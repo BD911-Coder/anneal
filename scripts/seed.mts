@@ -15,6 +15,10 @@ import { loadEnvFile } from "node:process";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client.ts";
+// Motor sürümü tek yerde tanımlı: perf_index satırları ile sayfanın okuduğu
+// sürüm ayrışırsa sayfa hiç indeks bulamaz.
+import { MODEL_VERSION } from "../engine/performance.ts";
+import { PERF_COMPUTED_AT, PERF_INDEXES, PRICES_MINOR, PRICE_DATES } from "./seed-prices.ts";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
@@ -335,6 +339,68 @@ await upsertAll(cases, prisma.caseSpecs as any);
 await upsertAll(storages, prisma.storageSpecs as any);
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+// ---------------------------------------------------------------------------
+// Fiyatlar — price_snapshots
+// ---------------------------------------------------------------------------
+//
+// Tablo append-only: UPDATE yazılmaz, var olan satır silinmez. Bu yüzden seed
+// yeniden çalıştığında satır tekrarlamasın diye önce hangi (parça, tarih)
+// çiftlerinin zaten yazıldığına bakılır, sadece eksikler eklenir.
+
+const mevcutFiyatlar = await prisma.priceSnapshot.findMany({
+  where: { source: "dev_seed" },
+  select: { part_id: true, collected_at: true },
+});
+const yazilmis = new Set(
+  mevcutFiyatlar.map((row) => `${row.part_id}|${row.collected_at.toISOString()}`),
+);
+
+const yeniFiyatlar = [];
+for (const [partId, guncelFiyat] of Object.entries(PRICES_MINOR)) {
+  for (const { at, factor } of PRICE_DATES) {
+    if (yazilmis.has(`${partId}|${at.toISOString()}`)) continue;
+    yeniFiyatlar.push({
+      part_id: partId,
+      // Gerçek bir satıcıdan gelmediği için 'manual'; satıcı adı uydurulmuyor.
+      retailer: "manual",
+      price_minor: Math.round(guncelFiyat * factor), // integer kalmalı
+      currency: "TRY",
+      in_stock: true,
+      product_url: null,
+      ...provenance,
+      collected_at: at, // provenance'ın "şimdi"si değil, snapshot'ın kendi tarihi
+    });
+  }
+}
+if (yeniFiyatlar.length > 0) {
+  await prisma.priceSnapshot.createMany({ data: yeniFiyatlar });
+}
+
+// ---------------------------------------------------------------------------
+// Performans indeksi — perf_index
+// ---------------------------------------------------------------------------
+//
+// Bu tablo append-only DEĞİL: (part_id, model_version) tekildir, yeniden hesap
+// aynı satırı günceller (SCHEMA.md bölüm 4).
+//
+// perf_index'te `source` sütunu yoktur — motorun kendi hesabıdır, dış dünya
+// hakkında iddia taşımaz. Dolayısıyla bu satırlar 'dev-seed' damgası TAŞIYAMAZ;
+// sahteliklerini bağlı oldukları parçadan alırlar (docs/KARARLAR.md K32).
+
+for (const [partId, indexValue] of Object.entries(PERF_INDEXES)) {
+  const row = {
+    part_id: partId,
+    index_value: indexValue,
+    model_version: MODEL_VERSION,
+    computed_at: PERF_COMPUTED_AT,
+  };
+  await prisma.perfIndex.upsert({
+    where: { part_id_model_version: { part_id: partId, model_version: MODEL_VERSION } },
+    create: row,
+    update: row,
+  });
+}
+
 const sayim = await prisma.part.groupBy({
   by: ["category"],
   _count: { _all: true },
@@ -347,5 +413,14 @@ for (const satir of sayim) {
 const devSeedSayisi = await prisma.part.count({ where: { source: "dev_seed" } });
 const toplam = await prisma.part.count();
 console.log(`\nToplam ${toplam} parça, ${devSeedSayisi} tanesi dev-seed.`);
+
+const fiyatSayisi = await prisma.priceSnapshot.count();
+const fiyatliParca = (await prisma.priceSnapshot.groupBy({ by: ["part_id"] })).length;
+console.log(
+  `Fiyat: ${fiyatSayisi} snapshot (${yeniFiyatlar.length} yeni), ${fiyatliParca} parçada fiyat var.`,
+);
+
+const indeksSayisi = await prisma.perfIndex.count({ where: { model_version: MODEL_VERSION } });
+console.log(`Performans indeksi: ${indeksSayisi} parça, model_version '${MODEL_VERSION}'.`);
 
 await prisma.$disconnect();

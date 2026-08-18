@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 
+import type { CurrentPrice } from "@/data/prices";
 import type { BuilderCatalog } from "@/data/parts";
 import { checkCompatibility } from "@/engine/compatibility";
-import type { BuildInput, Finding } from "@/engine/types";
+import { computePerformance } from "@/engine/performance";
+import type { BuildInput, Finding, Resolution } from "@/engine/types";
+import { formatIsoDate, formatPriceMinor } from "@/lib/format";
 
 // Motora giden kategoriler. Depolama burada yok: hiçbir uyumluluk kuralı
 // depolamayı kullanmıyor (S12), ama kullanıcı yine de birden fazla disk seçebilir.
@@ -20,11 +23,25 @@ const CATEGORY_LABEL: Record<EngineCategory, string> = {
   case: "Kasa",
 };
 
+// Motorun tanıdığı değer '2160p'; "4K" sadece ekranda yazan ad.
+const RESOLUTIONS: { value: Resolution; label: string }[] = [
+  { value: "1080p", label: "1080p" },
+  { value: "1440p", label: "1440p" },
+  { value: "2160p", label: "4K" },
+];
+
 type Selection = Partial<Record<EngineCategory, string>>;
 
-export function Builder({ catalog }: { catalog: BuilderCatalog }) {
+type BuilderProps = {
+  catalog: BuilderCatalog;
+  prices: Record<string, CurrentPrice>;
+  perfIndexes: Record<string, number>;
+};
+
+export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const [selection, setSelection] = useState<Selection>({});
   const [storageIds, setStorageIds] = useState<string[]>([]);
+  const [resolution, setResolution] = useState<Resolution>("1440p");
 
   // Seçilen id'lerden motorun beklediği girdiyi kur.
   const buildInput = useMemo<BuildInput>(() => {
@@ -48,10 +65,39 @@ export function Builder({ catalog }: { catalog: BuilderCatalog }) {
   const selectedStorage = catalog.storage.filter((item) => storageIds.includes(item.id));
   const secilenSayisi = Object.values(selection).filter(Boolean).length + selectedStorage.length;
 
+  // Seçilen bütün parçaların id'si — fiyat toplamı bunun üzerinden yürüyor.
+  const selectedPartIds = [
+    ...ENGINE_CATEGORIES.map((category) => selection[category]).filter(
+      (id): id is string => Boolean(id),
+    ),
+    ...storageIds,
+  ];
+
+  // Toplam fiyat tamamen tam sayıyla (kuruş) toplanıyor; float'a hiç geçilmiyor.
+  // useMemo yok: en fazla on parça toplanıyor, her çizimde yeniden hesaplamak
+  // önbelleği doğru tutmaya çalışmaktan ucuz.
+  const priceSummary = summarizePrice(selectedPartIds, prices);
+
+  const gpuId = selection.gpu;
+  const cpuId = selection.cpu;
+  const performance = computePerformance({
+    resolution,
+    gpu_index: gpuId ? perfIndexes[gpuId] : undefined,
+    cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
+  });
+
   function toggleStorage(id: string) {
     setStorageIds((current) =>
       current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
     );
+  }
+
+  /** Bir parçanın indeksi neden yok: seçilmedi mi, verisi mi yok? */
+  function eksikSebebi(kind: "gpu" | "cpu"): string {
+    const id = kind === "gpu" ? gpuId : cpuId;
+    const ad = kind === "gpu" ? "Ekran kartı" : "İşlemci";
+    if (!id) return `${ad} seçilmedi.`;
+    return `${ad} için performans verisi yok.`;
   }
 
   return (
@@ -78,6 +124,7 @@ export function Builder({ catalog }: { catalog: BuilderCatalog }) {
                 {catalog[category].map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
+                    {prices[item.id] ? ` — ${formatPriceMinor(prices[item.id].price_minor)}` : ""}
                   </option>
                 ))}
               </select>
@@ -98,6 +145,12 @@ export function Builder({ catalog }: { catalog: BuilderCatalog }) {
                   <span className="opacity-60">
                     ({item.storage_type}, {item.capacity_gb} GB)
                   </span>
+                  {prices[item.id] && (
+                    <span className="opacity-60">
+                      {" "}
+                      — {formatPriceMinor(prices[item.id].price_minor)}
+                    </span>
+                  )}
                 </span>
               </label>
             ))}
@@ -107,6 +160,86 @@ export function Builder({ catalog }: { catalog: BuilderCatalog }) {
 
       {/* --- Sonuç --- */}
       <section className="flex flex-col gap-6">
+        {/* Toplam fiyat */}
+        <div>
+          <h2 className="mb-3 text-lg font-semibold">Toplam fiyat</h2>
+          {secilenSayisi === 0 ? (
+            <p className="text-sm opacity-70">Parça seçince toplanacak.</p>
+          ) : (
+            <div className="text-sm">
+              <p className="text-2xl font-semibold">
+                {formatPriceMinor(priceSummary.totalMinor, priceSummary.currency)}{" "}
+                <span className="align-middle text-xs font-normal opacity-60">tahmini</span>
+              </p>
+              <p className="mt-1 opacity-70">
+                {priceSummary.latestIso
+                  ? `Son güncelleme: ${formatIsoDate(priceSummary.latestIso)}`
+                  : "Seçilen parçaların hiçbirinde fiyat kaydı yok."}
+              </p>
+              {priceSummary.missing > 0 && (
+                <p className="mt-1 opacity-70">
+                  {priceSummary.missing} parçanın fiyatı yok, toplama katılmadı.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Performans */}
+        <div>
+          <h2 className="mb-3 text-lg font-semibold">Performans</h2>
+
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+            <span className="opacity-70">Çözünürlük:</span>
+            {RESOLUTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setResolution(option.value)}
+                className={`rounded border px-3 py-1 ${
+                  resolution === option.value ? "border-blue-500 font-semibold" : "opacity-70"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {performance.ok ? (
+            <div className="flex flex-col gap-2 text-sm">
+              <p>
+                <span className="text-2xl font-semibold">{performance.system_index}</span>
+                <span className="opacity-60"> / 100</span>{" "}
+                <span className="text-xs opacity-60">tahmini sistem indeksi</span>
+              </p>
+              <p>
+                <span className="opacity-60">Bant:</span> {performance.band}{" "}
+                <span className="text-xs opacity-60">(tahmini)</span>
+              </p>
+              <p>
+                <span className="opacity-60">Darboğaz:</span> {performance.bottleneck_message}{" "}
+                <span className="text-xs opacity-60">(tahmini)</span>
+              </p>
+              <p className="text-xs opacity-50">
+                Ekran kartı {performance.gpu_index}, işlemci {performance.cpu_index}. Bu
+                çözünürlükte ağırlıklar: ekran kartı {performance.weights.gpu}, işlemci{" "}
+                {performance.weights.cpu}. Motor sürümü {performance.model_version}. Gerçek FPS
+                iddiası değildir.
+              </p>
+            </div>
+          ) : (
+            <div className="text-sm opacity-70">
+              <p>Tahmin için hem işlemci hem ekran kartı gerekiyor.</p>
+              <ul className="mt-1 list-inside list-disc">
+                {performance.missing.map((kind) => (
+                  <li key={kind}>{eksikSebebi(kind)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Seçilen sistem */}
         <div>
           <h2 className="mb-3 text-lg font-semibold">Seçilen sistem</h2>
           {secilenSayisi === 0 ? (
@@ -120,26 +253,27 @@ export function Builder({ catalog }: { catalog: BuilderCatalog }) {
                 return (
                   <li key={category}>
                     <span className="opacity-60">{CATEGORY_LABEL[category]}:</span> {item?.label}
+                    <PriceTag price={item ? prices[item.id] : undefined} />
                   </li>
                 );
               })}
               {selectedStorage.map((item) => (
                 <li key={item.id}>
                   <span className="opacity-60">Depolama:</span> {item.label}
+                  <PriceTag price={prices[item.id]} />
                 </li>
               ))}
             </ul>
           )}
         </div>
 
+        {/* Uyumluluk */}
         <div>
           <h2 className="mb-3 text-lg font-semibold">Uyumluluk</h2>
 
           {findings.length === 0 ? (
             <p className="text-sm">
-              {secilenSayisi === 0
-                ? "Parça seçince kontrol edilecek."
-                : "Sorun bulunamadı."}
+              {secilenSayisi === 0 ? "Parça seçince kontrol edilecek." : "Sorun bulunamadı."}
             </p>
           ) : (
             <div className="flex flex-col gap-4">
@@ -162,6 +296,41 @@ export function Builder({ catalog }: { catalog: BuilderCatalog }) {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */
+/**
+ * Seçilen parçaların fiyat özeti.
+ *
+ * Fiyatı olmayan parça toplama katılmaz ve ayrıca sayılır: eksik fiyatı sessizce
+ * 0 saymak, kullanıcının gördüğü toplamı olduğundan ucuz gösterirdi.
+ */
+function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>) {
+  let totalMinor = 0;
+  let currency = "TRY";
+  let latestIso: string | null = null;
+  let missing = 0;
+
+  for (const id of partIds) {
+    const price = prices[id];
+    if (!price) {
+      missing += 1;
+      continue;
+    }
+    totalMinor += price.price_minor;
+    currency = price.currency;
+    // "Son güncelleme": toplamı oluşturan fiyatların en yenisi.
+    if (!latestIso || price.collected_at > latestIso) latestIso = price.collected_at;
+  }
+
+  return { totalMinor, currency, latestIso, missing };
+}
+
+function PriceTag({ price }: { price?: CurrentPrice }) {
+  if (!price) return <span className="opacity-40"> — fiyat yok</span>;
+  return (
+    <span className="opacity-60"> — {formatPriceMinor(price.price_minor, price.currency)}</span>
   );
 }
 

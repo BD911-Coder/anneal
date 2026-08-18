@@ -1,8 +1,8 @@
 // Parça kataloğunu okur.
 //
-// dev-seed korumasının 2. katmanı burada: canlı ortamda `source = 'dev-seed'`
-// satırları OTOMATİK filtrelenir. Bu, çağıran kodun tercihine bırakılmaz —
-// bu dosyadaki her sorgu aynı `visibleParts()` filtresini kullanır.
+// dev-seed filtresi data/visibility.ts'te tanımlı ve bu dosyadaki her sorgu
+// onu kullanır (2. katman). Fiyat ve performans indeksi burada değil,
+// data/prices.ts ve data/perf.ts içinde okunur — bir dosya bir iş yapar.
 
 import type {
   EngineCase,
@@ -14,6 +14,7 @@ import type {
 } from "@/engine/types";
 
 import { prisma } from "./client";
+import { visibleParts } from "./visibility";
 import {
   toEngineCase,
   toEngineCpu,
@@ -22,20 +23,6 @@ import {
   toEnginePsu,
   toEngineRam,
 } from "./to-engine";
-
-const IS_LIVE = process.env.NODE_ENV === "production";
-
-/**
- * Her parça sorgusunun kullandığı filtre.
- *
- * Canlıda sahte veri görünmez. Geliştirmede görünür, yoksa üzerinde
- * çalışacak veri kalmaz.
- */
-function visibleParts() {
-  return IS_LIVE
-    ? { is_active: true, source: { not: "dev_seed" as const } }
-    : { is_active: true };
-}
 
 export type CatalogItem<TSpec> = {
   id: string;

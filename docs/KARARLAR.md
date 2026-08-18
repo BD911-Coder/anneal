@@ -413,3 +413,67 @@ altında ve `.gitignore` içinde, yani depoda yok — her dağıtımda yeniden
 
 **Kontrol `.env.local` okumadığı için** (K29) Vercel'de `DATABASE_URL` neyse
 ona bakar. Yani canlı dağıtımda canlı veritabanını denetler.
+
+---
+
+## 2026-08-18 — Fiyat ve performans indeksi
+
+### K32 — `perf_index` satırları dev-seed damgası taşıyamaz, koruma parça üzerinden yürür
+
+Sahte performans indeksleri `source = 'dev-seed'` ile işaretlenemedi:
+`perf_index` tablosunda `source` sütunu **yok** (SCHEMA.md bölüm 1.3 ve 4).
+
+Karar: sütun eklenmedi. Bu satırların sahteliği bağlı oldukları parçadan gelir —
+dev-seed bir parçanın indeksi de dev-seed'dir.
+
+**Gerekçe:** `perf_index` dış dünya hakkında iddia taşımaz, motorun kendi
+hesabıdır; kaynağı `model_version` sütunudur. Oraya `source` eklemek, şemanın
+"olgusal iddia taşıyan tablo" ayrımını bozardı.
+
+**Korumaya etkisi:**
+
+| Katman | `perf_index` için durumu |
+|---|---|
+| 1. Damga | Yok — damgalanacak sütun yok |
+| 2. Veri katmanı filtresi | **Var** — `data/perf.ts` parça ilişkisi üzerinden filtreler |
+| 3. Dağıtım kontrolü | Dolaylı — `perf_index` taranmaz ama bağlı olduğu `parts` satırı taranır ve dağıtımı durdurur |
+| 4. Seed reddi | Var — aynı script |
+
+Dolaylı olan tek katman 3. Bir `perf_index` satırının canlıya sızması için
+bağlı olduğu parçanın da canlıda olması gerekir; o parça zaten dağıtımı durdurur.
+
+### K33 — Bant üst sınırı ve darboğaz eşiği: sınır değeri üst tarafa dahildir
+
+`SCHEMA.md` bölüm 8 iki yerde sınırın hangi tarafa ait olduğunu söylemiyordu:
+
+- Bant tablosu "0–25", "25–45" diye yazıyor; **25 hangi banda ait?**
+- Darboğaz kuralı "`|fark| < 15` dengeli, `fark > 15` CPU sınırlıyor" diyor;
+  **tam 15 hiçbir dala girmiyor.**
+
+Karar: her iki yerde de sınır değeri üst/dış tarafa dahildir.
+`index = 25` ikinci banda, `fark = 15` "CPU sınırlıyor"a girer.
+
+**Gerekçe:** Bir değerin hiçbir dala düşmemesi sessiz hataya açık kapı bırakır.
+Kuralın ucu açık kalacağına bir yöne kapatılması gerekiyordu; testler bu sınırları
+tek tek ölçüyor (`tests/performance.test.ts`).
+
+**Yuvarlama bandan önce yapılır.** Sistem indeksi bir ondalık basamağa
+yuvarlanıp öyle banda sokulur. Sebebi: 24,96 ekranda "25,0" yazarken bandın
+"1080p düşük" demesi, kullanıcı için açıklanamaz bir çelişki olurdu.
+
+### K34 — dev-seed fiyatları sabit tarihli üç snapshot, seed tekrar yazmaz
+
+Her parça için üç `price_snapshots` satırı üretiliyor: 20.07.2026, 03.08.2026,
+17.08.2026. Tarihler koda sabit yazıldı, çalışma anından alınmıyor.
+
+**Neden üç satır, bir değil:** "Güncel fiyat = en son `collected_at`'li satır"
+tanımı tek satırla doğrulanamaz — yanlış satırı seçen bir hata görünmez kalırdı.
+
+**Neden sabit tarih:** `price_snapshots` append-only. Çalışma anının tarihi
+kullanılsaydı seed her çalıştığında yeni satır üretirdi ve o satırlar
+silinemezdi. Seed, yazmadan önce hangi (parça, tarih) çiftlerinin zaten var
+olduğuna bakar ve sadece eksikleri ekler — böylece tabloyu şişirmeden
+tekrar çalışabilir.
+
+**Satıcı adı `manual`.** Sahte fiyata gerçek bir satıcı adı yazmak, veriye
+sahip olmadığımız bir kaynağı ima ederdi.

@@ -78,3 +78,42 @@ export type Finding = {
   message: string;
   involved_part_ids: string[];
 };
+
+// ---------------------------------------------------------------------------
+// Performans motoru — SCHEMA.md bölüm 8
+// ---------------------------------------------------------------------------
+
+// Değerler SCHEMA.md'deki Resolution enum'ıyla birebir aynı. Arayüz "4K"
+// yazabilir ama motorun tanıdığı değer '2160p'dir.
+export type Resolution = "1080p" | "1440p" | "2160p";
+
+// Motor parça nesnelerini değil, önceden hesaplanmış indeksleri alır:
+// perf_index tablosu motorun çıktısıdır, girdisi değil. Böylece motor
+// veritabanını tanımadan çalışır.
+export type PerformanceInput = {
+  resolution: Resolution;
+  gpu_index?: number; // 0-100
+  cpu_index?: number; // 0-100
+};
+
+export type Bottleneck = "balanced" | "cpu_limited" | "gpu_limited";
+
+export type PerformanceResult = {
+  ok: true;
+  system_index: number; // 0-100, bir ondalık basamağa yuvarlanmış
+  band: string; // bant etiketi, SCHEMA.md bölüm 8'deki tablo
+  bottleneck: Bottleneck;
+  bottleneck_message: string;
+  gpu_index: number; // kullanılan (kırpılmış) değerler — hesap izlenebilir olsun
+  cpu_index: number;
+  weights: { gpu: number; cpu: number };
+  model_version: string;
+};
+
+// Eksik girdiyle sayı uydurulmaz: hangi parçanın indeksi yoksa o söylenir.
+export type PerformanceUnavailable = {
+  ok: false;
+  missing: ("gpu" | "cpu")[];
+};
+
+export type PerformanceOutcome = PerformanceResult | PerformanceUnavailable;

@@ -18,6 +18,27 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
+### S15 — Darboğaz göstergesi çözünürlüğü hesaba katmıyor
+
+Motor v0.1'de darboğaz, iki indeksin **ham farkına** bakıyor: fark 15'i geçerse
+zayıf olan taraf "sınırlıyor" sayılıyor. Bu, `SCHEMA.md` bölüm 8'deki somut
+kuralın birebir uygulanması.
+
+**Sorun:** Aynı sistem 1080p'de ve 4K'da aynı darboğaz uyarısını alıyor. Oysa
+4K'da işlemcinin payı yalnızca %12; orada 20 puan zayıf bir işlemci pratikte
+sorun çıkarmaz. Şu an kullanıcı 4K seçtiğinde de "İşlemci sınırlıyor" yazısını
+görüyor ve bu yazı o çözünürlükte yanıltıcı.
+
+`SCHEMA.md` bölüm 8'de bunu ima eden yarım bir satır var
+(`beklenen_cpu = gpu_idx * (w_cpu / w_gpu ile ölçeklenmiş eşik)`) ama tamamlanmamış
+ve altındaki somut kural onu kullanmıyor. Daha spesifik olan kural uygulandı.
+
+**Karar gereken:** Eşik çözünürlüğe göre değişsin mi? Örneğin 1080p'de 15,
+1440p'de 25, 4K'da 40 puan. Bu bir motor davranışı değişikliğidir; yapılırsa
+`model_version` `v0.2` olur ve eski hesaplar `v0.1` olarak durmaya devam eder.
+
+Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
+
 ### S14 — Vercel hesabı ve dağıtım bağlantısı bekleniyor 🔴 ENGELLEYİCİ
 
 Kod tarafı hazır: `vercel.json` build komutu, `robots.txt`, `noindex` meta.
