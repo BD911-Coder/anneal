@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npm run dagitim:kontrol && prisma migrate deploy && prisma generate && next build"
+  "buildCommand": "npm run dagitim:kontrol && npm run dagitim:migration && prisma generate && next build"
 }

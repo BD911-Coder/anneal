@@ -723,3 +723,71 @@ sorgu hatası veriyor olmalı.
 
 `prisma migrate deploy` yalnızca bekleyen migration'ları uygular, şema
 üretmez ve veri silmez — geriye dönük tehlikeli bir işlem değildir.
+
+---
+
+## 2026-08-18 — Önizleme dağıtımı riski
+
+Karar veren: proje sahibi (K46); Claude (K47, yetki dahilinde).
+
+Riski proje sahibi buldu: `prisma migrate deploy` build komutuna eklendikten
+sonra (K45), ortam değişkenleri "Production and Preview" kapsamında kaldığı
+sürece bir **önizleme dağıtımı canlı veritabanına migration uygulayabilirdi**.
+
+### K46 — Ortam değişkenleri yalnızca Production kapsamında tanımlıdır
+
+`DATABASE_URL` ve `DIRECT_URL` Vercel'de sadece **Production** kapsamında
+tutulur. Preview ve Development kapsamlarında tanımlı değildir.
+
+**Gerekçe:** Canlı veritabanının adresini eline geçiren her dağıtım ona
+yazabilir. Önizleme dağıtımları her dal itişinde kendiliğinden oluşur; hiçbiri
+canlı şemayı değiştirebilecek yetkiye sahip olmamalı. Migration geri alınamayan
+bir işlemdir — "dikkat ederiz" yeterli bir koruma değildir.
+
+**Bu deliği dev-seed kontrolü kapatmıyordu.** `dagitim:kontrol` canlı
+veritabanında dev-seed satırı arar; canlı veritabanı temiz olduğu için kontrol
+**geçerdi** ve migration çalışırdı. Yani 3. katman bu riske karşı değil,
+başka bir riske karşı yazılmıştı. Kapsamı daraltmak tek gerçek çözümdü.
+
+**Sonucu:** Önizleme dağıtımları artık veritabanı adresi görmüyor ve
+derlenemiyor (K47). Bu bilinçli kabul edilen bir sonuçtur.
+
+### K47 — Önizleme dağıtımları derlenmez; migration'lar ayrı bir betikten geçer
+
+**Ölçülen davranış.** Veritabanı adresi olmadan build iki bağımsız noktada
+duruyor:
+
+1. `npm run dagitim:kontrol` → çıkış kodu **1**
+   ("DATABASE_URL tanimli degil"). Zincir burada kesiliyor, `migrate deploy`
+   adımına hiç ulaşılmıyor.
+2. O adım atlansa bile `next build` → çıkış kodu **1**:
+   `Failed to collect configuration for /`, sebep `data/client.ts` içindeki
+   "DATABASE_URL tanımlı değil" hatası. Sayfalar `force-dynamic` olsa da Next
+   derleme sırasında modülleri içe aktarıyor ve istemci orada kuruluyor.
+
+Yani önizleme dağıtımı **başarısız olur**. Tehlikeli bir şey yapmaz, sadece
+kırmızı görünür.
+
+**Eklenen koruma:** `scripts/migrate-deploy.mjs`. `VERCEL_ENV` tanımlı ve
+`production` değilse migration uygulanmaz, betik 0 ile çıkar. Build komutu:
+
+```
+npm run dagitim:kontrol && npm run dagitim:migration && prisma generate && next build
+```
+
+**Neden panel ayarı yetmiyor da bir de betik var:** K46 bir Vercel panel
+ayarıdır; ileride biri "önizlemede de veritabanı lazım" diye kapsamı geri
+genişletebilir ve bu depoda hiçbir iz bırakmaz. Betik depoda durur, değişirse
+commit'te görünür. dev-seed korumasının dört katmanıyla aynı mantık: geri
+alınamayan işlemler tek bir ayara bağlanmaz.
+
+**Ölçüldü:**
+
+```
+VERCEL_ENV=preview     -> "Migration uygulanmadi: VERCEL_ENV='preview'"   çıkış 0
+VERCEL_ENV=production  -> "3 migrations found... No pending migrations"    çıkış 0
+VERCEL_ENV tanımsız    -> yerel çalıştırma, uygular                        çıkış 0
+```
+
+**Önizleme dağıtımlarının kapatılması ayrı bir karardır** — panel ayarı
+gerektiriyor, `SORULAR.md` S18.

@@ -18,6 +18,44 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
+### S18 — Önizleme dağıtımları kapatılsın mı?
+
+Ortam değişkenleri artık sadece Production kapsamında (K46). Sonucu: her dal
+itişinde oluşan **önizleme dağıtımları derlenemiyor ve başarısız oluyor**.
+Tehlikeli bir şey yapmıyorlar — iki ayrı noktada duruyorlar (K47) — ama Vercel
+panelinde ve GitHub'da kırmızı görünüyorlar.
+
+**Önerim: önizleme dağıtımlarını kapat.** Gerekçe: bu projede bir dalın
+çalıştığı yerelde `npm run dev` ile doğrulanıyor, önizleme adresine ihtiyaç yok.
+Beta testçileri de canlı adrese girecek. Kapatılırsa hem gürültü biter hem de
+canlı veritabanına yaklaşabilecek bir dağıtım türü hiç oluşmaz.
+
+**Nasıl:** Vercel → Settings → Git → **Ignored Build Step** → komut:
+
+```
+[ "$VERCEL_ENV" != "production" ]
+```
+
+Vercel'in kuralı: bu komut **0 ile çıkarsa derleme atlanır**, 1 ile çıkarsa
+devam eder. Yukarıdaki ifade production dışında 0 döner, yani sadece canlı
+dağıtımlar derlenir.
+
+Bunu buradan doğrulayamıyorum (panel ayarı). Doğru kurulduğunu şuradan
+anlarsın: bir dal itişinden sonra Vercel'de dağıtım "Build skipped" der,
+"Error" demez.
+
+**Alternatifler:**
+
+1. **Hiçbir şey yapma.** Önizlemeler başarısız olmaya devam eder. Zararsız,
+   sadece gürültülü.
+2. **Önizlemelere geliştirme veritabanını ver.** Preview kapsamına geliştirme
+   veritabanı adresini yaz. O zaman önizlemeler çalışır — ama `dagitim:kontrol`
+   geliştirme veritabanında dev-seed bulup duracağı için build komutunun da
+   ortama göre davranması gerekir. Karmaşıklık artar; beta'da karşılığı yok.
+
+Acil değil. Karar verilene kadar önizlemeler başarısız olur, canlı etkilenmez.
+→ `docs/KARARLAR.md` K46, K47
+
 ### S16 — Oyun dışı ölçümlerde `game_id` ne olacak? ⏸️ ERTELENDİ (2026-08-18)
 
 **Proje sahibinin kararı:** Şimdi karar verilmeyecek. Beta'da tek iş yükü var
