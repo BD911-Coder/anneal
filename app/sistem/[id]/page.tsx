@@ -3,13 +3,21 @@ import { notFound } from "next/navigation";
 
 import { getBuild } from "@/data/builds";
 import { getCurrentPrices } from "@/data/prices";
-import { REFERENCE_RESOLUTION, bandFor } from "@/engine/performance";
+import { bandFor } from "@/engine/performance";
+import type { Resolution } from "@/engine/types";
 import { formatIsoDate, formatPriceMinor } from "@/lib/format";
 
 import { FeedbackForm } from "../../feedback-form";
 
 // Kayıt dondurulmuş olsa da güncel fiyat her açılışta yeniden okunuyor.
 export const dynamic = "force-dynamic";
+
+// Motorun tanıdığı değer '2160p'; "4K" sadece ekranda yazan ad.
+const RESOLUTION_LABEL: Record<Resolution, string> = {
+  "1080p": "1080p",
+  "1440p": "1440p",
+  "2160p": "4K",
+};
 
 const CATEGORY_LABEL: Record<string, string> = {
   cpu: "İşlemci",
@@ -67,21 +75,34 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             </p>
           </div>
 
-          <div>
-            <p className="text-xl font-semibold">
-              {build.perf_index_snapshot}
-              <span className="text-sm font-normal opacity-60"> / 100</span>{" "}
-              <span className="text-xs font-normal opacity-60">tahmini sistem indeksi</span>
-            </p>
-            <p className="opacity-70">
-              {bandFor(build.perf_index_snapshot)}{" "}
-              <span className="text-xs opacity-60">(tahmini)</span>
-            </p>
-            <p className="text-xs opacity-50">
-              {REFERENCE_RESOLUTION} referans alınarak, motor sürümü {build.model_version} ile
-              hesaplandı. Gerçek FPS iddiası değildir.
-            </p>
-          </div>
+          {build.perf_index_snapshot !== null ? (
+            <div>
+              <p className="text-xl font-semibold">
+                {build.perf_index_snapshot}
+                <span className="text-sm font-normal opacity-60"> / 100</span>{" "}
+                <span className="text-xs font-normal opacity-60">tahmini sistem indeksi</span>
+              </p>
+              <p className="opacity-70">
+                {bandFor(build.perf_index_snapshot)}{" "}
+                <span className="text-xs opacity-60">(tahmini)</span>
+              </p>
+              <p className="text-xs opacity-50">
+                {RESOLUTION_LABEL[build.resolution]} için, motor sürümü {build.model_version} ile
+                hesaplandı. Gerçek FPS iddiası değildir.
+              </p>
+            </div>
+          ) : (
+            // İndeks yerine 0 yazılmıyor: hesaplanamadı ile "çok yavaş" aynı şey
+            // değil (K44). Sebebi yazılıyor.
+            <div>
+              <p className="opacity-70">Performans tahmini için ekran kartı gerekiyor.</p>
+              <p className="text-xs opacity-50">
+                Bu sistem {RESOLUTION_LABEL[build.resolution]} seçiliyken kaydedildi, ama
+                performans indeksi ekran kartı ve işlemcinin ikisini birden gerektiriyor.
+                Sistem geçerli; sadece hızı hakkında bir sayı üretilemiyor.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

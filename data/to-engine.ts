@@ -15,6 +15,7 @@ import type {
   EnginePsu,
   EngineRam,
   FormFactor,
+  Resolution,
 } from "@/engine/types";
 
 /**
@@ -124,4 +125,37 @@ export function toEngineCase(row: {
     max_gpu_length_mm: row.max_gpu_length_mm,
     max_psu_length_mm: row.max_psu_length_mm,
   };
+}
+
+/**
+ * Çözünürlük: Prisma üye adı <-> motor değeri.
+ *
+ * Prisma enum değeri rakamla başlayamadığı için üye adı `R1440p` (K7).
+ * Veritabanındaki gerçek değer `1440p`, motorun beklediği de o.
+ *
+ * Bu çeviri iki yönlü çünkü çözünürlük hem okunuyor (kayıtlı sistem sayfası)
+ * hem yazılıyor (sistem kaydetme). Diğer alanlar tek yönlüydü.
+ */
+const RESOLUTION_TO_ENGINE: Record<string, Resolution> = {
+  R1080p: "1080p",
+  R1440p: "1440p",
+  R2160p: "2160p",
+};
+
+const RESOLUTION_TO_PRISMA: Record<Resolution, "R1080p" | "R1440p" | "R2160p"> = {
+  "1080p": "R1080p",
+  "1440p": "R1440p",
+  "2160p": "R2160p",
+};
+
+export function toEngineResolution(value: string): Resolution {
+  const mapped = RESOLUTION_TO_ENGINE[value];
+  if (!mapped) {
+    throw new Error(`Bilinmeyen çözünürlük: ${value}`);
+  }
+  return mapped;
+}
+
+export function toPrismaResolution(value: Resolution) {
+  return RESOLUTION_TO_PRISMA[value];
 }

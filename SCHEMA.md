@@ -1,4 +1,4 @@
-# Anneal — Alan Modeli (Domain Model) — v1.2
+# Anneal — Alan Modeli (Domain Model) — v1.3
 
 Bu dosya projenin veri yapısını tanımlar. Kod bundan türetilir, tersi değil.
 Bir alan burada yoksa koda da girmez; kodda bir alan gerekiyorsa önce buraya eklenir.
@@ -319,8 +319,9 @@ hesabıdır, kaynağı `model_version` sütunudur. `updated_at` de yoktur (böl�
 | `title` | text? | Kullanıcının verdiği ad |
 | `total_price_minor` | integer | **Kayıt anında dondurulur** |
 | `currency` | text | |
-| `perf_index_snapshot` | float | Kayıt anındaki indeks |
-| `model_version` | text | O indeksi üreten motor sürümü |
+| `resolution` | enum | `1080p`, `1440p`, `2160p` — kullanıcının kaydettiği çözünürlük |
+| `perf_index_snapshot` | float? | Kayıt anındaki indeks. Hesaplanamadıysa **null** |
+| `model_version` | text | Kayıt anındaki motor sürümü |
 | `created_at` | timestamptz | |
 
 **Neden dondurulur:** Altı ay önce paylaşılan bir link bugün açıldığında, o günün
@@ -328,6 +329,26 @@ fiyatını ve o günün hesabını göstermelidir. Canlı fiyatla hesaplanırsa 
 yanlış bilgi verir ve bu sonradan düzeltilemez.
 
 Güncel fiyatı ayrıca göstermek serbest — ama dondurulmuş değerin üzerine yazılmaz.
+
+**Neden `resolution` saklanır:** Sistem indeksi çözünürlüğe göre değişir (bölüm 8).
+Çözünürlük yazılmasaydı dondurulan sayı neyi ifade ettiği bilinmeyen bir sayı
+olurdu. Kullanıcı hangi çözünürlükte kaydettiyse indeks o çözünürlükte hesaplanır
+ve kayıtlı sistem sayfası hangisi olduğunu yazar.
+
+Bu alan indeks hesaplanamasa da doldurulur: kullanıcının o an baktığı çözünürlük,
+kaydın kendisi hakkında bir olgudur.
+
+**Neden `perf_index_snapshot` null olabilir:** Ekran kartsız (iGPU) bir sistem
+uyumluluk kurallarına göre geçerlidir (bölüm 7, C4 ve W4) ama indeksi
+hesaplanamaz — `perf_index` yalnızca `gpu` ve `cpu` için vardır. Alan zorunlu
+kalsaydı geçerli bir sistem kaydedilemezdi; bu bir hatadır.
+
+Null, "indeks sıfır" demek **değildir**: hesaplanamadı demektir. Kayıtlı sistem
+sayfası sayı yerine sebebini yazar. Sıfır yazılsaydı sistem, olmadığı kadar
+yavaş görünürdü ve bu sayı donduğu için düzeltilemezdi.
+
+`model_version` bu durumda da yazılır ve "kayıt anında hangi motor sürümü
+çalışıyordu" sorusunu cevaplar — hangi sürümün indeks üretemediği de bilgidir.
 
 ### `build_items`
 

@@ -133,7 +133,9 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
     setSaving(true);
     setSaveError(null);
 
-    const result = await saveBuildAction(selectedPartIds);
+    // Çözünürlük de gidiyor: indeks kullanıcının o an baktığı çözünürlükte
+    // donuyor (K43), sabit bir referansta değil.
+    const result = await saveBuildAction(selectedPartIds, resolution);
     if (result.ok) {
       setShareUrl(`${window.location.origin}/sistem/${result.id}`);
     } else {
@@ -251,7 +253,12 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setResolution(option.value)}
+                onClick={() => {
+                  // Çözünürlük dondurulan indeksi belirliyor; değişince eldeki
+                  // paylaşım linki artık bu ekrandakini göstermiyor.
+                  forgetShareLink();
+                  setResolution(option.value);
+                }}
                 className={`rounded border px-3 py-1 ${
                   resolution === option.value ? "border-blue-500 font-semibold" : "opacity-70"
                 }`}
@@ -400,6 +407,8 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
           <p className="mt-2 text-xs opacity-60">
             Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan değişmez.
+            İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır. Ekran kartı
+            seçilmemişse sistem yine kaydedilir, indeks yerine sebebi görünür.
           </p>
 
           {shareUrl && (

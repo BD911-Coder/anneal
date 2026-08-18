@@ -9,11 +9,13 @@
 // ve indeks burada, veritabanından okunarak yeniden hesaplanır — yoksa
 // tarayıcıdan istediği toplamı yazan biri sahte bir sistem kaydedebilirdi.
 
-import { MODEL_VERSION, REFERENCE_RESOLUTION, computePerformance } from "@/engine/performance";
+import { MODEL_VERSION, freezeSystemIndex } from "@/engine/performance";
+import type { Resolution } from "@/engine/types";
 
 import { prisma } from "./client";
 import { getPerfIndexes } from "./perf";
 import { getCurrentPrices } from "./prices";
+import { toEngineResolution, toPrismaResolution } from "./to-engine";
 import { IS_LIVE, visibleParts } from "./visibility";
 
 /** Paylaşılabilir kimlik: `k3n9x2` (SCHEMA.md bölüm 5). */
@@ -45,7 +47,6 @@ export type SaveBuildFailure =
   | "empty" // hiç parça seçilmemiş
   | "unknown_part" // gönderilen id kataloğda yok
   | "missing_price" // fiyatı olmayan parça var, toplam dürüst olmaz
-  | "no_index" // ekran kartı/işlemci indeksi yok, dondurulacak sayı yok
   | "id_collision"; // beş denemede de boş kimlik bulunamadı
 
 export type SaveBuildResult =
@@ -56,7 +57,11 @@ export type SaveBuildResult =
  * Seçilen parçaları kalıcı, paylaşılabilir bir sistem olarak kaydeder.
  * Hesap gerektirmez — `builds` tablosunda kullanıcı alanı yoktur.
  */
-export async function saveBuild(partIds: string[], title?: string): Promise<SaveBuildResult> {
+export async function saveBuild(
+  partIds: string[],
+  resolution: Resolution,
+  title?: string,
+): Promise<SaveBuildResult> {
   // Aynı parça iki kez gönderilmiş olabilir; bileşik anahtar zaten buna izin
   // vermez, o yüzden yazmadan önce tekilleştiriliyor.
   const ids = [...new Set(partIds.filter(Boolean))];
@@ -83,15 +88,14 @@ export async function saveBuild(partIds: string[], title?: string): Promise<Save
 
   const gpuId = parts.find((part) => part.category === "gpu")?.id;
   const cpuId = parts.find((part) => part.category === "cpu")?.id;
-  const performance = computePerformance({
-    resolution: REFERENCE_RESOLUTION,
+  // İndeks kullanıcının kaydettiği çözünürlükte donar (K43). Hesaplanamıyorsa
+  // null yazılır ve kayıt yine de yapılır: ekran kartsız (iGPU) bir sistem
+  // geçerlidir, kaydedilememesi hatadır (K44).
+  const indexSnapshot = freezeSystemIndex({
+    resolution,
     gpu_index: gpuId ? perfIndexes[gpuId] : undefined,
     cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
   });
-  // `builds.perf_index_snapshot` zorunlu bir alan: şema, kaydedilmiş her
-  // sistemin dondurulmuş bir indeksi olduğunu söylüyor. Hesaplanamıyorsa
-  // uydurma bir sayı yazmak yerine kayıt reddedilir.
-  if (!performance.ok) return { ok: false, reason: "no_index", parts: performance.missing };
 
   const items = ids.map((id) => ({
     part_id: id,
@@ -111,8 +115,11 @@ export async function saveBuild(partIds: string[], title?: string): Promise<Save
           title: title?.trim() || null,
           total_price_minor: totalMinor,
           currency,
-          perf_index_snapshot: performance.system_index,
-          model_version: performance.model_version,
+          resolution: toPrismaResolution(resolution),
+          perf_index_snapshot: indexSnapshot,
+          // İndeks üretilemese de yazılır: hangi motor sürümünün üretemediği
+          // de bilgidir (SCHEMA.md bölüm 5).
+          model_version: MODEL_VERSION,
           build_items: { create: items },
         },
       });
@@ -141,7 +148,9 @@ export type SavedBuild = {
   created_at: string; // ISO
   total_price_minor: number;
   currency: string;
-  perf_index_snapshot: number;
+  resolution: Resolution;
+  /** Hesaplanamadıysa null — "indeks sıfır" demek değil (K44). */
+  perf_index_snapshot: number | null;
   model_version: string;
   items: SavedBuildItem[];
 };
@@ -176,6 +185,7 @@ export async function getBuild(id: string): Promise<SavedBuild | null> {
     created_at: build.created_at.toISOString(),
     total_price_minor: build.total_price_minor,
     currency: build.currency,
+    resolution: toEngineResolution(build.resolution),
     perf_index_snapshot: build.perf_index_snapshot,
     model_version: build.model_version,
     items: build.build_items.map((item) => ({

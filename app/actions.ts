@@ -9,6 +9,7 @@
 
 import { saveBuild } from "@/data/builds";
 import { saveFeedback } from "@/data/feedback";
+import type { Resolution } from "@/engine/types";
 
 export type SaveBuildAction =
   | { ok: true; id: string }
@@ -19,15 +20,15 @@ const SAVE_BUILD_MESSAGE: Record<string, string> = {
   empty: "Kaydetmeden önce en az bir parça seçin.",
   unknown_part: "Seçilen parçalardan biri artık kataloğda yok. Sayfayı yenileyip tekrar deneyin.",
   missing_price: "Fiyatı olmayan parça var. Toplam fiyat dondurulacağı için sistem kaydedilmiyor.",
-  no_index: "Sistem indeksi hesaplanamıyor. Kaydetmek için işlemci ve ekran kartı seçilmeli.",
   id_collision: "Sistem kimliği üretilemedi. Lütfen tekrar deneyin.",
 };
 
 export async function saveBuildAction(
   partIds: string[],
+  resolution: Resolution,
   title?: string,
 ): Promise<SaveBuildAction> {
-  const result = await saveBuild(partIds, title);
+  const result = await saveBuild(partIds, resolution, title);
   if (result.ok) return { ok: true, id: result.id };
 
   return {

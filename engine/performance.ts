@@ -47,17 +47,6 @@ export const BANDS: { max: number; label: string }[] = [
 /** İki indeks arasındaki bu farktan sonrası darboğaz sayılır. */
 export const BOTTLENECK_THRESHOLD = 15;
 
-/**
- * Kaydedilen sistemlerin dondurulan indeksi bu çözünürlükte hesaplanır.
- *
- * `builds.perf_index_snapshot` tek bir sayıdır ve şemada çözünürlük sütunu
- * yoktur; dondurulan sayının neyi ifade ettiği sabit bir referansa bağlanmak
- * zorundaydı. 1440p seçildi: üç seçeneğin ortası ve varsayılan seçim.
- * Yan fayda: bütün kayıtlı sistemler aynı ölçüyle karşılaştırılabilir olur.
- * Ayrıntı ve açık soru: docs/KARARLAR.md K38, SORULAR.md S17.
- */
-export const REFERENCE_RESOLUTION: Resolution = "1440p";
-
 const BOTTLENECK_MESSAGE: Record<Bottleneck, string> = {
   balanced: "Dengeli — işlemci ve ekran kartı birbirine yakın güçte.",
   cpu_limited:
@@ -141,4 +130,21 @@ export function computePerformance(input: PerformanceInput): PerformanceOutcome 
     weights,
     model_version: MODEL_VERSION,
   };
+}
+
+/**
+ * Kaydedilen sistemin dondurulacak indeksi. Hesaplanamıyorsa `null`.
+ *
+ * Kuralın kendi adı olan bir fonksiyonu olmasının sebebi: "indeks yoksa ne
+ * yazılır" sorusunun cevabı tek yerde dursun ve test edilebilsin. Ekran kartsız
+ * (iGPU) sistemler geçerlidir ama indeksleri hesaplanamaz; bu durumda 0 değil
+ * `null` yazılır — 0, "sistem çok yavaş" demek olurdu ve dondurulan bir sayı
+ * sonradan düzeltilemez (docs/KARARLAR.md K44).
+ *
+ * Çözünürlük çağıran taraftan gelir: kullanıcı hangi çözünürlükte kaydettiyse
+ * indeks o çözünürlükte donar (K43).
+ */
+export function freezeSystemIndex(input: PerformanceInput): number | null {
+  const result = computePerformance(input);
+  return result.ok ? result.system_index : null;
 }

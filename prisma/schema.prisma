@@ -1,6 +1,6 @@
 // Anneal — veritabanı şeması
 //
-// Bu dosya SCHEMA.md v1.2'den türetilmiştir. SCHEMA.md tek kaynaktır.
+// Bu dosya SCHEMA.md v1.3'ten türetilmiştir. SCHEMA.md tek kaynaktır.
 // Tablo ve alan adları SCHEMA.md ile birebir aynı tutuldu ki satır satır
 // karşılaştırılabilsin. Alan adlarının snake_case olmasının sebebi budur.
 //
@@ -432,8 +432,17 @@ model Build {
   title               String? // kullanıcının verdiği ad
   total_price_minor   Int // kayıt anında dondurulur
   currency            String
-  perf_index_snapshot Float // kayıt anındaki indeks
-  model_version       String // o indeksi üreten motor sürümü
+
+  // Kullanıcının kaydettiği çözünürlük (K43). İndeks bu çözünürlükte
+  // hesaplanır; yazılmasaydı dondurulan sayı neyi ifade ettiği bilinmeyen
+  // bir sayı olurdu. İndeks hesaplanamasa da doldurulur.
+  resolution Resolution
+
+  // Ekran kartsız (iGPU) sistemin indeksi hesaplanamaz — perf_index yalnızca
+  // gpu ve cpu için vardır. Zorunlu kalsaydı geçerli bir sistem kaydedilemezdi
+  // (K44). null "indeks sıfır" değil, "hesaplanamadı" demektir.
+  perf_index_snapshot Float?
+  model_version       String // kayıt anındaki motor sürümü
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)

@@ -18,29 +18,6 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S17 — `builds` tablosuna `resolution` alanı eklensin mi?
-
-Kaydedilen sistemin dondurulmuş indeksi (`builds.perf_index_snapshot`) tek bir
-sayı, ama sistem indeksi çözünürlüğe göre değişiyor. `builds` tablosunda
-çözünürlük sütunu yok, yani dondurulan sayının hangi çözünürlüğe ait olduğu
-şemada yazmıyor.
-
-**Şimdilik nasıl çözüldü:** Dondurulan indeks her zaman **1440p** referansıyla
-hesaplanıyor ve kayıtlı sistem sayfası bunu açıkça yazıyor. Alan eklemek şema
-değişikliği olduğu için sormadan yapılmadı (K38).
-
-**Sonucu:** Kullanıcı 4K seçip sistemi kaydederse, açtığı linkte 1440p indeksini
-görüyor. Sayfa bunu yazıyor ama yine de beklediğinden farklı.
-
-**Seçenekler:**
-
-1. Böyle kalsın — bütün kayıtlar aynı ölçüyle karşılaştırılabilir olur, alan
-   eklemeye gerek kalmaz.
-2. `builds.resolution` eklensin — kullanıcının seçtiği çözünürlük dondurulur,
-   link daha sadık olur. `SCHEMA.md` bölüm 5 ve migration gerekir.
-
-Acil değil; beta böyle çalışabilir. → `docs/KARARLAR.md` K38
-
 ### S16 — Oyun dışı ölçümlerde `game_id` ne olacak? ⏸️ ERTELENDİ (2026-08-18)
 
 **Proje sahibinin kararı:** Şimdi karar verilmeyecek. Beta'da tek iş yükü var
@@ -88,33 +65,32 @@ ve altındaki somut kural onu kullanmıyor. Daha spesifik olan kural uygulandı.
 
 Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 
-### S14 — Vercel hesabı ve dağıtım bağlantısı bekleniyor 🔴 ENGELLEYİCİ
-
-Kod tarafı hazır: `vercel.json` build komutu, `robots.txt`, `noindex` meta.
-Yerelde Vercel'in çalıştıracağı komutun birebir simülasyonu geçti.
-
-**Yapılamayan:** Vercel hesabı açmak ve oturum açmak. Hesap oluşturma ve
-kimlik doğrulama benim yapabileceğim işler değil — parola/oturum bilgisi
-girmem gereken adımlar.
-
-**Proje sahibinin yapması gerekenler:**
-
-1. `vercel.com` → GitHub hesabıyla kaydol (ücretsiz Hobby katmanı)
-2. "Add New… → Project" → `BD911-Coder/anneal` deposunu içe aktar
-3. Ortam değişkenlerini **Production** kapsamında tanımla:
-   - `DATABASE_URL` → canlı Supabase, havuzlanmış (port 6543, `?pgbouncer=true`)
-   - `DIRECT_URL` → canlı Supabase, doğrudan (port 5432)
-   - `DEV_SEED_ALLOWED` **tanımlanmayacak** — yokluğu 4. katman korumasıdır
-4. Deploy
-
-**Karar gereken ek nokta:** Canlı veritabanı parolası bir kez sohbet geçmişine
-girmişti (K21'de yenilenmemesine karar verilmişti). Vercel'e girerken
-yenilemek iyi bir fırsat olur — yenilersen yeni parolayı Vercel'e yazarsın,
-başka hiçbir yeri güncellemek gerekmez.
-
 ---
 
 ## Kapanmış sorular
+
+### S17 — `builds` tablosuna `resolution` alanı ✅ 2026-08-18
+
+**Cevap:** Alan eklendi (2. seçenek). Dondurulan indeks artık sabit bir
+referansta değil, kullanıcının kaydettiği çözünürlükte hesaplanıyor; kayıtlı
+sistem sayfası hangi çözünürlük olduğunu yazıyor. `REFERENCE_RESOLUTION` sabiti
+koddan kaldırıldı. Migration `20260818172814_kayit_cozunurlugu_ve_indekssiz_sistem`;
+mevcut kayıtlar `1440p` ile dolduruldu — eski davranış zaten oydu.
+→ `docs/KARARLAR.md` K43 (K38'i değiştirir)
+
+### S14 — Vercel hesabı ve dağıtım bağlantısı ✅ 2026-08-18
+
+**Cevap:** Site canlıda. Proje sahibi Vercel hesabını açtı, depoyu bağladı ve
+dağıtımı tarayıcıdan yaptı. Ortam değişkenleri Vercel'de Production kapsamında
+tanımlı; `DEV_SEED_ALLOWED` **tanımlanmadı** — yokluğu 4. katman korumasıdır.
+
+**İlk deneme `dagitim:kontrol`'e takılıp durdu, bağlantı düzeltilince geçti.**
+Yani dev-seed korumasının 3. katmanı yazılı olmakla kalmadı, gerçek dağıtım
+hattında da çalıştığını kanıtladı.
+
+Canlıda 0 parça — beklenen: canlı veritabanında dev-seed verisi yok ve gerçek
+veri girişi henüz yapılmadı (CSV içe aktarma ertelenmişti).
+→ `docs/KARARLAR.md` K45
 
 ### S13 — dev-seed verisi canlı olacak veritabanında duruyor ✅ 2026-08-18
 

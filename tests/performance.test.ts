@@ -8,6 +8,7 @@ import {
   bandFor,
   bottleneckFor,
   computePerformance,
+  freezeSystemIndex,
 } from "../engine/performance";
 import type { PerformanceResult, Resolution } from "../engine/types";
 
@@ -218,5 +219,56 @@ describe("motor saflığı", () => {
     const girdi = { resolution: "1440p" as const, gpu_index: 62, cpu_index: 78 };
     computePerformance(girdi);
     expect(girdi).toEqual({ resolution: "1440p", gpu_index: 62, cpu_index: 78 });
+  });
+});
+
+describe("dondurulan indeks (K43, K44)", () => {
+  it("hesaplanabiliyorsa sistem indeksinin kendisi donar", () => {
+    // 1440p: 54*0.75 + 78*0.25 = 40.5 + 19.5 = 60
+    expect(freezeSystemIndex({ resolution: "1440p", gpu_index: 54, cpu_index: 78 })).toBe(60);
+  });
+
+  it("kullanıcının seçtiği çözünürlükte donar — sabit bir referansta değil", () => {
+    const parts = { gpu_index: 100, cpu_index: 55 };
+    const at1080 = freezeSystemIndex({ resolution: "1080p", ...parts });
+    const at1440 = freezeSystemIndex({ resolution: "1440p", ...parts });
+    const at2160 = freezeSystemIndex({ resolution: "2160p", ...parts });
+
+    expect(at1080).toBe(79.8);
+    expect(at1440).toBe(88.8);
+    expect(at2160).toBe(94.6);
+    // Üçü de farklı: çözünürlük saklanmasaydı bu sayı neyi ifade ettiği
+    // bilinmeyen bir sayı olurdu.
+    expect(new Set([at1080, at1440, at2160]).size).toBe(3);
+  });
+
+  it("ekran kartı yoksa null döner — iGPU sistemi kaydedilebilmeli", () => {
+    expect(freezeSystemIndex({ resolution: "1440p", cpu_index: 78 })).toBeNull();
+  });
+
+  it("işlemci yoksa null döner", () => {
+    expect(freezeSystemIndex({ resolution: "1440p", gpu_index: 54 })).toBeNull();
+  });
+
+  it("ikisi de yoksa null döner", () => {
+    expect(freezeSystemIndex({ resolution: "1080p" })).toBeNull();
+  });
+
+  it("null dönüyor, 0 değil — 'hesaplanamadı' ile 'çok yavaş' aynı şey değil", () => {
+    const sonuc = freezeSystemIndex({ resolution: "1440p", cpu_index: 78 });
+    expect(sonuc).toBeNull();
+    expect(sonuc).not.toBe(0);
+  });
+
+  it("gerçek 0 ile hesaplanamayan ayırt edilebiliyor", () => {
+    // İki indeks de 0 ise sonuç 0'dır ve bu null değildir.
+    expect(freezeSystemIndex({ resolution: "1440p", gpu_index: 0, cpu_index: 0 })).toBe(0);
+  });
+
+  it("computePerformance ile aynı sayıyı üretir — iki yol ayrışmaz", () => {
+    const girdi = { resolution: "2160p" as const, gpu_index: 62, cpu_index: 92 };
+    const hesap = computePerformance(girdi);
+    expect(hesap.ok).toBe(true);
+    if (hesap.ok) expect(freezeSystemIndex(girdi)).toBe(hesap.system_index);
   });
 });

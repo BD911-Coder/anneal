@@ -560,7 +560,13 @@ en yakın yerde durmalı.
 Karar veren: Claude, "Karar yetkisi" bölümündeki yetki dahilinde. K38 bir
 şema sorusuna dokunuyor; alan **eklenmedi**, soru `SORULAR.md` S17'de açıldı.
 
-### K38 — Dondurulan indeks 1440p referansıyla hesaplanır
+### K38 — Dondurulan indeks 1440p referansıyla hesaplanır — **DEĞİŞTİRİLDİ, bkz. K43**
+
+> ⚠️ **2026-08-18 tarihinde değiştirildi.** `builds.resolution` alanı eklendi;
+> indeks artık sabit bir referansta değil, kullanıcının kaydettiği çözünürlükte
+> hesaplanıyor. `REFERENCE_RESOLUTION` sabiti koddan kaldırıldı. Açık soru S17
+> kapandı.
+
 
 `builds.perf_index_snapshot` tek bir `float`. Ama sistem indeksi çözünürlüğe
 göre değişiyor (bölüm 8) ve `builds` tablosunda çözünürlük sütunu **yok** —
@@ -578,7 +584,13 @@ saklanacaksa neyi ifade ettiği sabit olmak zorunda; kullanıcının o an baktı
 "Dur ve sor" kapsamındadır. Soru açıldı (S17), iş beklemesin diye alansız
 çözümle devam edildi. Alan eklenirse bu karar değişir.
 
-### K39 — Dondurulacak değer üretilemiyorsa kayıt reddedilir
+### K39 — Dondurulacak değer üretilemiyorsa kayıt reddedilir — **KISMEN DEĞİŞTİRİLDİ, bkz. K44**
+
+> ⚠️ **2026-08-18 tarihinde değiştirildi.** İkinci gerekçe (indeks
+> hesaplanamıyorsa reddet) kaldırıldı: `perf_index_snapshot` artık null
+> olabiliyor ve ekran kartsız sistemler kaydedilebiliyor. Fiyatı olmayan parça
+> nedeniyle reddetme aynen geçerli.
+
 
 Sistem şu iki durumda **kaydedilmez**:
 
@@ -631,3 +643,83 @@ fiyat ve indeks, `/data` katmanında veritabanından okunarak orada hesaplanır.
 **Gerekçe:** Tarayıcıdan gelen sayıya güvenilseydi, isteği elle düzenleyen biri
 istediği fiyatı ve indeksi kaydedebilirdi. Kaydedilen değer kalıcı ve
 paylaşılabilir olduğu için bu yanlış bilgi başkalarına da gösterilirdi.
+
+---
+
+## 2026-08-18 — Kayıt çözünürlüğü, indekssiz sistem ve canlıya geçiş
+
+Karar veren: proje sahibi (K43, K44); Claude (K45, yetki dahilinde).
+`SCHEMA.md` v1.2 → v1.3.
+
+### K43 — `builds.resolution` eklendi, indeks kullanıcının çözünürlüğünde donar
+
+`builds` tablosuna `resolution` enum'ı eklendi (`1080p`, `1440p`, `2160p`).
+Dondurulan indeks artık sabit bir referansta değil, kullanıcının kaydettiği
+çözünürlükte hesaplanıyor. Kayıtlı sistem sayfası hangi çözünürlük olduğunu
+yazıyor. K38'i değiştirir; S17 kapandı.
+
+**Gerekçe:** Sistem indeksi çözünürlüğe göre değişir. Sabit referans (1440p)
+tek bir sayıyı anlamlı kılıyordu ama kullanıcının gördüğü sayıyla kaydettiği
+sayı farklı olabiliyordu — 4K seçip kaydeden biri linkte başka bir sayı
+görüyordu. Alan eklenince ikisi aynı oldu.
+
+**Alan zorunlu (null olamaz), indeks hesaplanamasa bile yazılır.** Kullanıcının
+o an baktığı çözünürlük, kaydın kendisi hakkında bir olgudur ve her zaman
+bilinir. İki nullable sütunun "ikisi de null ya da ikisi de dolu" diye
+birbirine bağlı olmasındansa, biri her zaman dolu olsun.
+
+**Mevcut kayıtlar `1440p` ile dolduruldu** — eski K38 gereği gerçekten o
+referansla hesaplanmışlardı, yani uydurma bir etiket değil.
+
+### K44 — `perf_index_snapshot` null olabilir, iGPU sistemler kaydedilebilir
+
+`builds.perf_index_snapshot` artık `float?`. Ekran kartsız (iGPU) sistemler
+kaydedilebiliyor; indeks yerine kayıtlı sistem sayfası "performans tahmini için
+ekran kartı gerekiyor" yazıyor. K39'un ikinci gerekçesini kaldırır.
+
+**Gerekçe:** iGPU'lu sistem uyumluluk kurallarına göre **geçerlidir** (C4 ve W4
+bunu açıkça sayar). Geçerli bir sistemin kaydedilememesi hatadır. Alanın zorunlu
+olması, şemanın bir varsayımını (her sistemin indeksi vardır) kullanıcının
+önüne engel olarak koyuyordu.
+
+**Null yazılıyor, 0 değil.** 0 geçerli bir indeks değeridir ve "sistem çok
+yavaş" demektir; hesaplanamayan bir şeyi 0 yazmak sistemi olmadığı kadar yavaş
+gösterirdi — üstelik bu sayı donduğu için sonradan düzeltilemezdi. Null,
+"hesaplanamadı" der ve sayfa sebebini yazar.
+
+**`model_version` yine yazılıyor.** Anlamı biraz genişledi: "o indeksi üreten
+sürüm" değil, "kayıt anındaki motor sürümü". Hangi sürümün indeks üretemediği
+de bilgidir; ileride motor iGPU indeksi üretmeye başlarsa eski kayıtların hangi
+sürümde donduğu bilinir.
+
+**Kural kendi fonksiyonunu aldı.** `engine/performance.ts` içinde
+`freezeSystemIndex()`: hesaplanabiliyorsa sayı, hesaplanamıyorsa `null`.
+Üç satır ama "indeks yoksa ne yazılır" sorusunun cevabı tek yerde duruyor ve
+test ediliyor — `/data` içinde kalsaydı test edilemezdi.
+
+**Fiyat tarafı değişmedi:** fiyatı olmayan parça varsa kayıt hâlâ reddediliyor
+(K39). Fark şu: fiyat her parça için **vardır ya da toplanamaz**; indeks ise
+bazı geçerli sistemler için tanımsızdır.
+
+### K45 — Migration'lar dağıtım hattında çalışır
+
+`vercel.json` build komutu:
+
+```
+npm run dagitim:kontrol && prisma migrate deploy && prisma generate && next build
+```
+
+**Sebep — bulunmuş bir hata:** Hat bu adımı içermiyordu. `workload` migration'ı
+(K35) yalnızca geliştirme veritabanına uygulanmıştı; canlı veritabanı şema
+olarak bir sürüm geride kaldı. Kod `perf_index.workload` sütununu sorguluyor,
+canlıda o sütun yok — yani canlı ana sayfa, dağıtım yapıldığı andan beri
+sorgu hatası veriyor olmalı.
+
+**Neden `dagitim:kontrol`'den sonra:** dev-seed kontrolü geçmeden veritabanına
+şema değişikliği uygulanmamalı. Kontrol dururmuşsa migration da çalışmaz.
+
+**Neden `next build`'den önce:** derleme sırasında sayfa verisi toplanıyor;
+şema eski kalırsa derleme de hatalı veriyle çalışır.
+
+`prisma migrate deploy` yalnızca bekleyen migration'ları uygular, şema
+üretmez ve veri silmez — geriye dönük tehlikeli bir işlem değildir.
