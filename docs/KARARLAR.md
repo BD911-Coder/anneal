@@ -791,3 +791,30 @@ VERCEL_ENV tanımsız    -> yerel çalıştırma, uygular                       
 
 **Önizleme dağıtımlarının kapatılması ayrı bir karardır** — panel ayarı
 gerektiriyor, `SORULAR.md` S18.
+
+---
+
+## 2026-08-19 — Veri kaynağı lisansı
+
+Karar veren: proje sahibi.
+
+### K48 — Kaggle veri setleri kullanılmaz; Wikidata (CC0) serbest
+
+**Kaggle'daki donanım veri setleri kullanılmayacak.** Gerekçe: bunların çoğu
+TechPowerUp gibi sitelerden kazınmış (scrape) ve yeniden dağıtım hakkı belirsiz.
+Veri setinin Kaggle sayfasında "public domain" yazması, kazındığı sitenin
+kullanım şartlarını geçersiz kılmaz. Lisansı belirsiz veriyi canlı bir siteye
+koymak, sonradan kaldırılması gereken bir borçtur.
+
+**Wikidata serbesttir.** Bütün içerik CC0 ile yayımlanır: kaynak gösterme
+zorunluluğu bile yoktur, ticari kullanım dahil serbesttir.
+
+**Bu bir lisans kararıdır, kalite kararı değil.** Wikidata'nın kullanılabilir
+olması, kullanılmaya değer olduğu anlamına gelmiyor — kapsam ve doğruluk ayrı
+bir soru ve ölçüldü: `docs/log/2026-08-19-wikidata-fizibilite.md`. Sonuç, beta
+için birincil kaynak olamayacağı yönünde.
+
+**Kural olarak:** Dışarıdan alınacak her veri kümesinin lisansı, veri koda
+girmeden **önce** kontrol edilir. Kaynağı belirsizse alınmaz. `SCHEMA.md`
+bölüm 1.3'teki `source` ve `source_url` alanları zaten bunu zorunlu kılıyor:
+nereden geldiğini yazamadığın veriyi giremezsin.

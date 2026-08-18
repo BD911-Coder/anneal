@@ -18,6 +18,32 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
+### S19 — Gerçek parça verisi nereden gelecek?
+
+Wikidata ölçüldü ve **elendi**: 153 GPU / 284 CPU kaydı var, satmakta olan
+parçaların çoğu eksik, `recommended_psu_watt` ve `pcie_version` gibi alanlar
+hiç tanımlı değil, uzunluk %4 dolu, ve doğrulanmış yanlış değerler var
+(Core i7-3770'in soketi yanlış yazılmış). Ayrıntı:
+`docs/log/2026-08-19-wikidata-fizibilite.md`
+
+Kaggle veri setleri lisans nedeniyle kapalı (K48).
+
+**Önerim: elle giriş.** Kategori başına 5-10 parça, üretici ürün sayfasından.
+`source = 'manufacturer'`, `source_url` = ürün sayfası, `confidence = 'high'`.
+Beta bitiş ölçütü "10 kişi bir sistem toplayabildi" — bunun için binlerce parça
+gerekmiyor ve az sayıda doğru parça, çok sayıda şüpheli parçadan iyidir.
+
+**Karar gereken:**
+
+1. Elle giriş onaylanıyor mu?
+2. Kaç parçayla başlanacak? (Şu an dev-seed'de 29 sahte parça var; gerçek
+   veriyle aynı kategorileri doldurmak yeterli olabilir.)
+3. Giriş nasıl olacak — CSV içe aktarma (daha önce ertelenmişti) yeniden mi
+   açılsın, yoksa seed script'ine benzer elle yazılmış bir dosya mı?
+
+Wikidata kalıcı olarak elenmedi; veri CC0 ve topluluk düzenliyor, bir yıl
+sonra tekrar bakılabilir. → `docs/KARARLAR.md` K48
+
 ### S18 — Önizleme dağıtımları kapatılsın mı?
 
 Ortam değişkenleri artık sadece Production kapsamında (K46). Sonucu: her dal
