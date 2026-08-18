@@ -18,30 +18,23 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S11 — Veritabanı parolası sohbet geçmişine girdi
-
-Bağlantı adresleri parolayla birlikte yazışmada paylaşıldı. **Depoya sızmadı** —
-`.env.local` yok sayılıyor, push protection etkin, commit geçmişi temiz. Ama
-parolanın kendisi artık sohbet kaydında duruyor.
-
-**Önerim:** Supabase panelinden veritabanı parolasını yenile (Project Settings →
-Database → Reset database password). Parola başka hiçbir yerde kayıtlı değil,
-yenilenince sadece `.env.local` güncellenir — bunu ben yaparım.
-
-**Karar gereken:** yenilensin mi, yoksa mevcut hâliyle mi devam edilsin.
-
----
-
-### S4 — Test koşucusu
-
-`/tests` şu an sadece README. Motor kodu (`compatibility.ts`, `performance.ts`)
-yazılırken bir koşucu gerekecek, muhtemelen `vitest`.
-
-**Durum:** Ertelendi — motor adımında sorulacak.
+Şu an açık soru yok.
 
 ---
 
 ## Kapanmış sorular
+
+### S11 — Veritabanı parolası sohbet geçmişine girdi ✅ 2026-08-18
+
+**Cevap:** Yenilenmeyecek. Parola depoya sızmadı — `.env.local` yok sayılıyor
+(`git check-ignore` ile doğrulandı), commit diff'i tarandı, push protection
+etkin. → `docs/KARARLAR.md` K21
+
+### S4 — Test koşucusu ✅ 2026-08-18
+
+**Cevap:** `vitest` 4.1.10 kuruldu. `vitest.config.mts` testleri `tests/` altıyla
+sınırlıyor, ortam `node` — arayüz bileşeni test edilmediği için tarayıcı ortamı
+kurulmadı. `npm test` ve `npm run test:izle`.
 
 ### S10 — Supabase bağlantı bilgileri ✅ 2026-08-18
 

@@ -233,3 +233,15 @@ Değerler `.env.local` dosyasındadır ve asla commit edilmez.
 bağlantıyı açan nesne oraya aittir. `/lib` ortak yardımcılar içindir ve oradan
 veritabanı açmak, `/engine`'in yanlışlıkla `/lib` üzerinden veritabanına
 ulaşmasına kapı aralardı.
+
+### K21 — Veritabanı parolası yenilenmeyecek
+
+Bağlantı adresleri parolayla birlikte yazışmada paylaşıldı. Parola değiştirilmiyor.
+
+**Gerekçe:** Parola depoya sızmadı. `.env.local` `.gitignore` içinde ve bu
+`git check-ignore` ile doğrulandı; commit diff'i parola desenine karşı tarandı,
+eşleşme çıkmadı; push protection etkin. Risk yalnızca sohbet kaydıyla sınırlı
+kaldığı için yenileme gerek görülmedi.
+
+**Not:** Parola yenilenirse tek yapılacak `.env.local`'i güncellemektir; başka
+hiçbir yerde kayıtlı değildir.
