@@ -1,6 +1,6 @@
 // Anneal — veritabanı şeması
 //
-// Bu dosya SCHEMA.md v1.1'den türetilmiştir. SCHEMA.md tek kaynaktır.
+// Bu dosya SCHEMA.md v1.2'den türetilmiştir. SCHEMA.md tek kaynaktır.
 // Tablo ve alan adları SCHEMA.md ile birebir aynı tutuldu ki satır satır
 // karşılaştırılabilsin. Alan adlarının snake_case olmasının sebebi budur.
 //
@@ -103,6 +103,16 @@ enum BenchmarkSourceType {
   review
   user_submission
   own_test
+}
+
+// Bir ölçümün / indeksin hangi iş yüküne ait olduğu (K35).
+// Beta'da yalnızca `gaming` kullanılır; diğer üçü şemada hazır bekler.
+// Varsayılan değeri bilinçli olarak yok: iş yükü söylenmeden satır yazılamaz.
+enum Workload {
+  gaming
+  ai_inference
+  video_encode
+  productivity
 }
 
 enum ImportStatus {
@@ -371,6 +381,7 @@ model BenchmarkPoint {
   game_id     String
   game        Game    @relation(fields: [game_id], references: [id])
 
+  workload            Workload // beta'da hep 'gaming' (K35)
   resolution          Resolution
   preset              Preset
   upscaling           String?
@@ -395,16 +406,19 @@ model PerfIndex {
   part_id String // sadece gpu ve cpu
   part    Part   @relation(fields: [part_id], references: [id])
 
+  workload      Workload // beta'da hep 'gaming' (K35)
   index_value   Float // 0-100
   model_version String
   computed_at   DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
 
-  // Bir parçanın bir motor sürümünde tek indeksi olur (K14). Yeniden hesap
-  // aynı satırı günceller; "ne zaman hesaplandı" bilgisini computed_at taşır,
-  // bu yüzden updated_at yoktur.
-  @@unique([part_id, model_version])
+  // Bir parçanın, bir iş yükünde, bir motor sürümünde tek indeksi olur (K35;
+  // K14'ün tekillik kısmını değiştirir). Aynı kart oyunda ve AI çıkarımında
+  // farklı skor alabilir; workload kısıtta olmasaydı biri diğerinin üzerine
+  // yazardı. Yeniden hesap aynı satırı günceller; "ne zaman hesaplandı"
+  // bilgisini computed_at taşır, bu yüzden updated_at yoktur.
+  @@unique([part_id, workload, model_version])
   @@map("perf_index")
 }
 

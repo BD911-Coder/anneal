@@ -201,10 +201,23 @@ check("K6 raw_imports.source serbest metin",
   prTypes.get("raw_imports").source === "String",
   String(prTypes.get("raw_imports").source));
 
-// K14 — perf_index
+// K14 — perf_index (tekillik kismi K35'te degistirildi)
 check("K14 perf_index: updated_at yok", !prTables.get("perf_index").includes("updated_at"));
-check("K14 perf_index: (part_id, model_version) unique",
-  /@@unique\(\[part_id,\s*model_version\]\)/.test(prRaw.get("perf_index")));
+check("K35 perf_index: (part_id, workload, model_version) unique",
+  /@@unique\(\[part_id,\s*workload,\s*model_version\]\)/.test(prRaw.get("perf_index")));
+
+// K35 — is yuku alani iki tabloda da var ve varsayilani yok.
+// Varsayilan olsaydi is yukunu soylemeyi unutan kayit sessizce 'gaming' olurdu;
+// alanin var olma sebebi tam olarak bunu engellemek.
+for (const t of ["benchmark_points", "perf_index"]) {
+  check(`K35 ${t}: workload alani var`, prTables.get(t).includes("workload"));
+  check(`K35 ${t}: workload zorunlu (Workload tipi)`,
+    prTypes.get(t).workload === "Workload", String(prTypes.get(t).workload));
+  check(`K35 ${t}: workload varsayilani yok`,
+    !new RegExp(`workload\\s+Workload[^\\n]*@default`).test(prRaw.get(t)));
+}
+check("K35 Workload enum dort degerli",
+  /enum Workload \{[^}]*gaming[^}]*ai_inference[^}]*video_encode[^}]*productivity[^}]*\}/s.test(pr));
 
 // K15 — her indeks SCHEMA.md bolum 11'de tanimli olmali
 console.log("\n--- Indeksler (K15: SCHEMA.md bolum 11'de tanimli olmali) ---");

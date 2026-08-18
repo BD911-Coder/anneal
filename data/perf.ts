@@ -16,7 +16,11 @@ import { visibleParts } from "./visibility";
  */
 export async function getPerfIndexes(modelVersion: string): Promise<Record<string, number>> {
   const rows = await prisma.perfIndex.findMany({
-    where: { model_version: modelVersion, part: visibleParts() },
+    // Beta yalnızca oyun indeksini okur (K35, K36). Bu filtre olmasaydı, ileride
+    // ikinci bir iş yükü eklendiğinde aynı parçanın iki satırı gelir ve sonuncusu
+    // diğerinin üzerine yazılırdı — sessiz ve fark edilmesi zor bir hata.
+    // İkinci iş yükü geldiğinde bu değer parametre olmalı.
+    where: { model_version: modelVersion, workload: "gaming", part: visibleParts() },
     select: { part_id: true, index_value: true },
   });
 

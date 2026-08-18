@@ -18,6 +18,26 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
+### S16 — Oyun dışı ölçümlerde `game_id` ne olacak?
+
+`benchmark_points.workload` eklendi ve dört değeri var, ama tablonun `game_id`
+alanı **zorunlu**. Oyun dışı bir ölçümün (`ai_inference`, `video_encode`,
+`productivity`) oyunu yok.
+
+Beta'da sorun çıkarmıyor: yalnızca `gaming` kullanılıyor ve her satırın oyunu
+var. İş yükü genişletildiğinde ilk çözülecek şey bu.
+
+**Seçenekler:**
+
+1. `game_id` opsiyonel yapılır (`FK?`) — en küçük değişiklik, ama "oyun ölçümünün
+   oyunu olmalı" garantisi veritabanı seviyesinde kaybolur.
+2. Ayrı bir `workload_targets` tablosu açılır: her iş yükünün kendi hedefi olur
+   (oyun, model, kodek profili). Doğru olan bu ama beta'da karşılığı yok.
+3. Oyun dışı ölçümler ayrı bir tabloya yazılır.
+
+Acil değil, karar iş yükü genişletildiğinde verilir.
+→ `docs/KARARLAR.md` K35, K36
+
 ### S15 — Darboğaz göstergesi çözünürlüğü hesaba katmıyor
 
 Motor v0.1'de darboğaz, iki indeksin **ham farkına** bakıyor: fark 15'i geçerse

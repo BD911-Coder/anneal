@@ -161,6 +161,10 @@ Karar veren: proje sahibi (K14, K15, K16); Claude (K17, yetki dahilinde).
 
 ### K14 — `perf_index`: `updated_at` yok, (`part_id`, `model_version`) tekil
 
+> ⚠️ **Tekillik kısmı değiştirildi → K35.** Kısıt artık üç sütunlu:
+> (`part_id`, `workload`, `model_version`). `updated_at`'in bulunmaması ve
+> dörtlü alanın bulunmaması kararları aynen geçerli.
+
 K8'in `updated_at` kısmını değiştirir. Dörtlü alanın bulunmaması kararı aynen geçerli.
 
 **Gerekçe:** Bir parçanın bir motor sürümünde tek indeksi olur; tekillik kısıtı
@@ -477,3 +481,74 @@ tekrar çalışabilir.
 
 **Satıcı adı `manual`.** Sahte fiyata gerçek bir satıcı adı yazmak, veriye
 sahip olmadığımız bir kaynağı ima ederdi.
+
+---
+
+## 2026-08-18 — İş yükü ayrımı (SCHEMA.md v1.1 → v1.2)
+
+Karar veren: proje sahibi (K35, K36, K37). Kod tarafında hiçbir davranış
+değişmedi; bu bölüm ileriye dönük bir şema hazırlığıdır.
+
+### K35 — `workload` alanı: `benchmark_points` ve `perf_index`, tekillik üç sütunlu
+
+İki tabloya `workload` enum'ı eklendi:
+`gaming`, `ai_inference`, `video_encode`, `productivity`.
+
+`perf_index` tekillik kısıtı (`part_id`, `model_version`) → **(`part_id`,
+`workload`, `model_version`)**. K14'ün tekillik kısmını değiştirir.
+
+**Gerekçe:** Bir parçanın tek bir performans gerçeği yoktur. Oyunda güçlü bir
+ekran kartı yapay zekâ çıkarımında vasat, video kodlamada iyi olabilir; bunlar
+aynı sayıya sıkıştırılamayacak ayrı ölçümlerdir. Tekillik iki sütunlu kalsaydı
+ikinci iş yükünün indeksi birincinin üzerine yazılır ve bu sessizce olurdu.
+
+**Neden şimdi, kullanılmayacakken:** Alan sonradan eklenseydi, bugün girilen
+bütün ölçümlerin hangi iş yüküne ait olduğu geriye dönük **tahmin edilmek**
+zorunda kalırdı. Ölçüm verisi elle toplanıyor ve geriye dönük etiketlenemez.
+Boş bir sütunun maliyeti, yanlış etiketlenmiş bir geçmişin maliyetinin yanında
+yok sayılır.
+
+**Varsayılan değer yok.** `workload`'ın veritabanı varsayılanı bilinçli olarak
+tanımlanmadı: varsayılan olsaydı, iş yükünü söylemeyi unutan bir kayıt sessizce
+`gaming` etiketi alırdı. Alanın var olma sebebi tam olarak bunu engellemek.
+
+Mevcut sekiz `perf_index` satırı migration içinde `gaming` olarak dolduruldu —
+bunlar gerçekten oyun indeksleri, uydurma bir etiket değil.
+
+### K36 — Çoklu iş yükü skorları hedefte var, beta kapsamı dışında
+
+Oyun / AI çıkarımı / video kodlama / üretkenlik skorları projenin hedefinde
+var. Beta'da **yalnızca `gaming`** kullanılacak.
+
+**Neden kapsam dışı:** Eksik olan şema değil, veri. Her iş yükü kendi ölçümünü
+gerektirir — bir ekran kartının oyun performansını bilmek, aynı kartın çıkarım
+performansı hakkında hiçbir şey söylemez. Dört iş yükü, dört ayrı ölçüm defteri
+demektir; ölçümler elle toplanıyor ve beta'da bir tanesi bile tamamlanmadı.
+
+**Türetme yolu kapalıdır.** Bu skorlar parçaların spec alanlarından
+hesaplanamaz — bkz. K37.
+
+**Şema hazır, ama tam değil:** `workload ≠ 'gaming'` olan bir ölçüm satırının
+`game_id` alanına ne yazılacağı çözülmedi; bugün zorunlu bir alan ve oyun dışı
+bir ölçümün oyunu yok. İş yükü genişletildiğinde ilk çözülecek şey budur.
+→ `SORULAR.md` S16
+
+### K37 — Spec alanları uyumluluk içindir, performans tahmini için kullanılmaz
+
+Kategori spec tablolarındaki hiçbir alandan performans sayısı türetilmez.
+CUDA çekirdek sayısı, saat hızı, çekirdek/thread sayısı, VRAM miktarı — bunlar
+"hangi parça hangisine takılır" sorusu için tutulur, "bu parça ne kadar hızlı"
+sorusu için değil.
+
+**Gerekçe:** Bu değerler bir mimarinin içinde anlamlıdır, mimariler arasında
+değildir. İki farklı nesilden veya iki farklı üreticiden aynı çekirdek sayısı
+aynı performans demek değildir; aynı saat hızı da öyle. Bu alanlardan FPS veya
+indeks üretmek, kaynağı olmayan bir sayıyı ölçülmüş gibi göstermek olur — ve
+yanlışlığı kullanıcıya hiçbir yerde görünmez.
+
+Performans sayısının tek meşru kaynağı `benchmark_points`'teki gerçek
+ölçümlerdir. Motor da yalnızca `perf_index` üzerinden çalışır; parça
+nesnelerinin spec alanlarını hiç görmez (K22, `engine/performance.ts`).
+
+Bu karar `SCHEMA.md` bölüm 2'ye de not olarak yazıldı — kural, onu ihlal etmeye
+en yakın yerde durmalı.

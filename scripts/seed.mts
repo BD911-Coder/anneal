@@ -380,22 +380,34 @@ if (yeniFiyatlar.length > 0) {
 // Performans indeksi — perf_index
 // ---------------------------------------------------------------------------
 //
-// Bu tablo append-only DEĞİL: (part_id, model_version) tekildir, yeniden hesap
-// aynı satırı günceller (SCHEMA.md bölüm 4).
+// Bu tablo append-only DEĞİL: (part_id, workload, model_version) tekildir,
+// yeniden hesap aynı satırı günceller (SCHEMA.md bölüm 4, K35).
 //
 // perf_index'te `source` sütunu yoktur — motorun kendi hesabıdır, dış dünya
 // hakkında iddia taşımaz. Dolayısıyla bu satırlar 'dev-seed' damgası TAŞIYAMAZ;
 // sahteliklerini bağlı oldukları parçadan alırlar (docs/KARARLAR.md K32).
+//
+// workload beta'da hep 'gaming' (K35). Alanın varsayılanı yok, bu yüzden her
+// satırda açıkça yazılıyor — hangi iş yükünün indeksi olduğu söylenmeden
+// satır yazılamaz.
+const WORKLOAD = "gaming" as const;
 
 for (const [partId, indexValue] of Object.entries(PERF_INDEXES)) {
   const row = {
     part_id: partId,
+    workload: WORKLOAD,
     index_value: indexValue,
     model_version: MODEL_VERSION,
     computed_at: PERF_COMPUTED_AT,
   };
   await prisma.perfIndex.upsert({
-    where: { part_id_model_version: { part_id: partId, model_version: MODEL_VERSION } },
+    where: {
+      part_id_workload_model_version: {
+        part_id: partId,
+        workload: WORKLOAD,
+        model_version: MODEL_VERSION,
+      },
+    },
     create: row,
     update: row,
   });
