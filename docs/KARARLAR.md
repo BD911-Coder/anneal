@@ -333,3 +333,39 @@ yeni bağımlılık gerekmedi.
 canlı ortamda `.env.local` dosyası olmaz, değişkenler platformdan gelir —
 dolayısıyla bayrak da olmaz. "Canlı veritabanı" adresi tahmin etmeye çalışmak
 yerine ortamın kendisini ölçüt yapmak daha az kırılgan.
+
+---
+
+## 2026-08-18 — Geliştirme ve canlı veritabanı ayrımı
+
+Karar veren: proje sahibi (K29).
+
+### K29 — Geliştirme ve canlı ayrı veritabanlarıdır
+
+İki ayrı Supabase projesi:
+
+| Ortam | Nerede tanımlı | dev-seed |
+|---|---|---|
+| Geliştirme | `.env.local` (commit edilmez) | Var, 29 parça |
+| Canlı | Dağıtım platformunun ortam değişkenleri | Yasak |
+
+**Canlı bağlantı bilgileri hiçbir yerel dosyada bulunmaz.** `.env.local`
+yalnızca geliştirme veritabanını gösterir.
+
+**Gerekçe:** Tek veritabanı kullanıldığında dev-seed korumasının 2. ve 3.
+katmanları birbiriyle çelişiyordu. 2. katman (veri erişiminde otomatik filtre)
+satırların *görünmesini* engelliyor, 3. katman (dağıtım öncesi kontrol) ise
+satırların *varlığını* yasaklıyor. Aynı veritabanında hem geliştirme yapıp hem
+dağıtmak, 3. katmanın her dağıtımı durdurması demekti.
+
+Ayrıca canlı adresin geliştirme makinesinde hiç bulunmaması, yanlış veritabanına
+yazma ihtimalini ortadan kaldırıyor — hatırlamaya değil, erişimin yokluğuna
+dayanan bir koruma.
+
+**Yapılan geçiş:** Canlı veritabanındaki 58 dev-seed satırı (29 `parts` +
+29 spec) tek işlemde silindi. Silme öncesi sayıldı, sonrası doğrulandı.
+O veritabanında dev-seed olmayan hiç satır yoktu, gerçek veri kaybı olmadı.
+
+**Not:** Silme işlemi tek seferlik yapıldı, depoya kalıcı bir silme aracı
+eklenmedi. Ayrı veritabanlarıyla böyle bir araca ihtiyaç kalmıyor ve depoda
+duran silme aracı başlı başına bir risk.

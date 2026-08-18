@@ -18,32 +18,19 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S13 — dev-seed verisi ileride canlı olacak veritabanında duruyor 🔴
-
-29 dev-seed parçası Supabase'deki tek veritabanına yazıldı. Aynı veritabanı
-canlıya çıkacaksa **CLAUDE.md'deki dev-seed korumasının 3. katmanı dağıtımı
-durduracak**: "canlı veritabanında tek bir dev-seed satırı varsa dağıtım durur."
-
-2. katman çalışıyor — canlı ortamda satırlar zaten görünmüyor, bunu ölçtük
-(geliştirmede 29 parça, canlıda 0). Ama 3. katman satırların *varlığını*
-sorguluyor, görünürlüğünü değil.
-
-**Üç yol var:**
-
-1. **Ayrı bir Supabase projesi** aç, geliştirme oraya bağlansın. En temizi;
-   dev-seed canlıya hiç dokunmaz.
-2. Dağıtımdan önce dev-seed satırlarını sil. Basit ama her seferinde
-   hatırlanması gerekir.
-3. 3. katmanı gevşet — önerilmez, kural bilerek katı.
-
-**Önerim: 1.** Yeni proje açıp `DATABASE_URL` / `DIRECT_URL` verirsen
-`.env.local`'i güncellerim, migration ve seed'i orada tekrar çalıştırırım.
-
-**Karar gereken:** hangi yol.
+Şu an açık soru yok.
 
 ---
 
 ## Kapanmış sorular
+
+### S13 — dev-seed verisi canlı olacak veritabanında duruyor ✅ 2026-08-18
+
+**Cevap:** Ayrı bir geliştirme veritabanı açıldı (1. seçenek). `.env.local`
+artık yalnızca geliştirmeyi gösteriyor; canlı bağlantı bilgileri hiçbir yerel
+dosyada durmuyor, dağıtım platformunda tutulacak. Canlı veritabanındaki 58
+dev-seed satırı silindi. Dağıtım öncesi kontrol (3. katman) yazıldı:
+`npm run dagitim:kontrol`. → `docs/KARARLAR.md` K29
 
 ### S12 — Kategori başına tek parça varsayımı ✅ 2026-08-18
 

@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "test": "vitest run",
     "test:izle": "vitest",
-    "db:seed": "node scripts/seed.mts"
+    "db:seed": "node scripts/seed.mts",
+    "dagitim:kontrol": "node scripts/check-deploy.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
