@@ -18,7 +18,36 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S16 — Oyun dışı ölçümlerde `game_id` ne olacak?
+### S17 — `builds` tablosuna `resolution` alanı eklensin mi?
+
+Kaydedilen sistemin dondurulmuş indeksi (`builds.perf_index_snapshot`) tek bir
+sayı, ama sistem indeksi çözünürlüğe göre değişiyor. `builds` tablosunda
+çözünürlük sütunu yok, yani dondurulan sayının hangi çözünürlüğe ait olduğu
+şemada yazmıyor.
+
+**Şimdilik nasıl çözüldü:** Dondurulan indeks her zaman **1440p** referansıyla
+hesaplanıyor ve kayıtlı sistem sayfası bunu açıkça yazıyor. Alan eklemek şema
+değişikliği olduğu için sormadan yapılmadı (K38).
+
+**Sonucu:** Kullanıcı 4K seçip sistemi kaydederse, açtığı linkte 1440p indeksini
+görüyor. Sayfa bunu yazıyor ama yine de beklediğinden farklı.
+
+**Seçenekler:**
+
+1. Böyle kalsın — bütün kayıtlar aynı ölçüyle karşılaştırılabilir olur, alan
+   eklemeye gerek kalmaz.
+2. `builds.resolution` eklensin — kullanıcının seçtiği çözünürlük dondurulur,
+   link daha sadık olur. `SCHEMA.md` bölüm 5 ve migration gerekir.
+
+Acil değil; beta böyle çalışabilir. → `docs/KARARLAR.md` K38
+
+### S16 — Oyun dışı ölçümlerde `game_id` ne olacak? ⏸️ ERTELENDİ (2026-08-18)
+
+**Proje sahibinin kararı:** Şimdi karar verilmeyecek. Beta'da tek iş yükü var
+ve `game_id` zorunluluğu **doğru davranıştır** — oyun ölçümünün oyunu olmalı.
+İkinci iş yükü eklendiğinde bakılacak. Soru kapanmadı, ertelendi.
+
+---
 
 `benchmark_points.workload` eklendi ve dört değeri var, ama tablonun `game_id`
 alanı **zorunlu**. Oyun dışı bir ölçümün (`ai_inference`, `video_encode`,

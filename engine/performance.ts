@@ -47,6 +47,17 @@ export const BANDS: { max: number; label: string }[] = [
 /** İki indeks arasındaki bu farktan sonrası darboğaz sayılır. */
 export const BOTTLENECK_THRESHOLD = 15;
 
+/**
+ * Kaydedilen sistemlerin dondurulan indeksi bu çözünürlükte hesaplanır.
+ *
+ * `builds.perf_index_snapshot` tek bir sayıdır ve şemada çözünürlük sütunu
+ * yoktur; dondurulan sayının neyi ifade ettiği sabit bir referansa bağlanmak
+ * zorundaydı. 1440p seçildi: üç seçeneğin ortası ve varsayılan seçim.
+ * Yan fayda: bütün kayıtlı sistemler aynı ölçüyle karşılaştırılabilir olur.
+ * Ayrıntı ve açık soru: docs/KARARLAR.md K38, SORULAR.md S17.
+ */
+export const REFERENCE_RESOLUTION: Resolution = "1440p";
+
 const BOTTLENECK_MESSAGE: Record<Bottleneck, string> = {
   balanced: "Dengeli — işlemci ve ekran kartı birbirine yakın güçte.",
   cpu_limited:
@@ -72,7 +83,7 @@ function clampIndex(value: number): number {
  * demesi (24,96'nın yuvarlanmış hali) kullanıcı için açıklanamaz bir çelişki
  * olurdu. Gösterilen sayı ile bandı seçen sayı aynı olmalı.
  */
-function round1(value: number): number {
+export function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 

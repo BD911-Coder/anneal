@@ -6,8 +6,17 @@ import type { CurrentPrice } from "@/data/prices";
 import type { BuilderCatalog } from "@/data/parts";
 import { checkCompatibility } from "@/engine/compatibility";
 import { computePerformance } from "@/engine/performance";
-import type { BuildInput, Finding, Resolution } from "@/engine/types";
+import { suggestUpgrades } from "@/engine/upgrade";
+import type {
+  BuildInput,
+  Finding,
+  Resolution,
+  UpgradeCategory,
+  UpgradePart,
+} from "@/engine/types";
 import { formatIsoDate, formatPriceMinor } from "@/lib/format";
+
+import { saveBuildAction } from "./actions";
 
 // Motora giden kategoriler. Depolama burada yok: hiçbir uyumluluk kuralı
 // depolamayı kullanmıyor (S12), ama kullanıcı yine de birden fazla disk seçebilir.
@@ -42,6 +51,10 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const [selection, setSelection] = useState<Selection>({});
   const [storageIds, setStorageIds] = useState<string[]>([]);
   const [resolution, setResolution] = useState<Resolution>("1440p");
+  const [budgetText, setBudgetText] = useState("");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Seçilen id'lerden motorun beklediği girdiyi kur.
   const buildInput = useMemo<BuildInput>(() => {
@@ -86,10 +99,47 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
     cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
   });
 
+  // Yükseltme önerisi. Bütçe boşken de çalışır: 0 TL farkla daha iyi bir parça
+  // varsa (aynı fiyata daha güçlü) onu da göstermek doğru.
+  const budgetMinor = parseBudgetToMinor(budgetText);
+  const upgrades = suggestUpgrades({
+    resolution,
+    current: {
+      gpu: toUpgradePart(gpuId, prices, perfIndexes),
+      cpu: toUpgradePart(cpuId, prices, perfIndexes),
+    },
+    budget_delta_minor: budgetMinor,
+    candidates: {
+      gpu: toCandidates(catalog.gpu, prices, perfIndexes),
+      cpu: toCandidates(catalog.cpu, prices, perfIndexes),
+    },
+  });
+
+  /** Seçim değiştiğinde paylaşım linki artık o sistemi göstermiyor. */
+  function forgetShareLink() {
+    setShareUrl(null);
+    setSaveError(null);
+  }
+
   function toggleStorage(id: string) {
+    forgetShareLink();
     setStorageIds((current) =>
       current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
     );
+  }
+
+  async function save() {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+
+    const result = await saveBuildAction(selectedPartIds);
+    if (result.ok) {
+      setShareUrl(`${window.location.origin}/sistem/${result.id}`);
+    } else {
+      setSaveError(result.message);
+    }
+    setSaving(false);
   }
 
   /** Bir parçanın indeksi neden yok: seçilmedi mi, verisi mi yok? */
@@ -98,6 +148,11 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
     const ad = kind === "gpu" ? "Ekran kartı" : "İşlemci";
     if (!id) return `${ad} seçilmedi.`;
     return `${ad} için performans verisi yok.`;
+  }
+
+  /** Öneride görünen parça adı — motor id döndürüyor, adı katalog biliyor. */
+  function labelOf(category: UpgradeCategory, id: string): string {
+    return catalog[category].find((item) => item.id === id)?.label ?? id;
   }
 
   return (
@@ -113,12 +168,13 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
               <select
                 className="rounded border px-2 py-1"
                 value={selection[category] ?? ""}
-                onChange={(event) =>
+                onChange={(event) => {
+                  forgetShareLink();
                   setSelection((current) => ({
                     ...current,
                     [category]: event.target.value || undefined,
-                  }))
-                }
+                  }));
+                }}
               >
                 <option value="">— seçilmedi —</option>
                 {catalog[category].map((item) => (
@@ -239,6 +295,68 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
           )}
         </div>
 
+        {/* Yükseltme önerisi */}
+        <div>
+          <h2 className="mb-3 text-lg font-semibold">Yükseltme önerisi</h2>
+
+          <label className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="opacity-70">Bütçe farkı:</span>
+            <span>+</span>
+            <input
+              className="w-28 rounded border px-2 py-1"
+              inputMode="numeric"
+              placeholder="2000"
+              value={budgetText}
+              onChange={(event) => setBudgetText(event.target.value)}
+            />
+            <span className="opacity-70">TL</span>
+          </label>
+
+          <div className="mt-3 text-sm">
+            {!performance.ok ? (
+              <p className="opacity-70">
+                Öneri için önce işlemci ve ekran kartı seçilmeli — artışın neye göre
+                ölçüleceği belli olmuyor.
+              </p>
+            ) : upgrades.length === 0 ? (
+              <p className="opacity-70">
+                {budgetMinor === 0
+                  ? "Bütçe farkı girin, bu parayla ne alınabileceğini arayalım."
+                  : "Bu bütçeyle indeksi artıran bir değişiklik bulunamadı."}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {upgrades.map((upgrade, index) => (
+                  <li
+                    key={upgrade.category}
+                    className={`border-l-4 pl-3 ${
+                      index === 0 ? "border-green-600" : "border-neutral-300"
+                    }`}
+                  >
+                    <div>
+                      <span className="opacity-60">
+                        {CATEGORY_LABEL[upgrade.category as EngineCategory]}:
+                      </span>{" "}
+                      {labelOf(upgrade.category, upgrade.current_part_id)}{" "}
+                      <span className="opacity-60">→</span>{" "}
+                      <span className="font-medium">
+                        {labelOf(upgrade.category, upgrade.suggested_part_id)}
+                      </span>
+                    </div>
+                    <div className="text-xs opacity-70">
+                      Fark: {upgrade.price_delta_minor >= 0 ? "+" : ""}
+                      {formatPriceMinor(upgrade.price_delta_minor)} · İndeks{" "}
+                      {upgrade.index_before} → {upgrade.index_after} (+{upgrade.index_delta}){" "}
+                      <span className="opacity-80">tahmini</span>
+                      {index === 0 && upgrades.length > 1 && " · en çok kazandıran"}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
         {/* Seçilen sistem */}
         <div>
           <h2 className="mb-3 text-lg font-semibold">Seçilen sistem</h2>
@@ -265,6 +383,41 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
               ))}
             </ul>
           )}
+        </div>
+
+        {/* Paylaşılabilir link */}
+        <div>
+          <h2 className="mb-3 text-lg font-semibold">Kaydet ve paylaş</h2>
+
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving || secilenSayisi === 0}
+            className="rounded border px-3 py-1 text-sm disabled:opacity-40"
+          >
+            {saving ? "Kaydediliyor…" : "Sistemi kaydet"}
+          </button>
+
+          <p className="mt-2 text-xs opacity-60">
+            Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan değişmez.
+          </p>
+
+          {shareUrl && (
+            <div className="mt-3 text-sm">
+              <p className="mb-1 opacity-70">Bu adres sistemi açar:</p>
+              <input
+                readOnly
+                value={shareUrl}
+                onFocus={(event) => event.currentTarget.select()}
+                className="w-full rounded border px-2 py-1 font-mono text-xs"
+              />
+              <a className="mt-1 inline-block underline" href={shareUrl}>
+                Kaydedilen sistemi aç →
+              </a>
+            </div>
+          )}
+
+          {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
         </div>
 
         {/* Uyumluluk */}
@@ -299,7 +452,45 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   );
 }
 
-/** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */
+/**
+ * "2000" -> 200000 kuruş.
+ *
+ * Sadece rakamlar okunuyor: kullanıcı "2.000" veya "2000 TL" yazsa da aynı
+ * sonucu vermeli. Kuruş girilmesi beklenmiyor, bütçe farkı tam TL.
+ */
+function parseBudgetToMinor(text: string): number {
+  const digits = text.replace(/\D/g, "");
+  if (digits.length === 0) return 0;
+  return Number(digits) * 100;
+}
+
+/** Seçili parçayı motorun aday tipine çevirir. Fiyatı yoksa hesap yapılamaz. */
+function toUpgradePart(
+  id: string | undefined,
+  prices: Record<string, CurrentPrice>,
+  perfIndexes: Record<string, number>,
+): UpgradePart | undefined {
+  if (!id) return undefined;
+  const price = prices[id];
+  if (!price) return undefined;
+  return { id, price_minor: price.price_minor, perf_index: perfIndexes[id] };
+}
+
+/** Katalog listesini aday listesine çevirir; fiyatı olmayanlar elenir. */
+function toCandidates(
+  items: { id: string }[],
+  prices: Record<string, CurrentPrice>,
+  perfIndexes: Record<string, number>,
+): UpgradePart[] {
+  return items
+    .filter((item) => prices[item.id])
+    .map((item) => ({
+      id: item.id,
+      price_minor: prices[item.id].price_minor,
+      perf_index: perfIndexes[item.id],
+    }));
+}
+
 /**
  * Seçilen parçaların fiyat özeti.
  *
@@ -327,6 +518,7 @@ function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>)
   return { totalMinor, currency, latestIso, missing };
 }
 
+/** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */
 function PriceTag({ price }: { price?: CurrentPrice }) {
   if (!price) return <span className="opacity-40"> — fiyat yok</span>;
   return (

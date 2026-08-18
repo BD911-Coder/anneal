@@ -552,3 +552,82 @@ nesnelerinin spec alanlarını hiç görmez (K22, `engine/performance.ts`).
 
 Bu karar `SCHEMA.md` bölüm 2'ye de not olarak yazıldı — kural, onu ihlal etmeye
 en yakın yerde durmalı.
+
+---
+
+## 2026-08-18 — Beta'nın kalan üç özelliği
+
+Karar veren: Claude, "Karar yetkisi" bölümündeki yetki dahilinde. K38 bir
+şema sorusuna dokunuyor; alan **eklenmedi**, soru `SORULAR.md` S17'de açıldı.
+
+### K38 — Dondurulan indeks 1440p referansıyla hesaplanır
+
+`builds.perf_index_snapshot` tek bir `float`. Ama sistem indeksi çözünürlüğe
+göre değişiyor (bölüm 8) ve `builds` tablosunda çözünürlük sütunu **yok** —
+dondurulan sayının hangi çözünürlüğe ait olduğu şemada yazmıyor.
+
+Karar: dondurulan indeks her zaman **1440p** referansıyla hesaplanır. Sabit
+`engine/performance.ts` içinde (`REFERENCE_RESOLUTION`), kayıtlı sistem sayfası
+da bunu açıkça yazıyor.
+
+**Gerekçe:** Üç seçenekten ortadaki ve arayüzün varsayılanı. Tek bir sayı
+saklanacaksa neyi ifade ettiği sabit olmak zorunda; kullanıcının o an baktığı
+çözünürlüğe göre değişseydi iki kayıt birbiriyle karşılaştırılamazdı.
+
+**Alan eklenmedi.** `builds`'e `resolution` eklemek şema değişikliğidir ve
+"Dur ve sor" kapsamındadır. Soru açıldı (S17), iş beklemesin diye alansız
+çözümle devam edildi. Alan eklenirse bu karar değişir.
+
+### K39 — Dondurulacak değer üretilemiyorsa kayıt reddedilir
+
+Sistem şu iki durumda **kaydedilmez**:
+
+1. Seçili parçalardan birinin fiyatı yok → toplam dürüst olmaz.
+2. İşlemci veya ekran kartı yok → sistem indeksi hesaplanamaz.
+
+**Gerekçe:** `builds.total_price_minor` ve `perf_index_snapshot` zorunlu
+alanlar; şema, kaydedilmiş her sistemin dondurulmuş bir fiyatı ve indeksi
+olduğunu söylüyor. Eksik fiyata 0 demek toplamı olduğundan ucuz gösterirdi ve
+bu sayı donduğu için sonradan düzeltilemezdi — paylaşılan link kalıcı olarak
+yanlış bilgi taşırdı. Hata mesajı kullanıcıya sebebini söylüyor.
+
+**Bilinen sınır:** iGPU'lu sistemler (ekran kartsız) uyumluluk kurallarına göre
+geçerlidir ama şu an kaydedilemez, çünkü indeksleri hesaplanamıyor. Motor
+iGPU indeksi üretmeye başladığında bu kısıt kendiliğinden kalkar.
+
+### K40 — Yükseltme taraması sadece ekran kartı ve işlemciyi kapsar
+
+`SCHEMA.md` bölüm 8 "her kategori için alternatifler taranır" diyor. Uygulamada
+yalnızca `gpu` ve `cpu` taranıyor.
+
+**Gerekçe:** Sistem indeksi formülü sadece bu iki parçayı kullanıyor. Bellek
+veya kasa yükseltmesi indeksi hiç değiştirmez; taransalardı hepsi "0 artış"
+ile elenirdi, yani tarama sonucu değiştirmeden süre harcardı. Daha spesifik
+olan kural (indeks formülü) daha genel ifadeyi belirliyor.
+
+Formül genişlerse (`UPGRADE_CATEGORIES` listesi) tarama da genişler.
+
+**Seçim kuralı:** İndeks artışı en yüksek olan kazanır; eşitlikte **ucuz olan**
+kazanır. İkinci kural olmasaydı sonuç aday listesinin sırasına bağlı kalırdı.
+
+### K41 — Paylaşım kimliği: altı karakter, karışmayan alfabe
+
+`builds.id` altı karakter, `abcdefghkmnpqrstuvwxyz23456789` alfabesinden.
+Çakışırsa beş kez yeniden denenir.
+
+**Gerekçe:** Birbirine karışan karakterler (`0`/`o`, `1`/`l`/`i`, `j`) alfabeden
+çıkarıldı — link telefonda elle yazılabilmeli. 30 karakter, 6 hane ≈ 729 milyon
+ihtimal; beta ölçeğinde çakışma pratikte imkânsız, yine de veritabanı kısıtı
+yakalarsa yeniden deneniyor.
+
+Rastgelelik `crypto.getRandomValues` ile üretiliyor ve modulo sapması reddetme
+yöntemiyle giderildi: 256, 30'a tam bölünmediği için artan aralık atılıyor.
+
+### K42 — Kaydedilen değerler tarayıcıdan gelmez, sunucuda yeniden hesaplanır
+
+Sunucu işlemi (`saveBuildAction`) yalnızca **parça id'lerini** alır. Toplam
+fiyat ve indeks, `/data` katmanında veritabanından okunarak orada hesaplanır.
+
+**Gerekçe:** Tarayıcıdan gelen sayıya güvenilseydi, isteği elle düzenleyen biri
+istediği fiyatı ve indeksi kaydedebilirdi. Kaydedilen değer kalıcı ve
+paylaşılabilir olduğu için bu yanlış bilgi başkalarına da gösterilirdi.

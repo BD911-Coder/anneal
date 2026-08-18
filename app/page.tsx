@@ -4,6 +4,7 @@ import { getCurrentPrices } from "@/data/prices";
 import { MODEL_VERSION } from "@/engine/performance";
 
 import { Builder } from "./builder";
+import { FeedbackForm } from "./feedback-form";
 
 // Katalog her istekte veritabanından okunur. Beta'da önbellek yok:
 // veri değiştiğinde sayfanın eskimiş kalması, hız kazancından daha kötü.
@@ -31,6 +32,10 @@ export default async function HomePage() {
       </header>
 
       <Builder catalog={catalog} prices={prices} perfIndexes={perfIndexes} />
+
+      <section className="rounded border p-4">
+        <FeedbackForm />
+      </section>
     </main>
   );
 }

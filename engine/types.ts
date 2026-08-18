@@ -117,3 +117,38 @@ export type PerformanceUnavailable = {
 };
 
 export type PerformanceOutcome = PerformanceResult | PerformanceUnavailable;
+
+// ---------------------------------------------------------------------------
+// Yükseltme önerisi — SCHEMA.md bölüm 8
+// ---------------------------------------------------------------------------
+
+// Sadece gpu ve cpu: sistem indeksi formülü yalnızca bu ikisini kullanıyor,
+// başka bir kategoriyi yükseltmek indeksi hiç değiştirmez (K40).
+export type UpgradeCategory = "gpu" | "cpu";
+
+// Motorun bir parça hakkında bilmesi gereken her şey. Katalog, marka/model gibi
+// alanlar burada yok: motor onları kullanmıyor, arayüz id ile eşleştiriyor.
+export type UpgradePart = {
+  id: string;
+  price_minor: number; // kuruş
+  perf_index?: number; // 0-100. Yoksa parça aday olamaz.
+};
+
+export type UpgradeInput = {
+  resolution: Resolution;
+  // Mevcut sistemin yükseltmeye açık iki parçası.
+  current: Partial<Record<UpgradeCategory, UpgradePart>>;
+  // Bütçe farkı, kuruş. `+2000 TL` -> 200000.
+  budget_delta_minor: number;
+  candidates: Record<UpgradeCategory, UpgradePart[]>;
+};
+
+export type UpgradeSuggestion = {
+  category: UpgradeCategory;
+  current_part_id: string;
+  suggested_part_id: string;
+  price_delta_minor: number; // ek maliyet, kuruş
+  index_before: number;
+  index_after: number;
+  index_delta: number;
+};
