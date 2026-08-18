@@ -985,3 +985,35 @@ beklemez. `shader_units` × `boost_clock_mhz` yeterli sayılır.
 sayfanın üçünde de yok. Verilen tek şey bellek arayüz genişliği (bit); bellek
 hızı da yazılmadığı için bant genişliği hesaplanamıyor, hesaplamak uydurma
 olurdu. Modeli bulunamayan bir girdiye bağlamak, modeli kullanılamaz yapardı.
+
+### K56 — `pcie_version` ve `recommended_psu_watt` opsiyonel + zorunluluk ölçütü
+
+Migration: `20260818224819_gpu_pcie_ve_psu_opsiyonel`.
+
+**Gerekçe:** Şema tek üreticinin sayfa yapısına göre kurulmuştu. NVIDIA PCIe
+sürümü veriyor, AMD vermiyor; AMD bant genişliği veriyor, NVIDIA vermiyor.
+Kaynağa göre değişen bir şeye "zorunlu" denemez.
+
+**Genel kural — zorunluluk ölçütü:**
+
+> Bir alan ancak bir uyumluluk kuralı ya da arayüz tarafından kullanılıyorsa
+> zorunlu olabilir.
+
+Bu iki alan hiçbir yerde kullanılmıyordu:
+
+```
+$ grep -rn "pcie_version\|recommended_psu_watt" engine/ data/to-engine.ts app/
+  (çıktı yok)
+```
+
+On bir uyumluluk kuralının hiçbiri bu alanlara bakmıyor. C4 gerekli gücü
+işlemci ve kartın TDP'sinden hesaplıyor, `recommended_psu_watt`'ı kullanmıyor.
+`EngineGpu` tipinde ikisi de yok. Zorunlulukları hiçbir şeyi korumuyordu;
+yalnızca 23 gerçek AMD kartını dışarıda bırakıyordu.
+
+Kural `CLAUDE.md` "Kalite" bölümüne de yazıldı: yeni bir zorunlu alan
+önerilirken "hangi kural bunu kullanıyor" sorusu cevaplanmak zorunda.
+
+`npm run sema:kontrol` bu kuralı denetliyor: zorunlu bir spec alanı `engine/`
+ya da `app/` içinde hiç geçmiyorsa uyarı basıyor. Uyarı, hata değil —
+kullanılmayan zorunlu alan bir tasarım kokusudur, kırık kod değil.

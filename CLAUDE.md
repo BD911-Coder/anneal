@@ -99,6 +99,13 @@ Bu kural ihlal edilirse söyle, sessizce esnetme.
 - Arayüz bileşenleri için test
 - Erken performans optimizasyonu
 
+**Zorunlu alan ölçütü:** Bir alan ancak bir uyumluluk kuralı ya da arayüz
+tarafından kullanılıyorsa zorunlu olabilir. Yeni bir zorunlu alan önerirken
+**"hangi kural bunu kullanıyor?"** sorusu cevaplanmak zorundadır; cevap yoksa
+alan opsiyonel olur. Sebebi: zorunluluk, kaynağın o alanı yayınlamasına
+bağımlılık yaratır ve yayınlamayan kaynaktan gelen doğru veriyi dışarıda
+bırakır. `npm run sema:kontrol` bunu denetler. Bkz. `docs/KARARLAR.md` K56.
+
 **İndeks istisnası:** Belgelenmiş sorgu yolları üzerindeki indeksler erken
 optimizasyon sayılmaz, ancak `SCHEMA.md`'de tanımlı olmak zorundadır.
 `SCHEMA.md` bölüm 11'de yazmayan indeks şemaya girmez.

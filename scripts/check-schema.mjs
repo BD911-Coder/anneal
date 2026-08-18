@@ -298,6 +298,45 @@ for (const dir of disariKatmanlar) {
 }
 check("K25 data/client disaridan ice aktarilmiyor", ihlalEdenler.length === 0, ihlalEdenler.join(", "));
 
+// K56 — zorunlu alan olcutu: bir alan ancak bir uyumluluk kurali ya da arayuz
+// tarafindan kullaniliyorsa zorunlu olabilir.
+//
+// Bu bir UYARI'dir, hata degil: kullanilmayan zorunlu alan bir tasarim
+// kokusudur, kirik kod degil. Cikis kodunu etkilemez.
+//
+// Kapsam: yedi kategori spec tablosu. Kimlik ve koken alanlari (part_id,
+// source, collected_at...) haric — onlar kural icin degil kayit icin var.
+console.log("\n--- Zorunlu alan kullanimi (K56) ---");
+const KOKEN = ["part_id", "id", "source", "source_url", "confidence",
+               "collected_at", "created_at", "updated_at"];
+const kullanimKaynagi = [...walk("engine"), ...walk("app")]
+  .map((f) => readFileSync(f, "utf8"))
+  .join("\n");
+
+const kullanilmayan = [];
+for (const table of SPEC) {
+  const body = prRaw.get(table) ?? "";
+  for (const line of body.split("\n")) {
+    const m = line.match(/^\s{2,}(\w+)\s+(\w+)(\?|\[\])?/);
+    if (!m || line.trim().startsWith("//") || line.trim().startsWith("@@")) continue;
+    const [, fname, , suffix = ""] = m;
+    // prTables yalnizca gercek sutunlari tutar; iliski alanlari (part) disarida.
+    if (!(prTables.get(table) ?? []).includes(fname)) continue;
+    if (suffix === "?" || KOKEN.includes(fname)) continue; // opsiyonel ya da koken
+    if (!new RegExp(`\\b${fname}\\b`).test(kullanimKaynagi)) {
+      kullanilmayan.push(`${table}.${fname}`);
+    }
+  }
+}
+if (kullanilmayan.length === 0) {
+  console.log("  [OK  ] her zorunlu spec alani engine/ ya da app/ icinde kullaniliyor");
+} else {
+  console.log(`  [UYARI] ${kullanilmayan.length} zorunlu alan hicbir kural ya da arayuzde kullanilmiyor:`);
+  for (const alan of kullanilmayan) console.log(`          ${alan}`);
+  console.log("          K56: kullanilmayan alan zorunlu olmamali. Opsiyonel yapilmasi");
+  console.log("          dusunulmeli — zorunluluk, kaynagin o alani yayinlamasina bagimlilik yaratir.");
+}
+
 // ---------------------------------------------------------------------------
 console.log("");
 if (problems.length > 0) {

@@ -133,13 +133,21 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `vram_type` | text (`GDDR6`, `GDDR7`) |
 | `tdp_watt` | int |
 | `length_mm` | int? |
-| `recommended_psu_watt` | int |
-| `pcie_version` | text |
+| `recommended_psu_watt` | int? |
+| `pcie_version` | text? |
 | `shader_units` | int? |
 | `boost_clock_mhz` | int? |
 | `memory_bandwidth_gbs` | float? |
 
-`length_mm` **opsiyoneldir** (K52). Bilinmeyen uzunluk, uzunluğu olmayan kart
+`length_mm`, `recommended_psu_watt` ve `pcie_version` **opsiyoneldir**
+(K52, K56). Hangi alanı hangi üreticinin yayınladığı kaynağa göre değişiyor:
+NVIDIA PCIe sürümü veriyor, AMD vermiyor; AMD bant genişliği veriyor, NVIDIA
+vermiyor. Kaynağa göre değişen bir şeye "zorunlu" denemez.
+
+**Zorunluluk ölçütü (K56):** Bir alan ancak bir uyumluluk kuralı ya da arayüz
+tarafından kullanılıyorsa zorunlu olabilir.
+
+`length_mm` hakkında (K52): Bilinmeyen uzunluk, uzunluğu olmayan kart
 demek değildir; üreticiler yalnızca kendi referans kartlarının ölçüsünü verir.
 Boşsa C5 kuralı atlanır ve **arayüz bunu kullanıcıya söyler** — sessizce
 atlanmaz.

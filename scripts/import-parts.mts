@@ -39,8 +39,9 @@ const CSV_DIR = "data/parts";
 // aktarilmaz — uydurma deger yazmak yerine parcayi degistirmek gerekir.
 const REQUIRED_SPEC: Record<string, string[]> = {
   cpu: ["socket", "cores", "threads", "base_clock_mhz", "boost_clock_mhz", "tdp_watt", "memory_type", "has_igpu"],
-  // length_mm burada YOK: K52 ile opsiyonel oldu.
-  gpu: ["chipset", "vram_gb", "vram_type", "tdp_watt", "recommended_psu_watt", "pcie_version"],
+  // length_mm, recommended_psu_watt, pcie_version burada YOK: K52 ve K56
+  // ile opsiyonel oldular.
+  gpu: ["chipset", "vram_gb", "vram_type", "tdp_watt"],
 };
 
 // parts tablosunda zorunlu olanlar (release_year opsiyonel).
@@ -228,12 +229,6 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
         ...provenance,
       };
 
-      await prisma.part.upsert({
-        where: { id: row.id },
-        create: { id: row.id, ...partData },
-        update: partData,
-      });
-
       const degisen = new Set<string>();
       if (mevcut) for (const f of changedFields(mevcut, partData)) degisen.add(f);
 
@@ -256,10 +251,20 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
           has_igpu: boolOrNull(row.has_igpu, "has_igpu")!,
           ...provenance,
         };
-        await prisma.cpuSpecs.upsert({
-          where: { part_id: row.id },
-          create: { part_id: row.id, ...specData },
-          update: specData,
+        // parts ve spec satiri TEK islemde yazilir: spec yazimi patlarsa
+        // spec'siz bir parts satiri kalmasin. Bu bir kez gerceklesti ve
+        // 22 yetim satir birakti.
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({
+            where: { id: row.id },
+            create: { id: row.id, ...partData },
+            update: partData,
+          });
+          await tx.cpuSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
         });
         if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
       } else {
@@ -273,18 +278,25 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
           tdp_watt: intOrNull(row.tdp_watt, "tdp_watt")!,
           // K52: bos olabilir, zorunlu degil.
           length_mm: intOrNull(row.length_mm, "length_mm"),
-          recommended_psu_watt: intOrNull(row.recommended_psu_watt, "recommended_psu_watt")!,
-          pcie_version: row.pcie_version,
+          recommended_psu_watt: intOrNull(row.recommended_psu_watt, "recommended_psu_watt"),
+          pcie_version: row.pcie_version || null,
           // K51: olcekleme alanlari, hepsi opsiyonel.
           shader_units: intOrNull(row.shader_units ?? "", "shader_units"),
           boost_clock_mhz: intOrNull(row.boost_clock_mhz ?? "", "boost_clock_mhz"),
           memory_bandwidth_gbs: floatOrNull(row.memory_bandwidth_gbs ?? "", "memory_bandwidth_gbs"),
           ...provenance,
         };
-        await prisma.gpuSpecs.upsert({
-          where: { part_id: row.id },
-          create: { part_id: row.id, ...specData },
-          update: specData,
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({
+            where: { id: row.id },
+            create: { id: row.id, ...partData },
+            update: partData,
+          });
+          await tx.gpuSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
         });
         if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
       }

@@ -18,56 +18,40 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S21 — `pcie_version` ve `recommended_psu_watt` zorunlu, ama AMD sayfalarında yok 🔴 AKIŞI ENGELLİYOR
+### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
-`data/parts/gpu-amd.csv` yazıldı (23 satır) ama **hiçbiri içe aktarılamıyor**:
-
-```
-[HATA ] amd-rx-9070-xt — zorunlu alan bos: pcie_version
-[HATA ] amd-rx-7900-gre — zorunlu alan bos: recommended_psu_watt, pcie_version
-... 23 satırın 23'ü
-```
-
-**Ölçülen durum:**
-
-| Alan | NVIDIA sayfaları | AMD sayfaları |
-|---|---|---|
-| `pcie_version` | 30/30 var | **0/23 var** |
-| `recommended_psu_watt` | 30/30 var | 22/23 var (7900 GRE'de yok) |
-
-AMD ürün sayfalarında "PCI Express" ifadesi hiç geçmiyor — eski ve yeni şablonun
-ikisinde de yok. 9000 serisi sayfaları "Minimum PSU Recommendation" veriyor,
-7900 GRE'nin eski şablonu vermiyor.
-
-**Önemli bulgu: bu iki alanı hiçbir yer kullanmıyor.**
+K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
 
 ```
-$ grep -rn "pcie_version\|recommended_psu_watt" engine/ data/to-engine.ts app/
-  (çıktı yok)
+gpu_specs.chipset, vram_gb, vram_type
+cpu_specs.cores, threads, base_clock_mhz, boost_clock_mhz
+motherboard_specs.chipset, m2_slots
+ram_specs.cas_latency
+psu_specs.efficiency_rating, modularity
+storage_specs.interface
+case_specs.max_cpu_cooler_height_mm
 ```
 
-On bir uyumluluk kuralının hiçbiri bu alanlara bakmıyor. C4 gerekli gücü
-işlemci ve kartın TDP'sinden **hesaplıyor**, `recommended_psu_watt`'ı
-kullanmıyor. `EngineGpu` tipinde ikisi de yok. Arayüzde de gösterilmiyorlar.
-Yani şu an bu iki alan yalnızca veritabanında duruyor.
+Bunların hepsi şu an **zorunlu**. K56'nın ölçütüne göre olmamaları gerekir:
+hiçbir uyumluluk kuralı ve hiçbir arayüz bu alanlara bakmıyor.
 
-**Seçenekler:**
+`pcie_version`'ın AMD kartlarını nasıl dışarıda bıraktığını gördük. Aynı şey
+bu 14 alan için de olabilir: bir üretici `cas_latency` ya da `m2_slots`
+yayınlamıyorsa o parça hiç içeri giremez — oysa hiçbir kuralı etkilemiyor.
 
-1. **İkisini de opsiyonel yap.** K52'nin aynı gerekçesi: bilinmeyen değer,
-   olmayan değer demek değil. Zorunluluk motoru korumuyor — hiçbir kural bu
-   alanlara bakmıyor — sadece 23 gerçek kartı dışarıda bırakıyor.
-2. Sadece `pcie_version`'ı opsiyonel yap. 22 AMD satırı geçer, 7900 GRE
-   yine takılır.
-3. AMD'yi kapsam dışı bırak.
-4. Başka bir resmi AMD kaynağı ara. Denendi: ürün sayfaları, `amd.com/en/product/<id>`
-   (boş dönüyor). AMD'nin genel karşılaştırma tablosu var ama o "genel liste
-   sayfası" ve K53 gereği kabul edilmiyor.
+**Ama hepsi aynı değil:**
 
-**Önerim: 1.** Gerekçe K52 ile birebir aynı ve burada daha güçlü: `length_mm`
-en azından C5 tarafından kullanılıyordu; bu iki alan hiçbir kural tarafından
-kullanılmıyor. Zorunlu tutmanın hiçbir teknik karşılığı yok.
+- `vram_gb`, `vram_type`, `chipset` — kullanıcı kart seçerken görmek isteyeceği
+  şeyler. Arayüzde **henüz** gösterilmiyor, ama gösterilmesi planlanıyorsa
+  zorunlu kalmaları savunulabilir.
+- `cas_latency`, `m2_slots`, `efficiency_rating`, `modularity` — ne kuralda ne
+  arayüzde; ileride kural gelebilir (`m2_slots` için depolama kuralı doğal aday).
+- `max_cpu_cooler_height_mm` — kasa uyumluluğunun eksik ayağı; soğutucu
+  kategorisi beta kapsamında değil.
 
-Bu bir `SCHEMA.md` değişikliği olduğu için kendi başıma yapmadım.
+**Karar gereken:** Hepsi opsiyonel mi olsun, bir kısmı mı, yoksa "arayüzde
+gösterilecek" diye bırakılsın mı? Acil değil — şu an hiçbir veri girişini
+engellemiyor, çünkü elle girilen CSV'lerde bu alanlar dolu geliyor.
 
 ### S18 — Önizleme dağıtımları kapatılsın mı?
 
@@ -157,6 +141,13 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S21 — `pcie_version` ve `recommended_psu_watt` zorunlu ✅ 2026-08-19
+
+**Cevap:** İkisi de opsiyonel oldu. Genel kural kondu: bir alan ancak bir
+uyumluluk kuralı ya da arayüz tarafından kullanılıyorsa zorunlu olabilir.
+Kural `CLAUDE.md` "Kalite" bölümüne ve `docs/KARARLAR.md` K56'ya yazıldı;
+`npm run sema:kontrol` denetliyor. 23 AMD kartı içeri alındı.
 
 ### S20 — Aynı slug ikinci kez geldiğinde ne olacak? ✅ 2026-08-19
 

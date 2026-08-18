@@ -176,8 +176,10 @@ model GpuSpecs {
   // Opsiyonel (K52): ureticiler yalnizca kendi referans kartlarinin olcusunu
   // verir. Bilinmeyen uzunluk, uzunlugu olmayan kart demek degil.
   length_mm            Int?
-  recommended_psu_watt Int
-  pcie_version         String
+  // Opsiyonel (K56): AMD urun sayfalari bu ikisini yayinlamiyor. Hicbir
+  // uyumluluk kurali ve arayuz bu alanlari kullanmiyor.
+  recommended_psu_watt Int?
+  pcie_version         String?
 
   // Nesiller arasi degil, ayni mimari icinde goreli olcekleme icin (K51).
   // Opsiyonel: ureticinin her sayfasinda bulunmuyor.
