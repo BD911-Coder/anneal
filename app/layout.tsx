@@ -15,6 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Anneal",
   description: "PC toplama ve performans tahmini",
+
+  // Beta bitene kadar arama motorlarına kapalı (K30).
+  // robots.txt tarama isteğini engeller, bu meta etiketi ise başka bir yerden
+  // link alınıp yine de taranırsa indekslenmeyi engeller. İkisi ayrı iş yapar.
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: { index: false, follow: false },
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

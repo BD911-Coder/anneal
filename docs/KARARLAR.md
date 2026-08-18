@@ -369,3 +369,47 @@ O veritabanında dev-seed olmayan hiç satır yoktu, gerçek veri kaybı olmadı
 **Not:** Silme işlemi tek seferlik yapıldı, depoya kalıcı bir silme aracı
 eklenmedi. Ayrı veritabanlarıyla böyle bir araca ihtiyaç kalmıyor ve depoda
 duran silme aracı başlı başına bir risk.
+
+---
+
+## 2026-08-18 — Dağıtım
+
+Karar veren: proje sahibi (K30); Claude (K31, yetki dahilinde).
+
+### K30 — Site beta bitene kadar arama motorlarına kapalı
+
+İki katman:
+
+- `app/robots.ts` → `/robots.txt`: `User-Agent: *` / `Disallow: /`
+- `app/layout.tsx` metadata → `<meta name="robots" content="noindex, nofollow, nocache">`
+  ve ayrıca `googlebot` için aynısı
+
+**Gerekçe:** Yarım bir site indekslendiğinde, düzeldikten sonra bile bir süre
+eski hâliyle aranır kalır; indeksten çıkmak girmekten çok daha yavaştır.
+
+**İki katman neden:** `robots.txt` taramayı engeller, `noindex` meta etiketi
+ise başka bir yerden link alınıp yine de taranırsa indekslenmeyi engeller.
+Farklı işler yapıyorlar, biri diğerinin yerine geçmiyor.
+
+**Kaldırma zamanı:** Beta bitiş ölçütü sağlandığında (10 kişi yardımsız sistem
+toplayabildiğinde). O zamana kadar bu iki dosya değişmez.
+
+### K31 — Dağıtım öncesi kontrol, Vercel build komutunun ilk adımı
+
+`vercel.json`:
+
+```
+"buildCommand": "npm run dagitim:kontrol && prisma generate && next build"
+```
+
+**Gerekçe:** dev-seed korumasının 3. katmanı yazılı olmakla kalmamalı,
+dağıtım hattında gerçekten çalışmalı. Build komutunun **ilk** adımı olması
+bilinçli: canlı veritabanında dev-seed varsa derleme hiç başlamaz, boşuna
+süre harcanmaz.
+
+`prisma generate` de burada olmak zorunda: üretilen istemci `lib/generated/`
+altında ve `.gitignore` içinde, yani depoda yok — her dağıtımda yeniden
+üretilmesi gerekiyor.
+
+**Kontrol `.env.local` okumadığı için** (K29) Vercel'de `DATABASE_URL` neyse
+ona bakar. Yani canlı dağıtımda canlı veritabanını denetler.

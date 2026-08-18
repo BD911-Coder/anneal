@@ -18,7 +18,29 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-Şu an açık soru yok.
+### S14 — Vercel hesabı ve dağıtım bağlantısı bekleniyor 🔴 ENGELLEYİCİ
+
+Kod tarafı hazır: `vercel.json` build komutu, `robots.txt`, `noindex` meta.
+Yerelde Vercel'in çalıştıracağı komutun birebir simülasyonu geçti.
+
+**Yapılamayan:** Vercel hesabı açmak ve oturum açmak. Hesap oluşturma ve
+kimlik doğrulama benim yapabileceğim işler değil — parola/oturum bilgisi
+girmem gereken adımlar.
+
+**Proje sahibinin yapması gerekenler:**
+
+1. `vercel.com` → GitHub hesabıyla kaydol (ücretsiz Hobby katmanı)
+2. "Add New… → Project" → `BD911-Coder/anneal` deposunu içe aktar
+3. Ortam değişkenlerini **Production** kapsamında tanımla:
+   - `DATABASE_URL` → canlı Supabase, havuzlanmış (port 6543, `?pgbouncer=true`)
+   - `DIRECT_URL` → canlı Supabase, doğrudan (port 5432)
+   - `DEV_SEED_ALLOWED` **tanımlanmayacak** — yokluğu 4. katman korumasıdır
+4. Deploy
+
+**Karar gereken ek nokta:** Canlı veritabanı parolası bir kez sohbet geçmişine
+girmişti (K21'de yenilenmemesine karar verilmişti). Vercel'e girerken
+yenilemek iyi bir fırsat olur — yenilersen yeni parolayı Vercel'e yazarsın,
+başka hiçbir yeri güncellemek gerekmez.
 
 ---
 
