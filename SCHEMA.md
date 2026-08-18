@@ -373,6 +373,10 @@ temel   = cpu.tdp_watt + gpu.tdp_watt + 100
 gerekli = ceil(temel * 1.3)
 ```
 1.3 katsayısı geçici tepe yükler ve verim payı içindir.
+GPU seçilmemişse `gpu.tdp_watt` 0 sayılır — iGPU'lu sistem geçerli bir sistemdir.
+
+W3'ün üst sınırı %15'tir: güç kaynakları tam kapasiteye yakın çalışırken verimi
+düşer ve sesi artar, %10 bu gerçeği yakalamak için dar kalıyordu.
 
 ### Uyarı (engellemez)
 
@@ -380,7 +384,7 @@ gerekli = ceil(temel * 1.3)
 |---|---|
 | W1 | `ram.speed_mhz > motherboard.max_memory_speed_mhz` → RAM düşük hızda çalışır |
 | W2 | `ram.capacity_gb > motherboard.max_memory_gb` |
-| W3 | `psu.wattage` gerekliye çok yakın (%10'dan az pay) |
+| W3 | `psu.wattage` gerekliye çok yakın: `gerekli <= wattage < gerekli * 1.15` |
 | W4 | Sistemde GPU yok ve `cpu.has_igpu === false` |
 | W5 | `psu.length_mm > case.max_psu_length_mm` |
 

@@ -6,7 +6,7 @@
 // Bagimliligi yok, duz Node. Veritabani baglantisi gerektirmez.
 // Hata bulursa 1 ile cikar, boylece dagitim oncesi kontrolde kullanilabilir.
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const md = readFileSync("SCHEMA.md", "utf8");
 const pr = readFileSync("prisma/schema.prisma", "utf8");
@@ -101,6 +101,20 @@ function parsePrisma(text) {
     raw.set(table, body);
   }
   return { tables, types, indexes, raw };
+}
+
+// engine/types.ts icindeki Engine* tiplerinin alanlari
+function parseEngineTypes(text) {
+  const types = new Map();
+  for (const [, name, body] of text.matchAll(/export type (Engine\w+) = \{([\s\S]*?)\n\};/g)) {
+    const fields = [];
+    for (const line of body.split("\n")) {
+      const m = line.match(/^\s+(\w+)\s*\??:/);
+      if (m) fields.push(m[1]);
+    }
+    types.set(name, fields);
+  }
+  return types;
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +212,52 @@ for (const idx of [...prIndexes].sort())
   check(`K15 ${idx} belgelenmis`, documentedIndexes.has(idx));
 for (const idx of [...documentedIndexes].sort())
   check(`K15 ${idx} semada var`, prIndexes.has(idx));
+
+// K22 — engine/types.ts alan adlari SCHEMA.md ile ayrismis mi?
+//
+// Motor tipleri semanin ALT KUMESI: sadece uyumluluk kurallarinin kullandigi
+// alanlar var. Bu yuzden kontrol tek yonlu — motordaki her alan semada olmali,
+// tersi degil. "id" haric: o parts tablosundan gelir.
+console.log("\n--- Motor tipleri (K22: engine/types.ts <-> SCHEMA.md) ---");
+const ENGINE_TABLE = {
+  EngineCpu: "cpu_specs",
+  EngineGpu: "gpu_specs",
+  EngineMotherboard: "motherboard_specs",
+  EngineRam: "ram_specs",
+  EnginePsu: "psu_specs",
+  EngineCase: "case_specs",
+};
+const engineTypes = parseEngineTypes(readFileSync("engine/types.ts", "utf8"));
+for (const [typeName, table] of Object.entries(ENGINE_TABLE)) {
+  const fields = engineTypes.get(typeName);
+  if (!fields) {
+    check(`K22 ${typeName} bulundu`, false, "engine/types.ts icinde yok");
+    continue;
+  }
+  const bilinmeyen = fields.filter((f) => f !== "id" && !(mdTables.get(table) ?? []).includes(f));
+  check(`K22 ${typeName} -> ${table}`, bilinmeyen.length === 0, `semada yok: ${bilinmeyen.join(", ")}`);
+}
+
+// /engine kurali — bu klasordeki hicbir dosya veritabani, ag, dosya sistemi
+// veya React ice aktarmaz. CLAUDE.md bu kuralin sessizce esnetilmemesini istiyor.
+console.log("\n--- /engine saflik kontrolu ---");
+const YASAK = [
+  ["prisma", /from\s+["'][^"']*prisma/],
+  ["react/next", /from\s+["'](react|next)/],
+  ["dosya sistemi / surec", /from\s+["']node:/],
+  ["veritabani surucusu", /from\s+["']pg["']/],
+  ["/data veya /lib", /from\s+["'][^"']*(\/data\/|\/lib\/|@\/data|@\/lib)/],
+  ["fetch cagrisi", /\bfetch\s*\(/],
+];
+const engineFiles = readdirSync("engine").filter((f) => f.endsWith(".ts"));
+for (const file of engineFiles) {
+  const source = readFileSync(`engine/${file}`, "utf8")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+    .join("\n");
+  const ihlaller = YASAK.filter(([, re]) => re.test(source)).map(([ad]) => ad);
+  check(`engine/${file} saf`, ihlaller.length === 0, ihlaller.join(", "));
+}
 
 // ---------------------------------------------------------------------------
 console.log("");

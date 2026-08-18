@@ -18,7 +18,17 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-Şu an açık soru yok.
+### S12 — Uyumluluk kuralları kategori başına tek parça varsayıyor
+
+`BuildInput` her kategoriden en fazla bir parça alıyor. Beta'daki on bir kuralın
+hiçbiri çoklu parça gerektirmiyor, ama **depolamada çoklu disk yaygın** — bir
+sistemde NVMe + HDD sıradan bir kurulum.
+
+`build_items.quantity` şemada zaten var, yani veri tarafı hazır. Değişmesi
+gereken motorun girdi tipi olur.
+
+**Durum:** Ertelendi — arayüz adımında yeniden bakılacak. O aşamada gerçek
+kullanım şekli görülmüş olacak ve tahminle tasarlamak gerekmeyecek.
 
 ---
 

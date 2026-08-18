@@ -245,3 +245,42 @@ kaldığı için yenileme gerek görülmedi.
 
 **Not:** Parola yenilenirse tek yapılacak `.env.local`'i güncellemektir; başka
 hiçbir yerde kayıtlı değildir.
+
+---
+
+## 2026-08-18 — Uyumluluk motoru
+
+Karar veren: proje sahibi (K22, K23); Claude (K24, yetki dahilinde).
+
+### K22 — Motor kendi sade tiplerini tanımlar, Prisma tiplerini almaz
+
+`engine/types.ts` hiçbir şey içe aktarmaz. Veritabanı satırını bu tiplere çeviren
+dönüştürücü `/data` altına, **arayüz adımında** yazılacak — şimdi yazmak, henüz
+gerçek bir okuma ihtiyacı yokken tahminle yazmak olurdu.
+
+**Gerekçe:** Prisma tiplerine bağlanmak — `import type` olsa bile — motoru
+veritabanı şemasına yapıştırır. `/engine` kuralının üç gerekçesinin üçünü de
+zayıflatırdı: mobilde Prisma istemcisini derlemek gerekirdi, testlerde 12 alanlı
+nesneler kurmak zorunlu olurdu, iki motor sürümünü aynı girdiyle karşılaştırmak
+üretilmiş bir artefakta bağımlı hale gelirdi.
+
+**Bedeli:** Alan adları iki yerde yazılı. Bu risk `npm run sema:kontrol` içindeki
+K22 kontrolüyle kapatıldı: `engine/types.ts`'teki her alan (`id` hariç, o
+`parts`'tan gelir) `SCHEMA.md`'deki karşılık tabloda bulunmak zorunda. Kontrol
+tek yönlüdür — motor tipleri şemanın alt kümesidir, tersi değil.
+
+### K23 — W3 eşiği %10 değil %15
+
+`gerekli <= psu.wattage < gerekli * 1.15` aralığında uyarı verilir.
+
+**Gerekçe:** Güç kaynakları tam kapasiteye yakın çalışırken verimi düşer ve sesi
+artar. %10 bu gerçeği yakalamak için dar kalıyordu. `SCHEMA.md` bölüm 7'deki
+tanım da güncellendi.
+
+### K24 — `/engine` saflık kontrolü betiğe eklendi
+
+`npm run sema:kontrol`, `engine/*.ts` dosyalarında yasak içe aktarmaları arar:
+Prisma, React/Next, `node:*`, `pg`, `/data`, `/lib` ve `fetch` çağrısı.
+
+**Gerekçe:** CLAUDE.md bu kuralın "sessizce esnetilmemesini" istiyor. İnsan
+dikkatine bırakılan kural er geç esner; kontrol otomatikleşince esneyemez.
