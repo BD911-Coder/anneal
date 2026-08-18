@@ -18,6 +18,57 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
+### S21 — `pcie_version` ve `recommended_psu_watt` zorunlu, ama AMD sayfalarında yok 🔴 AKIŞI ENGELLİYOR
+
+`data/parts/gpu-amd.csv` yazıldı (23 satır) ama **hiçbiri içe aktarılamıyor**:
+
+```
+[HATA ] amd-rx-9070-xt — zorunlu alan bos: pcie_version
+[HATA ] amd-rx-7900-gre — zorunlu alan bos: recommended_psu_watt, pcie_version
+... 23 satırın 23'ü
+```
+
+**Ölçülen durum:**
+
+| Alan | NVIDIA sayfaları | AMD sayfaları |
+|---|---|---|
+| `pcie_version` | 30/30 var | **0/23 var** |
+| `recommended_psu_watt` | 30/30 var | 22/23 var (7900 GRE'de yok) |
+
+AMD ürün sayfalarında "PCI Express" ifadesi hiç geçmiyor — eski ve yeni şablonun
+ikisinde de yok. 9000 serisi sayfaları "Minimum PSU Recommendation" veriyor,
+7900 GRE'nin eski şablonu vermiyor.
+
+**Önemli bulgu: bu iki alanı hiçbir yer kullanmıyor.**
+
+```
+$ grep -rn "pcie_version\|recommended_psu_watt" engine/ data/to-engine.ts app/
+  (çıktı yok)
+```
+
+On bir uyumluluk kuralının hiçbiri bu alanlara bakmıyor. C4 gerekli gücü
+işlemci ve kartın TDP'sinden **hesaplıyor**, `recommended_psu_watt`'ı
+kullanmıyor. `EngineGpu` tipinde ikisi de yok. Arayüzde de gösterilmiyorlar.
+Yani şu an bu iki alan yalnızca veritabanında duruyor.
+
+**Seçenekler:**
+
+1. **İkisini de opsiyonel yap.** K52'nin aynı gerekçesi: bilinmeyen değer,
+   olmayan değer demek değil. Zorunluluk motoru korumuyor — hiçbir kural bu
+   alanlara bakmıyor — sadece 23 gerçek kartı dışarıda bırakıyor.
+2. Sadece `pcie_version`'ı opsiyonel yap. 22 AMD satırı geçer, 7900 GRE
+   yine takılır.
+3. AMD'yi kapsam dışı bırak.
+4. Başka bir resmi AMD kaynağı ara. Denendi: ürün sayfaları, `amd.com/en/product/<id>`
+   (boş dönüyor). AMD'nin genel karşılaştırma tablosu var ama o "genel liste
+   sayfası" ve K53 gereği kabul edilmiyor.
+
+**Önerim: 1.** Gerekçe K52 ile birebir aynı ve burada daha güçlü: `length_mm`
+en azından C5 tarafından kullanılıyordu; bu iki alan hiçbir kural tarafından
+kullanılmıyor. Zorunlu tutmanın hiçbir teknik karşılığı yok.
+
+Bu bir `SCHEMA.md` değişikliği olduğu için kendi başıma yapmadım.
+
 ### S18 — Önizleme dağıtımları kapatılsın mı?
 
 Ortam değişkenleri artık sadece Production kapsamında (K46). Sonucu: her dal

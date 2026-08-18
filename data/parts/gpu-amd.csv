@@ -1,0 +1,24 @@
+id,brand,model,release_year,collected_at,source_url,confidence,chipset,vram_gb,vram_type,tdp_watt,length_mm,recommended_psu_watt,pcie_version,shader_units,boost_clock_mhz,memory_bandwidth_gbs
+amd-rx-9070-xt,AMD,Radeon RX 9070 XT,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html,high,Radeon RX 9070 XT,16,GDDR6,304,,750,,4096,2970,640
+amd-rx-9070,AMD,Radeon RX 9070,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070.html,high,Radeon RX 9070,16,GDDR6,220,,650,,3584,2520,640
+amd-rx-9070-gre,AMD,Radeon RX 9070 GRE,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070-gre.html,high,Radeon RX 9070 GRE,12,GDDR6,220,,650,,3072,2790,432
+amd-rx-9060-xt,AMD,Radeon RX 9060 XT,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9060xt.html,high,Radeon RX 9060 XT,16,GDDR6,160,,450,,2048,3130,320
+amd-rx-7900-xtx,AMD,Radeon RX 7900 XTX,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html,high,Radeon RX 7900 XTX,24,GDDR6,355,,800,,6144,2500,960
+amd-rx-7900-xt,AMD,Radeon RX 7900 XT,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html,high,Radeon RX 7900 XT,20,GDDR6,315,,750,,5376,2400,800
+amd-rx-7900-gre,AMD,Radeon RX 7900 GRE,2023,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900-gre.html,high,Radeon RX 7900 GRE,16,GDDR6,260,,,,5120,2245,576
+amd-rx-7800-xt,AMD,Radeon RX 7800 XT,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7800-xt.html,high,Radeon RX 7800 XT,16,GDDR6,263,,700,,3840,2430,624
+amd-rx-7700-xt,AMD,Radeon RX 7700 XT,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7700-xt.html,high,Radeon RX 7700 XT,12,GDDR6,245,,700,,3456,2544,432
+amd-rx-7600-xt,AMD,Radeon RX 7600 XT,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7600-xt.html,high,Radeon RX 7600 XT,16,GDDR6,190,,600,,2048,2755,288
+amd-rx-7600,AMD,Radeon RX 7600,,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7600.html,high,Radeon RX 7600,8,GDDR6,165,,550,,2048,2655,288
+amd-rx-6950-xt,AMD,Radeon RX 6950 XT,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6950-xt.html,high,Radeon RX 6950 XT,16,GDDR6,335,,850,,5120,2310,576
+amd-rx-6900-xt,AMD,Radeon RX 6900 XT,2020,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6900-xt.html,high,Radeon RX 6900 XT,16,GDDR6,300,,850,,5120,2250,512
+amd-rx-6800-xt,AMD,Radeon RX 6800 XT,2020,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6800-xt.html,high,Radeon RX 6800 XT,16,GDDR6,300,,750,,4608,2250,512
+amd-rx-6800,AMD,Radeon RX 6800,2020,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6800.html,high,Radeon RX 6800,16,GDDR6,250,,650,,3840,2105,512
+amd-rx-6750-xt,AMD,Radeon RX 6750 XT,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6750-xt.html,high,Radeon RX 6750 XT,12,GDDR6,250,,650,,2560,2600,432
+amd-rx-6700-xt,AMD,Radeon RX 6700 XT,2021,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6700-xt.html,high,Radeon RX 6700 XT,12,GDDR6,230,,650,,2560,2581,384
+amd-rx-6700,AMD,Radeon RX 6700,2021,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6700.html,high,Radeon RX 6700,10,GDDR6,175,,600,,2304,2450,320
+amd-rx-6650-xt,AMD,Radeon RX 6650 XT,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6650-xt.html,high,Radeon RX 6650 XT,8,GDDR6,180,,500,,2048,2635,280
+amd-rx-6600-xt,AMD,Radeon RX 6600 XT,2021,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6600-xt.html,high,Radeon RX 6600 XT,8,GDDR6,160,,500,,2048,2589,256
+amd-rx-6600,AMD,Radeon RX 6600,2021,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6600.html,high,Radeon RX 6600,8,GDDR6,132,,450,,1792,2491,224
+amd-rx-6500-xt,AMD,Radeon RX 6500 XT,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6500-xt.html,high,Radeon RX 6500 XT,8,GDDR6,113,,400,,1024,2815,144
+amd-rx-6400,AMD,Radeon RX 6400,2022,2026-08-19,https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6400.html,high,Radeon RX 6400,4,GDDR6,53,,350,,768,2321,128
