@@ -117,3 +117,35 @@ yerleşik `loadEnvFile` fonksiyonuyla okunuyor.
 
 **Gerekçe:** Windows'ta CRLF yüzünden dosyanın tamamı değişmiş gibi görünen sahte
 farkları önlemek.
+
+---
+
+## 2026-08-18 — Depo kararları
+
+Karar veren: proje sahibi.
+
+### K12 — Depo herkese açık (public)
+
+GitHub deposu public. Secret scanning ve push protection etkin.
+
+**Gerekçe:** Push protection, bir anahtarın yanlışlıkla commit edilmesini
+**gönderim anında** engeller — CLAUDE.md'deki "depoya sır sızmasını engelleyen bir
+kontrol kurulur" maddesinin karşılığı budur. Bu koruma GitHub'da public depolarda
+ücretsizdir.
+
+**Sonucu bilerek kabul edildi:** Depodaki her şey ve tüm commit geçmişi artık
+herkese açıktır. Public'e geçildikten sonra yazılan bir sırrı geri almak,
+depoyu tekrar private yapmak veya commit'i silmekle çözülmez — anahtarın
+iptal edilmesi gerekir.
+
+Geçişten önce commit geçmişi tarandı: hiç `.env` benzeri dosya commit edilmemiş,
+anahtar/parola deseni eşleşmesi çıkmamıştı.
+
+### K13 — LICENSE dosyası eklenmez, proje lisanssız kalır
+
+**Gerekçe:** Bilinçli tercih. Lisans dosyası olmayan bir depoda telif hakkı
+varsayılan olarak sahibinde kalır; kod görünür olsa da kimse yasal olarak
+kopyalayamaz, değiştiremez veya kendi projesinde kullanamaz.
+
+**Sonucu:** Bu aynı zamanda dışarıdan katkı (pull request) kabul etmeyi de
+belirsizleştirir. Katkı alınmak istenirse bir lisans seçilmesi gerekir.

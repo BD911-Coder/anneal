@@ -34,19 +34,19 @@ Proje sahibinin teknik bilgisi sınırlıdır ve bu bilinçli bir kısıttır, g
 
 **Kendi başına karar ver, sadece raporla:**
 
-- Kütüphane sürümleri, yapılandırma dosyaları, klasör içi düzen
+- Kütüphane sürümleri, yapılandırma, klasör içi düzen
 - İsimlendirme, kod organizasyonu, yardımcı fonksiyonlar
 - `SCHEMA.md`'nin kendi içindeki açık çelişkiler → daha spesifik olan bölüm
   kazanır, kararı `docs/KARARLAR.md`'ye yaz
-- Teknik zorunluluklar (dil/araç kısıtları) → en yakın çözümü uygula
+- Dil/araç kısıtlarından doğan teknik zorunluluklar
 
 **Dur ve sor:**
 
 - `SCHEMA.md`'ye alan ekleme/çıkarma
-- Yeni bir kütüphane veya servis
-- Beta kapsamı dışına çıkan herhangi bir şey
+- Yeni kütüphane veya servis
+- Beta kapsamı dışına çıkmak
 - Veri kaybı riski olan işlemler
-- Kurallardan birinin esnetilmesi gereken durum
+- Kurallardan birinin esnetilmesi
 
 ---
 
@@ -161,16 +161,16 @@ Proje sahibi her oturum sonunda üç soru sorar. Cevabı hazır tut:
 
 ## Raporlama
 
-Her iş biriminin sonunda `docs/log/YYYY-AA-GG-konu.md` dosyası yazılır:
+Her iş biriminin sonunda `docs/log/YYYY-AA-GG-konu.md` yazılır ve commit edilir:
 
-- Ne yapıldı (kısa)
+- Ne yapıldı
 - Hangi kararlar verildi ve neden
-- Ne doğrulandı (komut çıktılarıyla)
+- Ne doğrulandı (komut çıktısıyla)
 - Açık kalan sorular
 
-Bu dosya da commit edilir.
+**Rapor yazıldıktan sonra dosyanın tam yolu ekranda gösterilir.**
 
-Verilen her kalıcı karar `docs/KARARLAR.md`'ye tarih ve gerekçeyle eklenir.
+Kalıcı kararlar `docs/KARARLAR.md`'ye tarih ve gerekçeyle eklenir.
 
 ---
 
