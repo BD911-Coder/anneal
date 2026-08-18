@@ -12,7 +12,8 @@
     "db:kontrol": "node scripts/db-check.mjs",
     "db:migrate": "prisma migrate dev",
     "test": "vitest run",
-    "test:izle": "vitest"
+    "test:izle": "vitest",
+    "db:seed": "node scripts/seed.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

@@ -6,6 +6,9 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // scripts/seed.mts üretilen Prisma istemcisini .ts uzantısıyla içe aktarıyor;
+    // Node ESM uzantısız çözemediği için gerekli.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",

@@ -12,6 +12,11 @@
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
+
+  // Uretilen dosyalarin ic ice aktarmalarina .ts uzantisi ekler.
+  // Sebebi: Node ESM uzantisiz cozemiyor, seed script'i istemciyi
+  // dogrudan calistirabilsin diye.
+  importFileExtension = "ts"
 }
 
 datasource db {

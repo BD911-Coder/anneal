@@ -284,3 +284,52 @@ Prisma, React/Next, `node:*`, `pg`, `/data`, `/lib` ve `fetch` çağrısı.
 
 **Gerekçe:** CLAUDE.md bu kuralın "sessizce esnetilmemesini" istiyor. İnsan
 dikkatine bırakılan kural er geç esner; kontrol otomatikleşince esneyemez.
+
+---
+
+## 2026-08-18 — İlk çalışan sayfa
+
+Karar veren: Claude (K25–K28, yetki dahilinde). K26 proje sahibine önerildi.
+
+### K25 — Veritabanı istemcisine sadece `/data` erişebilir
+
+`data/client.ts` başka hiçbir katmandan içe aktarılmaz. `npm run sema:kontrol`
+bunu denetler.
+
+**Gerekçe:** dev-seed filtresi `data/parts.ts` içinde zorunlu. Başka bir katman
+Prisma istemcisini doğrudan alırsa filtreyi atlayabilir; o zaman filtre
+"zorunlu" olmaktan çıkıp "hatırlanması gereken" bir şeye dönüşür. CLAUDE.md
+filtrenin çağıran kodun tercihine bırakılmamasını istiyor.
+
+### K26 — Depolama motora girmez, arayüzde çoklu seçilebilir (S12 kapanışı)
+
+`BuildInput`'ta `storage` alanı yok. Arayüzde kullanıcı istediği kadar disk
+seçebilir; bu seçim sistem listesinde görünür ama motora gitmez.
+
+**Gerekçe:** Beta'daki on bir kuralın hiçbiri depolamayı kullanmıyor, dolayısıyla
+"kategori başına tek parça" kısıtı depolama için zaten geçerli değil — motor
+depolamayı hiç görmüyor. Çoklu disk arayüz meselesi, motor meselesi değil.
+
+**Depolama kuralı gerektiğinde** (`motherboard_specs.m2_slots` şemada duruyor,
+doğal aday) `BuildInput`'a `storage: EngineStorage[]` **dizi olarak** eklenecek —
+böylece tip iki kez değişmez.
+
+### K27 — Prisma istemcisi `.ts` uzantılı içe aktarma üretir
+
+`prisma/schema.prisma` içinde `importFileExtension = "ts"`, `tsconfig.json`
+içinde `allowImportingTsExtensions: true`.
+
+**Gerekçe:** Teknik zorunluluk. Seed script'i üretilen Prisma istemcisini Node
+ile doğrudan çalıştırıyor; Node ESM uzantısız içe aktarmayı çözemiyor. Alternatif
+`tsx` gibi bir paket eklemekti — Node'un kendi TypeScript desteği yeterliyken
+yeni bağımlılık gerekmedi.
+
+### K28 — Seed script'i `DEV_SEED_ALLOWED` bayrağı olmadan çalışmaz
+
+Üç koşuldan biri sağlanırsa reddeder: `NODE_ENV=production`,
+`VERCEL_ENV=production`, veya `DEV_SEED_ALLOWED !== "true"`.
+
+**Gerekçe:** dev-seed korumasının 4. katmanı. Bayrak `.env.local` içinde;
+canlı ortamda `.env.local` dosyası olmaz, değişkenler platformdan gelir —
+dolayısıyla bayrak da olmaz. "Canlı veritabanı" adresi tahmin etmeye çalışmak
+yerine ortamın kendisini ölçüt yapmak daha az kırılgan.

@@ -18,21 +18,40 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S12 — Uyumluluk kuralları kategori başına tek parça varsayıyor
+### S13 — dev-seed verisi ileride canlı olacak veritabanında duruyor 🔴
 
-`BuildInput` her kategoriden en fazla bir parça alıyor. Beta'daki on bir kuralın
-hiçbiri çoklu parça gerektirmiyor, ama **depolamada çoklu disk yaygın** — bir
-sistemde NVMe + HDD sıradan bir kurulum.
+29 dev-seed parçası Supabase'deki tek veritabanına yazıldı. Aynı veritabanı
+canlıya çıkacaksa **CLAUDE.md'deki dev-seed korumasının 3. katmanı dağıtımı
+durduracak**: "canlı veritabanında tek bir dev-seed satırı varsa dağıtım durur."
 
-`build_items.quantity` şemada zaten var, yani veri tarafı hazır. Değişmesi
-gereken motorun girdi tipi olur.
+2. katman çalışıyor — canlı ortamda satırlar zaten görünmüyor, bunu ölçtük
+(geliştirmede 29 parça, canlıda 0). Ama 3. katman satırların *varlığını*
+sorguluyor, görünürlüğünü değil.
 
-**Durum:** Ertelendi — arayüz adımında yeniden bakılacak. O aşamada gerçek
-kullanım şekli görülmüş olacak ve tahminle tasarlamak gerekmeyecek.
+**Üç yol var:**
+
+1. **Ayrı bir Supabase projesi** aç, geliştirme oraya bağlansın. En temizi;
+   dev-seed canlıya hiç dokunmaz.
+2. Dağıtımdan önce dev-seed satırlarını sil. Basit ama her seferinde
+   hatırlanması gerekir.
+3. 3. katmanı gevşet — önerilmez, kural bilerek katı.
+
+**Önerim: 1.** Yeni proje açıp `DATABASE_URL` / `DIRECT_URL` verirsen
+`.env.local`'i güncellerim, migration ve seed'i orada tekrar çalıştırırım.
+
+**Karar gereken:** hangi yol.
 
 ---
 
 ## Kapanmış sorular
+
+### S12 — Kategori başına tek parça varsayımı ✅ 2026-08-18
+
+**Cevap:** `BuildInput`'ta `storage` alanı yok ve olmayacak — beta'daki on bir
+kuralın hiçbiri depolamayı kullanmıyor, yani motor depolamayı hiç görmüyor.
+Çoklu disk arayüzde çözüldü: kullanıcı istediği kadar disk seçiyor, seçim sistem
+listesinde görünüyor, motora gitmiyor. Depolama kuralı gerektiğinde
+`storage: EngineStorage[]` dizi olarak eklenecek. → `docs/KARARLAR.md` K26
 
 ### S11 — Veritabanı parolası sohbet geçmişine girdi ✅ 2026-08-18
 

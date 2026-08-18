@@ -259,6 +259,32 @@ for (const file of engineFiles) {
   check(`engine/${file} saf`, ihlaller.length === 0, ihlaller.join(", "));
 }
 
+// K25 — veritabani istemcisine sadece /data erisebilir.
+//
+// dev-seed filtresi data/parts.ts icinde zorunlu. Baska bir katman prisma
+// istemcisini dogrudan alirsa filtreyi atlayabilir; o zaman filtre "zorunlu"
+// olmaktan cikip "hatirlanmasi gereken" bir sey olur.
+console.log("\n--- Veri erisimi (K25: data/client sadece /data icinden) ---");
+function walk(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === "node_modules" || entry.name === "generated") continue;
+    const full = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) out.push(...walk(full));
+    else if (/\.(ts|tsx|mts)$/.test(entry.name)) out.push(full);
+  }
+  return out;
+}
+const disariKatmanlar = ["app", "engine", "lib", "tests"];
+const ihlalEdenler = [];
+for (const dir of disariKatmanlar) {
+  for (const file of walk(dir)) {
+    const source = readFileSync(file, "utf8");
+    if (/from\s+["'][^"']*data\/client["']/.test(source)) ihlalEdenler.push(file);
+  }
+}
+check("K25 data/client disaridan ice aktarilmiyor", ihlalEdenler.length === 0, ihlalEdenler.join(", "));
+
 // ---------------------------------------------------------------------------
 console.log("");
 if (problems.length > 0) {
