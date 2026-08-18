@@ -1,4 +1,4 @@
-# Anneal — Alan Modeli (Domain Model) — v1.0
+# Anneal — Alan Modeli (Domain Model) — v1.1
 
 Bu dosya projenin veri yapısını tanımlar. Kod bundan türetilir, tersi değil.
 Bir alan burada yoksa koda da girmez; kodda bir alan gerekiyorsa önce buraya eklenir.
@@ -27,15 +27,35 @@ Bu yedi kural şemanın her yerinde geçerlidir ve sonradan değiştirilmesi pah
 
 ## 1. Ortak alanlar
 
-Her tabloda bulunur:
+### 1.1 Kimlik
 
-| Alan | Tip | Açıklama |
+Her tabloda bir birincil anahtar bulunur. Üç biçimden biridir:
+
+| Biçim | Nerede | Örnek |
 |---|---|---|
-| `id` | text / uuid | Kalıcı kimlik |
-| `created_at` | timestamptz | Kayıt oluşturulma anı |
-| `updated_at` | timestamptz | Son değişiklik anı |
+| Kendi `id`'si | Bağımsız varlıklar | `parts`, `games`, `builds`, `price_snapshots` |
+| Sahibinin `part_id`'si | Kategori spec tabloları | `gpu_specs.part_id` |
+| Bileşik anahtar | Bağlantı tabloları | `build_items (build_id, part_id)` |
 
-Dışarıdan veri taşıyan her tabloda ayrıca:
+Spec tablolarında ve bağlantı tablolarında **ayrı bir `id` sütunu yoktur.**
+Gerekçe: satırın kimliği zaten sahibinden geliyorsa ikinci bir anahtar
+tutmak, aynı gerçeği iki yerde saklamak demektir.
+
+### 1.2 Zaman
+
+| Alan | Tip | Açıklama | Nerede |
+|---|---|---|---|
+| `created_at` | timestamptz | Kayıt oluşturulma anı | **Her tabloda** |
+| `updated_at` | timestamptz | Son değişiklik anı | Append-only **olmayan** tablolarda |
+
+Append-only tablolarda (`price_snapshots`, `benchmark_points`) `updated_at`
+**yoktur.** Satır güncellenmediği için "son değişiklik anı" diye bir şey olamaz;
+sütunu tutmak var olmayan bir işlemin mümkün olduğunu ima eder.
+
+### 1.3 Olgusal iddia alanları
+
+**Kural:** Dış dünya hakkında olgusal bir iddia taşıyan her tabloda şu dört alan bulunur.
+"Bu ekran kartının TDP'si 220W" bir iddiadır ve nereden geldiği sorulabilir olmalıdır.
 
 | Alan | Tip | Açıklama |
 |---|---|---|
@@ -43,6 +63,15 @@ Dışarıdan veri taşıyan her tabloda ayrıca:
 | `source_url` | text? | Verinin alındığı adres |
 | `confidence` | enum | `high`, `medium`, `low` |
 | `collected_at` | timestamptz | Verinin **toplandığı** an (kaydedildiği an değil) |
+
+**Bulunduğu tablolar:** `parts`, yedi kategori spec tablosu (`gpu_specs`, `cpu_specs`,
+`motherboard_specs`, `ram_specs`, `psu_specs`, `storage_specs`, `case_specs`),
+`games`, `price_snapshots`, `benchmark_points`.
+
+**Muaf tablolar:** `builds`, `build_items`, `click_events`, `feedback`, `raw_imports`.
+Gerekçe: bunlar dış dünya hakkında iddia taşımaz. Kullanıcının kendi eylemini
+(sistem kaydetme, tıklama, geri bildirim) veya ham veriyi olduğu gibi tutarlar.
+`raw_imports.source` ayrı bir istisnadır — bkz. bölüm 11.
 
 > `source = 'dev-seed'` olan hiçbir satır canlı ortamda gösterilmez.
 > Bu filtre veri erişim katmanında zorunludur, çağıran kodun tercihine bırakılmaz.
@@ -69,6 +98,10 @@ sonra **asla değişmez**. Görünen ad değişebilir, slug değişmez.
 
 Her kategori kendi tablosunda, `part_id` ile `parts`'a bağlanır. Uyumluluk kuralları
 tipli sütunlara ihtiyaç duyduğu için JSON kullanılmaz.
+
+Aşağıdaki tabloların hepsinde **`part_id` birincil anahtardır**, ayrı `id` yoktur (bölüm 1.1).
+Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `confidence`,
+`collected_at` bulunur (bölüm 1.3). Tekrar olmasın diye aşağıdaki listelerde yazılmadı.
 
 **`gpu_specs`**
 
@@ -147,7 +180,7 @@ tipli sütunlara ihtiyaç duyduğu için JSON kullanılmaz.
 | Alan | Tip |
 |---|---|
 | `part_id` | FK |
-| `supported_form_factors` | text[] (`{ATX, mATX, ITX}`) |
+| `supported_form_factors` | **enum dizisi** — `FormFactor[]` (`{ATX, mATX, ITX}`) |
 | `max_gpu_length_mm` | int |
 | `max_cpu_cooler_height_mm` | int |
 | `max_psu_length_mm` | int |
@@ -172,6 +205,8 @@ tipli sütunlara ihtiyaç duyduğu için JSON kullanılmaz.
 Güncelleme yok. Bir parçanın güncel fiyatı = en son `collected_at`'li satır.
 Fiyat geçmişi bu tablodan doğrudan çıkar; **bugün biriktirilmezse sonradan üretilemez.**
 
+Append-only olduğu için `updated_at` sütunu **yoktur** (bölüm 1.2).
+
 ---
 
 ## 4. Benchmark ve performans
@@ -185,6 +220,8 @@ Fiyat geçmişi bu tablodan doğrudan çıkar; **bugün biriktirilmezse sonradan
 | `release_year` | int | |
 | `gpu_weight` | float | 0–1, oyunun GPU'ya bağımlılığı |
 | `cpu_weight` | float | 0–1 |
+
+Olgusal iddia taşır: `source`, `source_url`, `confidence`, `collected_at` bulunur (bölüm 1.3).
 
 ### `benchmark_points` — **append-only**
 
@@ -202,9 +239,12 @@ Elle toplanan gerçek ölçümler. Motorun kalibrasyon verisi.
 | `avg_fps` | float | |
 | `one_percent_low_fps` | float? | |
 | `source_type` | enum | `review`, `user_submission`, `own_test` |
-| `source_url`, `confidence`, `collected_at` | — | **Zorunlu.** Kaynak defteri budur. |
+| `source`, `confidence`, `collected_at` | — | Bölüm 1.3 |
+| `source_url` | text | **Burada zorunlu** (bölüm 1.3'te opsiyonel). Kaynak defteri budur. |
 
 > Tek bir kaynaktan toplu veri alınmaz. Her satır ayrı ayrı, kaynağı yazılarak girilir.
+
+Append-only olduğu için `updated_at` sütunu **yoktur** (bölüm 1.2).
 
 ### `perf_index` — hesaplanmış, sürümlü
 
@@ -242,10 +282,14 @@ Güncel fiyatı ayrıca göstermek serbest — ama dondurulmuş değerin üzerin
 
 ### `build_items`
 
+Birincil anahtar **bileşiktir: (`build_id`, `part_id`)**. Ayrı `id` yoktur (bölüm 1.1).
+Yan etkisi istenen bir kısıttır: aynı parça bir sistemde iki satır olamaz, adet
+`quantity` ile ifade edilir.
+
 | Alan | Tip |
 |---|---|
-| `build_id` | FK |
-| `part_id` | FK |
+| `build_id` | FK — birincil anahtarın parçası |
+| `part_id` | FK — birincil anahtarın parçası |
 | `quantity` | int |
 | `unit_price_minor_at_save` | integer |
 
@@ -407,3 +451,84 @@ Bu tablolar ve alanlar **şimdi yazılmaz**, ama şema onları engellemeyecek ş
 - Oyun bazlı FPS → `benchmark_points` + `games` zaten hazır, motor genişleyecek
 - Otomatik fiyat → `price_snapshots` yapısı aynı kalır, sadece yeni `source` değeri
 - Mobil → motor bağımsız olduğu için değişiklik gerekmez
+
+---
+
+## 11. Kararlar
+
+v1.0 şemayı koda dökerken belirsiz kalan noktalar. Burada yazılı olanlar
+**kapanmıştır**, yeniden sorulmaz. Yeni bir belirsizlik çıkarsa buraya eklenir.
+
+### K1 — Append-only tablolarda `updated_at` yok
+
+`price_snapshots` ve `benchmark_points` sadece `created_at` + `collected_at` taşır.
+
+**Gerekçe:** Satır güncellenmiyorsa "son değişiklik anı" diye bir olgu yoktur.
+Sütunu tutmak, olmayan bir işlemin mümkün olduğunu ima eder ve ileride birinin
+UPDATE yazmasına zemin hazırlar.
+
+### K2 — Spec tablolarında ayrı `id` yok, bağlantı tablosunda bileşik anahtar
+
+Yedi kategori spec tablosunda `part_id` birincil anahtardır.
+`build_items` birincil anahtarı (`build_id`, `part_id`) bileşiğidir.
+
+**Gerekçe:** Satırın kimliği zaten sahibinden geliyorsa ikinci bir anahtar aynı
+gerçeği iki yerde saklamaktır. Ayrıca bileşik anahtar, "aynı parça bir sistemde
+iki kez" hatasını veritabanı seviyesinde imkânsız kılar.
+
+### K3 — Olgusal iddia kuralı
+
+Dış dünya hakkında olgusal iddia taşıyan her tabloda `source`, `source_url`,
+`confidence`, `collected_at` bulunur. Muaf olanlar bölüm 1.3'te sayılıdır.
+
+**Gerekçe:** v1.0'daki "dışarıdan veri taşıyan tablo" ifadesi hangi tabloların
+kastedildiğini söylemiyordu ve her seferinde yorum gerektiriyordu. Ölçüt artık net:
+tablo bir şeyin **öyle olduğunu** iddia ediyorsa, nereden bilindiği de yazılır.
+Ek fayda: dev-seed damgası spec tablolarına da düşer.
+
+### K4 — `benchmark_points.source_url` zorunlu
+
+Bölüm 1.3'te opsiyonel, burada zorunlu.
+
+**Gerekçe:** Bu tablo motorun kalibrasyon verisidir. Kaynağı olmayan bir ölçüm,
+sonradan doğrulanamayacağı için veri değil gürültüdür.
+
+### K5 — `case_specs.supported_form_factors` enum dizisi
+
+`text[]` değil, `FormFactor[]`.
+
+**Gerekçe:** Uyumluluk kuralı C6 bu alanı `motherboard_specs.form_factor` ile
+karşılaştırıyor. İkisi de aynı enum olursa yazım hatası (`mATX` / `matx`) sessiz
+bir uyumsuzluk hatası üretemez — veritabanı kabul etmez.
+
+### K6 — `raw_imports.source` serbest metin kalır (bilinçli istisna)
+
+Şemanın geri kalanında `source` enum'dur; burada `text`.
+
+**Gerekçe:** Bu tablonun işi ham veriyi **olduğu gibi** saklamaktır. Kaynak adını
+enum'a bağlamak, yeni bir veri kaynağı denemek için şema değişikliği gerektirirdi —
+oysa `raw_imports`'ın varlık sebebi tam olarak henüz normalleştirilmemiş veriyi
+kabul edebilmektir.
+
+### K7 — Prisma enum değerlerinde takma ad (teknik kısıt)
+
+Prisma enum değerleri tire, eğik çizgi içeremez ve rakamla başlayamaz. Şu değerler
+kodda takma adla yazılır, **veritabanındaki gerçek değer değişmez**:
+
+| SCHEMA.md / veritabanı | Koddaki ad |
+|---|---|
+| `dev-seed` | `dev_seed` |
+| `DDR4/DDR5` | `DDR4_DDR5` |
+| `E-ATX` | `E_ATX` |
+| `sata-ssd` | `sata_ssd` |
+| `1080p`, `1440p`, `2160p` | `R1080p`, `R1440p`, `R2160p` |
+
+`cpu_specs.memory_type` üç değer alabildiği (`DDR4/DDR5` dahil), `motherboard_specs`
+ve `ram_specs` ise ikisinden birini aldığı için iki ayrı enum tanımlıdır:
+`CpuMemoryType` ve `MemoryType`.
+
+### Uygulama notu
+
+Bu şemanın çalışan karşılığı `prisma/schema.prisma` dosyasındadır ve alan adları
+buradakiyle birebir aynıdır. İndeks tanımları orada bulunur; indeks bir alan
+değildir, bu belgenin kapsamı dışındadır.

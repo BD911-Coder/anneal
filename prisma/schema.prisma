@@ -1,8 +1,10 @@
 // Anneal — veritabanı şeması
 //
-// Bu dosya SCHEMA.md'den türetilmiştir. SCHEMA.md tek kaynaktır.
+// Bu dosya SCHEMA.md v1.1'den türetilmiştir. SCHEMA.md tek kaynaktır.
 // Tablo ve alan adları SCHEMA.md ile birebir aynı tutuldu ki satır satır
 // karşılaştırılabilsin. Alan adlarının snake_case olmasının sebebi budur.
+//
+// Belirsiz noktaların nasıl çözüldüğü SCHEMA.md bölüm 11'de (Kararlar) yazılıdır.
 //
 // Hiçbir ilişkide silme davranışı tanımlanmadı: veri kuralları gereği satır
 // silinmez, Prisma varsayılanı da zaten silmeyi engeller.
@@ -19,6 +21,7 @@ datasource db {
 
 // ---------------------------------------------------------------------------
 // Enum'lar — SCHEMA.md bölüm 1 ve 2
+// Takma adların sebebi SCHEMA.md bölüm 11, K7. Veritabanındaki değerler değişmez.
 // ---------------------------------------------------------------------------
 
 enum Source {
@@ -105,6 +108,10 @@ enum ImportStatus {
 
 // ---------------------------------------------------------------------------
 // Bölüm 2 — Parça kataloğu
+//
+// Spec tablolarında part_id birincil anahtardır, ayrı id yoktur (K2).
+// Hepsi olgusal iddia taşır, dolayısıyla hepsinde source/source_url/
+// confidence/collected_at bulunur (K3).
 // ---------------------------------------------------------------------------
 
 model Part {
@@ -115,11 +122,11 @@ model Part {
   release_year Int?
   is_active    Boolean      @default(true) // piyasadan kalktıysa false, satır silinmez
 
-  // Dışarıdan veri taşıyan tabloların ortak alanları — bölüm 1
+  // Olgusal iddia alanları — bölüm 1.3
   source       Source
   source_url   String?
   confidence   Confidence
-  collected_at DateTime     @db.Timestamptz(6)
+  collected_at DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
@@ -144,8 +151,7 @@ model Part {
 }
 
 model GpuSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
   chipset              String
@@ -156,6 +162,11 @@ model GpuSpecs {
   recommended_psu_watt Int
   pcie_version         String
 
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
@@ -163,8 +174,7 @@ model GpuSpecs {
 }
 
 model CpuSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
   socket          String
@@ -176,6 +186,11 @@ model CpuSpecs {
   memory_type     CpuMemoryType
   has_igpu        Boolean
 
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
@@ -183,8 +198,7 @@ model CpuSpecs {
 }
 
 model MotherboardSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
   socket               String
@@ -196,6 +210,11 @@ model MotherboardSpecs {
   max_memory_speed_mhz Int
   m2_slots             Int
 
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
@@ -203,8 +222,7 @@ model MotherboardSpecs {
 }
 
 model RamSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
   memory_type  MemoryType
@@ -213,6 +231,11 @@ model RamSpecs {
   speed_mhz    Int
   cas_latency  Int
 
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
@@ -220,14 +243,18 @@ model RamSpecs {
 }
 
 model PsuSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
   wattage           Int
   efficiency_rating String
   modularity        Modularity
   length_mm         Int
+
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
@@ -236,14 +263,18 @@ model PsuSpecs {
 }
 
 model StorageSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
   storage_type   StorageType
   capacity_gb    Int
   interface      String
   read_speed_mbs Int?
+
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
@@ -252,14 +283,20 @@ model StorageSpecs {
 }
 
 model CaseSpecs {
-  id      String @id @default(uuid())
-  part_id String @unique
+  part_id String @id
   part    Part   @relation(fields: [part_id], references: [id])
 
-  supported_form_factors   String[] // SCHEMA.md'de text[] olarak tanımlı
+  // Enum dizisi (K5): C6 kuralı bunu motherboard_specs.form_factor ile
+  // karşılaştırdığı için yazım hatası veritabanı seviyesinde engelleniyor.
+  supported_form_factors   FormFactor[]
   max_gpu_length_mm        Int
   max_cpu_cooler_height_mm Int
   max_psu_length_mm        Int
+
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
@@ -268,7 +305,8 @@ model CaseSpecs {
 }
 
 // ---------------------------------------------------------------------------
-// Bölüm 3 — Fiyat (append-only: UPDATE yazılmaz)
+// Bölüm 3 — Fiyat
+// Append-only: UPDATE yazılmaz, bu yüzden updated_at yoktur (K1).
 // ---------------------------------------------------------------------------
 
 model PriceSnapshot {
@@ -283,11 +321,11 @@ model PriceSnapshot {
   product_url String?
 
   source       Source
+  source_url   String?
   confidence   Confidence
   collected_at DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   // güncel fiyat = en son collected_at'li satır, sorgu bu indeksten faydalanır
   @@index([part_id, collected_at])
@@ -305,6 +343,11 @@ model Game {
   gpu_weight   Float // 0-1, oyunun GPU'ya bağımlılığı
   cpu_weight   Float // 0-1
 
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
@@ -313,7 +356,7 @@ model Game {
   @@map("games")
 }
 
-// append-only — elle toplanan gerçek ölçümler, motorun kalibrasyon verisi
+// append-only (K1) — elle toplanan gerçek ölçümler, motorun kalibrasyon verisi
 model BenchmarkPoint {
   id          String  @id @default(uuid())
   gpu_part_id String
@@ -331,12 +374,11 @@ model BenchmarkPoint {
 
   source_type  BenchmarkSourceType
   source       Source
-  source_url   String // burada zorunlu — kaynak defteri budur
+  source_url   String // burada zorunlu (K4) — kaynağı olmayan ölçüm veri değil gürültüdür
   confidence   Confidence
   collected_at DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   @@index([gpu_part_id, game_id, resolution])
   @@map("benchmark_points")
@@ -361,6 +403,7 @@ model PerfIndex {
 
 // ---------------------------------------------------------------------------
 // Bölüm 5 — Sistemler
+// Olgusal iddia taşımaz (kullanıcının kendi eylemi), muaf (K3).
 // ---------------------------------------------------------------------------
 
 model Build {
@@ -382,7 +425,6 @@ model Build {
 }
 
 model BuildItem {
-  id       String @id @default(uuid())
   build_id String
   build    Build  @relation(fields: [build_id], references: [id])
   part_id  String
@@ -394,17 +436,19 @@ model BuildItem {
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
-  @@index([build_id])
+  // Bileşik anahtar (K2): aynı parça bir sistemde iki satır olamaz.
+  @@id([build_id, part_id])
   @@map("build_items")
 }
 
 // ---------------------------------------------------------------------------
 // Bölüm 6 — Yardımcı tablolar
+// Olgusal iddia taşımaz, muaf (K3).
 // ---------------------------------------------------------------------------
 
 model RawImport {
   id          String       @id @default(uuid())
-  source      String // SCHEMA.md'de burada enum değil, serbest metin
+  source      String // bilinçli istisna (K6): enum değil, serbest metin
   payload     Json
   imported_at DateTime     @db.Timestamptz(6)
   status      ImportStatus
