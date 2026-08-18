@@ -1,0 +1,3 @@
+# Satır sonlarını depoda her zaman LF tut, çalışma kopyasında OS ne isterse o.
+# Sebebi: Windows CRLF yüzünden dosyanın tamamı değişmiş gibi görünen sahte farkları önlemek.
+* text=auto eol=lf
