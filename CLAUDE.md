@@ -191,6 +191,48 @@ Raporlardaki "Açık kalan sorular" bölümü o günün fotoğrafıdır ve deği
 
 ---
 
+## Araç notları
+
+Her oturumda yeniden keşfedilmesin diye yazıldı.
+
+### Üretici sitelerinden sayfa okuma
+
+Üç üretici üç farklı yol gerektiriyor. Sıra: önce `WebFetch`, olmazsa `curl`,
+o da olmazsa tarayıcı paneli.
+
+| Site | Çalışan yol | Çalışmayan |
+|---|---|---|
+| nvidia.com | `WebFetch` | — |
+| amd.com | `curl` (tarayıcı `User-Agent` başlığıyla) | `WebFetch` → `ECONNRESET` |
+| intel.com | Tarayıcı paneli (`preview_start` + `get_page_text`) | `WebFetch` → 403, `curl` → 403 |
+
+`curl` için gereken başlık:
+
+```
+-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
+```
+
+**Sayfa yapıları:** AMD spec'leri `<dt>etiket</dt><dd>değer</dd>` çiftlerinde;
+etiketlere tooltip metni karışıyor, ilk anahtar kelimeye indirmek gerekiyor.
+Intel ARK'ta içerik JS bağlamından okunamıyor, `get_page_text` kullanılmalı.
+
+**Adres desenleri tutarsız:** AMD'de `amd-radeon-rx-9070xt.html` (tiresiz) ama
+`amd-radeon-rx-7900-gre.html` (tireli); 9000 serisinde pazarlama sayfası ile
+spec sayfası ayrı adreslerde. İki varyantı da denemek gerekiyor.
+
+### Spec verisinde çapraz kontrol
+
+Bir sayının doğru sütundan okunduğunu bağımsız olarak doğrulamanın yolu:
+
+```
+bant genişliği (GB/s) = bellek arayüzü (bit) × bellek hızı (Gbps) ÷ 8
+```
+
+Bu kontrol RTX 3080 10GB'da base clock'un boost diye okunduğunu yakaladı.
+Yeni bir üreticiden veri alınırken uygulanmalı.
+
+---
+
 ## Beta bitiş ölçütü
 
 10 kişi siteye girip yardım almadan bir sistem toplayabildi.
