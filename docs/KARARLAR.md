@@ -888,3 +888,35 @@ parça değiştirilir.
 **Normalizasyon uydurma değildir.** Sayfada "Gen 5" yazarken `PCIe 5.0`
 yazmak aynı olgunun başka yazımıdır. Sayfada olmayan hat sayısını (`x16`)
 eklemek uydurmadır ve yapılmaz.
+
+---
+
+## 2026-08-19 — GPU ölçekleme alanları
+
+Karar veren: proje sahibi.
+
+### K51 — `gpu_specs`'e üç opsiyonel alan: `shader_units`, `boost_clock_mhz`, `memory_bandwidth_gbs`
+
+Hepsi opsiyonel (`Int?`, `Int?`, `Float?`).
+Migration: `20260818220913_gpu_olcekleme_alanlari`.
+
+**Gerekçe:** Nesiller arası performans ölçekleme modelinin girdileri.
+
+**K37 ile çelişmiyor.** K37, spec alanlarından **mutlak** performans sayısı
+(FPS ya da indeks) türetilmesini yasaklar; gerekçesi bu değerlerin mimariler
+arasında karşılaştırılamaz olmasıdır. Bu üç alan mutlak FPS türetimi için
+değil, **aynı mimari içinde göreli ölçekleme** için tutulur — örneğin aynı
+nesildeki iki kart arasındaki farkı tahmin etmek. Yasaklanan şey, farklı
+mimarilerden aynı çekirdek sayısının aynı performans sayılmasıydı; burada
+karşılaştırma mimari içinde kalıyor.
+
+**Sınır nerede:** Bu alanlardan üretilen hiçbir sayı `perf_index`'in yerine
+geçmez. `perf_index`'in tek meşru kaynağı `benchmark_points` olmaya devam
+eder (K37, `SCHEMA.md` bölüm 4 ve 8). Ölçekleme modeli, ölçülmüş noktalar
+arasındaki boşluğu doldurmak içindir; ölçümün kendisinin yerine geçmek için
+değil.
+
+**Opsiyonel olmalarının sebebi:** NVIDIA ürün sayfaları bu üç değeri her
+model için vermiyor. Zorunlu olsalardı bulunamayan modeller hiç
+aktarılamazdı — oysa eksik ölçekleme girdisi, eksik uyumluluk alanından
+farklı olarak parçayı kullanılamaz yapmıyor.

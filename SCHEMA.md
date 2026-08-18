@@ -135,6 +135,14 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `length_mm` | int |
 | `recommended_psu_watt` | int |
 | `pcie_version` | text |
+| `shader_units` | int? |
+| `boost_clock_mhz` | int? |
+| `memory_bandwidth_gbs` | float? |
+
+Son üç alan **opsiyoneldir** ve K37'nin istisnası değildir: mutlak FPS ya da
+indeks türetmek için değil, **aynı mimari içinde göreli ölçekleme** için
+tutulurlar. Nesiller arası karşılaştırmada kullanılmazlar.
+Bkz. `docs/KARARLAR.md` K51.
 
 **`cpu_specs`**
 

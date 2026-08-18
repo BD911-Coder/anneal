@@ -177,6 +177,12 @@ model GpuSpecs {
   recommended_psu_watt Int
   pcie_version         String
 
+  // Nesiller arasi degil, ayni mimari icinde goreli olcekleme icin (K51).
+  // Opsiyonel: ureticinin her sayfasinda bulunmuyor.
+  shader_units         Int?
+  boost_clock_mhz      Int?
+  memory_bandwidth_gbs Float?
+
   source       Source
   source_url   String?
   confidence   Confidence
