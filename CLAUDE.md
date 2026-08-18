@@ -128,6 +128,19 @@ optimizasyon sayılmaz, ancak `SCHEMA.md`'de tanımlı olmak zorundadır.
   (`cuda_core`, `stream_processor`, `xe_vector_engine`) — iki satırın tipi
   farklıysa karşılaştırma geçersizdir. Bkz. `docs/KARARLAR.md` K57, K58.
 
+### Fiziksel ölçüler
+
+`case_specs` (üç açıklık alanı) ve `psu_specs.length_mm` doğrudan C5 ve W5
+kurallarını besler. Yanlış değer, kullanıcıya "sığar" deyip sığmaması demektir.
+
+- **Çıkarım yapılmaz.** Yalnızca üreticinin etiketlediği değer yazılır. Etiketsiz
+  bir sayıdan uzunluk çıkarılabilse bile yazılmaz, boş bırakılır (K60).
+- **Birden fazla değer varsa en küçüğü yazılır.** Yapılandırmaya göre değişen
+  açıklıklarda kullanıcı hangi yapılandırmada olduğunu bilmiyor (K59).
+- **Ondalıklı açıklık değerleri aşağı yuvarlanır.** 180.5 mm → 180 (K59).
+- **Şüpheli değer sayfaya tekrar sorulur.** Pazarlama metnindeki değil, spec
+  tablosundaki değer alınır.
+
 ### dev-seed koruması
 
 Dört katman, hepsi zorunlu:

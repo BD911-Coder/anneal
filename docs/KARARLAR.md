@@ -1058,3 +1058,52 @@ Kural `CLAUDE.md` "Veri kuralları" bölümüne de yazıldı.
 
 `npm run sema:kontrol` denetler: `shader_units` dolu olan her CSV satırında
 `shader_unit_type` da dolu olmalı.
+
+---
+
+## 2026-08-19 — Fiziksel ölçü disiplini
+
+Karar veren: proje sahibi.
+
+### K59 — Açıklık değerlerinde en küçüğü yazılır, ondalık aşağı yuvarlanır
+
+Bir açıklık/tolerans değeri için üretici birden fazla sayı veriyorsa (yapılandırmaya
+göre değişen) **en küçüğü** yazılır. Ondalıklı değerler **aşağı** yuvarlanır.
+
+İlk uygulamalar:
+- Fractal North `max_psu_length_mm` = **155** (sayfa: "1 HDD Tray: 255 mm max,
+  2 HDD Tray: 155 mm max")
+- Lian Li LANCOOL 216 `max_cpu_cooler_height_mm` = **180** (sayfa: 180.5 mm)
+
+**Gerekçe:** Kullanıcı hangi yapılandırmayı kullandığını bilmiyor. Yanlış
+"sığar" demek, gereksiz uyarıdan çok daha pahalı — kullanıcı parçayı alır ve
+takamaz. Gereksiz uyarının bedeli bir cümle okumak; yanlış onayın bedeli iade
+süreci.
+
+Bu, `case_specs`'in üç alanını ve `psu_specs.length_mm`'i doğrudan etkiliyor;
+bunlar C5 ve W5 kurallarını besliyor.
+
+### K60 — Fiziksel ölçülerde çıkarım yapılmaz
+
+Yalnızca üreticinin **etiketlediği** değer yazılır. Etiketsiz bir sayıdan hangi
+eksenin uzunluk olduğu çıkarılabilse bile yazılmaz; alan boş bırakılır.
+
+İlk uygulama: Corsair RM850e `length_mm` **boş**. Sayfa yalnızca
+`Dimensions: 140x150x86` diyor, eksen sırası yazmıyor. Seasonic aynı üç sayıyı
+`140 mm (L) x 150 mm (W) x 86 mm (H)` diye etiketliyor ve 150×86 ATX
+standardının sabit ölçüleri — yani 140'ın uzunluk olduğu neredeyse kesin.
+**Yine de yazılmadı.**
+
+**Gerekçe:** "Bulamazsan boş bırak" kuralı, ilk zorlandığı yerde esnetilirse
+kural olmaktan çıkar. Çıkarımın bu seferki doğruluğu, kuralın bir sonraki sefer
+yanlış çıkarıma açılmasına değmez.
+
+### K61 — `psu_specs.efficiency_rating` opsiyonel
+
+Migration: `20260818233436_psu_efficiency_opsiyonel`.
+
+**Gerekçe:** K56 ölçütü — hiçbir uyumluluk kuralı ve arayüz bu alanı
+kullanmıyor; zaten S22 listesindeydi. Ayrıca üreticiler aynı sertifika sistemini
+yayınlamıyor: Corsair RM850e sayfasında 80 PLUS satırı yok, yalnızca
+"Cybenetics Gold" var. Değer sayfada yazdığı gibi girilir — `80+ Gold` da olur,
+`Cybenetics Gold` da.

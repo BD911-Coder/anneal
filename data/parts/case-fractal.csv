@@ -1,0 +1,2 @@
+id,brand,model,release_year,collected_at,source_url,confidence,supported_form_factors,max_gpu_length_mm,max_cpu_cooler_height_mm,max_psu_length_mm
+fractal-design-north,Fractal Design,North,,2026-08-19,https://www.fractal-design.com/products/cases/north/north/chalk-white/,medium,ATX|mATX|ITX,355,170,155

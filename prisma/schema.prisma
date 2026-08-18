@@ -281,7 +281,9 @@ model PsuSpecs {
   part    Part   @relation(fields: [part_id], references: [id])
 
   wattage           Int
-  efficiency_rating String
+  // Opsiyonel (K61): her uretici ayni sertifika sistemini yayinlamiyor
+  // (80 PLUS / Cybenetics) ve hicbir kural bu alani kullanmiyor.
+  efficiency_rating String?
   modularity        Modularity
   length_mm         Int
 

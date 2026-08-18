@@ -1,0 +1,2 @@
+id,brand,model,release_year,collected_at,source_url,confidence,storage_type,capacity_gb,interface,read_speed_mbs
+samsung-990-pro-2tb,Samsung,990 PRO 2TB,,2026-08-19,https://www.samsung.com/us/memory-storage/nvme-ssd/990-pro-pcie-4-0-nvme-ssd-1tb-sku-mz-v9p2t0b-am/,high,nvme,2000,PCIe 4.0 NVMe M.2,7450

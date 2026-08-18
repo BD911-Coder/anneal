@@ -1,0 +1,2 @@
+id,brand,model,release_year,collected_at,source_url,confidence,socket,chipset,form_factor,memory_type,memory_slots,max_memory_gb,max_memory_speed_mhz,m2_slots
+msi-mag-b850-tomahawk-max-wifi,MSI,MAG B850 TOMAHAWK MAX WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-B850-TOMAHAWK-MAX-WIFI/Specification,high,AM5,B850,ATX,DDR5,4,256,8400,4

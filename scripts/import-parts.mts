@@ -42,7 +42,26 @@ const REQUIRED_SPEC: Record<string, string[]> = {
   // length_mm, recommended_psu_watt, pcie_version burada YOK: K52 ve K56
   // ile opsiyonel oldular.
   gpu: ["chipset", "vram_gb", "vram_type", "tdp_watt"],
+  motherboard: ["socket", "chipset", "form_factor", "memory_type", "memory_slots",
+                "max_memory_gb", "max_memory_speed_mhz", "m2_slots"],
+  ram: ["memory_type", "capacity_gb", "module_count", "speed_mhz", "cas_latency"],
+  // efficiency_rating burada YOK: K61 ile opsiyonel oldu.
+  psu: ["wattage", "modularity", "length_mm"],
+  // read_speed_mbs semada opsiyonel.
+  storage: ["storage_type", "capacity_gb", "interface"],
+  case: ["supported_form_factors", "max_gpu_length_mm", "max_cpu_cooler_height_mm",
+         "max_psu_length_mm"],
 };
+
+/** Prisma enum uyeleri tire/egik cizgi alamiyor (K7). CSV gercek degeri tasir. */
+function formFactor(v: string) {
+  return (v === "E-ATX" ? "E_ATX" : v) as "ATX" | "mATX" | "ITX" | "E_ATX";
+}
+
+/** case_specs.supported_form_factors bir dizi; CSV'de "ATX|mATX|ITX" biciminde. */
+function formFactorList(v: string) {
+  return v.split("|").map((x) => formFactor(x.trim()));
+}
 
 // parts tablosunda zorunlu olanlar (release_year opsiyonel).
 const REQUIRED_PART = ["id", "brand", "model", "collected_at", "source_url"];
@@ -221,7 +240,7 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
       }
 
       const partData = {
-        category: category as "cpu" | "gpu",
+        category: category as "cpu" | "gpu" | "motherboard" | "ram" | "psu" | "storage" | "case",
         brand: row.brand,
         model: row.model,
         release_year: intOrNull(row.release_year, "release_year"),
@@ -267,7 +286,7 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
           });
         });
         if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
-      } else {
+      } else if (category === "gpu") {
         const oncekiSpec = mevcut
           ? await prisma.gpuSpecs.findUnique({ where: { part_id: row.id } })
           : null;
@@ -296,6 +315,113 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
             update: partData,
           });
           await tx.gpuSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
+        });
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+      } else if (category === "motherboard") {
+        const oncekiSpec = mevcut
+          ? await prisma.motherboardSpecs.findUnique({ where: { part_id: row.id } })
+          : null;
+        const specData = {
+          socket: row.socket,
+          chipset: row.chipset,
+          form_factor: formFactor(row.form_factor),
+          memory_type: row.memory_type as "DDR4" | "DDR5",
+          memory_slots: intOrNull(row.memory_slots, "memory_slots")!,
+          max_memory_gb: intOrNull(row.max_memory_gb, "max_memory_gb")!,
+          max_memory_speed_mhz: intOrNull(row.max_memory_speed_mhz, "max_memory_speed_mhz")!,
+          m2_slots: intOrNull(row.m2_slots, "m2_slots")!,
+          ...provenance,
+        };
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({ where: { id: row.id }, create: { id: row.id, ...partData }, update: partData });
+          await tx.motherboardSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
+        });
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+      } else if (category === "ram") {
+        const oncekiSpec = mevcut
+          ? await prisma.ramSpecs.findUnique({ where: { part_id: row.id } })
+          : null;
+        const specData = {
+          memory_type: row.memory_type as "DDR4" | "DDR5",
+          capacity_gb: intOrNull(row.capacity_gb, "capacity_gb")!,
+          module_count: intOrNull(row.module_count, "module_count")!,
+          speed_mhz: intOrNull(row.speed_mhz, "speed_mhz")!,
+          cas_latency: intOrNull(row.cas_latency, "cas_latency")!,
+          ...provenance,
+        };
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({ where: { id: row.id }, create: { id: row.id, ...partData }, update: partData });
+          await tx.ramSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
+        });
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+      } else if (category === "psu") {
+        const oncekiSpec = mevcut
+          ? await prisma.psuSpecs.findUnique({ where: { part_id: row.id } })
+          : null;
+        const specData = {
+          wattage: intOrNull(row.wattage, "wattage")!,
+          // K61: opsiyonel, sayfada yazdigi gibi girilir.
+          efficiency_rating: row.efficiency_rating || null,
+          modularity: row.modularity as "full" | "semi" | "none",
+          length_mm: intOrNull(row.length_mm, "length_mm")!,
+          ...provenance,
+        };
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({ where: { id: row.id }, create: { id: row.id, ...partData }, update: partData });
+          await tx.psuSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
+        });
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+      } else if (category === "storage") {
+        const oncekiSpec = mevcut
+          ? await prisma.storageSpecs.findUnique({ where: { part_id: row.id } })
+          : null;
+        const specData = {
+          storage_type: (row.storage_type === "sata-ssd" ? "sata_ssd" : row.storage_type) as
+            | "nvme" | "sata_ssd" | "hdd",
+          capacity_gb: intOrNull(row.capacity_gb, "capacity_gb")!,
+          interface: row.interface,
+          read_speed_mbs: intOrNull(row.read_speed_mbs ?? "", "read_speed_mbs"),
+          ...provenance,
+        };
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({ where: { id: row.id }, create: { id: row.id, ...partData }, update: partData });
+          await tx.storageSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
+        });
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+      } else {
+        const oncekiSpec = mevcut
+          ? await prisma.caseSpecs.findUnique({ where: { part_id: row.id } })
+          : null;
+        const specData = {
+          supported_form_factors: formFactorList(row.supported_form_factors),
+          max_gpu_length_mm: intOrNull(row.max_gpu_length_mm, "max_gpu_length_mm")!,
+          max_cpu_cooler_height_mm: intOrNull(row.max_cpu_cooler_height_mm, "max_cpu_cooler_height_mm")!,
+          max_psu_length_mm: intOrNull(row.max_psu_length_mm, "max_psu_length_mm")!,
+          ...provenance,
+        };
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({ where: { id: row.id }, create: { id: row.id, ...partData }, update: partData });
+          await tx.caseSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
             update: specData,

@@ -212,9 +212,24 @@ Bkz. `docs/KARARLAR.md` K51.
 |---|---|
 | `part_id` | FK |
 | `wattage` | int |
-| `efficiency_rating` | text (`80+ Bronze`, `80+ Gold`) |
+| `efficiency_rating` | text? (`80+ Gold`, `Cybenetics Gold`) |
 | `modularity` | enum (`full`, `semi`, `none`) |
 | `length_mm` | int |
+
+`efficiency_rating` **opsiyoneldir** (K61): hiçbir kural kullanmıyor ve her
+üretici aynı sertifika sistemini yayınlamıyor — Corsair bazı modellerde yalnızca
+Cybenetics veriyor, 80 PLUS vermiyor. Değer sayfada yazdığı gibi girilir.
+
+> **Fiziksel ölçü kuralları** (K59, K60) — `case_specs` ve `psu_specs.length_mm`
+> doğrudan C5 ve W5 kurallarını besler:
+>
+> 1. **Çıkarım yapılmaz.** Yalnızca üreticinin **etiketlediği** değer yazılır.
+>    Etiketsiz bir sayıdan hangi eksenin uzunluk olduğu çıkarılabilse bile
+>    yazılmaz, boş bırakılır.
+> 2. **Birden fazla değer varsa en küçüğü yazılır.** Kullanıcı hangi
+>    yapılandırmayı kullandığını bilmiyor; yanlış "sığar" demek, gereksiz
+>    uyarıdan çok daha pahalı.
+> 3. **Ondalıklı açıklık değerleri aşağı yuvarlanır.** 180.5 mm → 180.
 
 **`storage_specs`**
 
