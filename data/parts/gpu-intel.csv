@@ -1,0 +1,8 @@
+id,brand,model,release_year,collected_at,source_url,confidence,chipset,vram_gb,vram_type,tdp_watt,length_mm,recommended_psu_watt,pcie_version,shader_units,boost_clock_mhz,memory_bandwidth_gbs
+intel-arc-b580,Intel,Arc B580,2024,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html,medium,Arc B580,12,GDDR6,190,272,600,PCIe 4.0 x8,,2670,456
+intel-arc-b570,Intel,Arc B570,2024,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/241676/intel-arc-b570-graphics/specifications.html,high,Arc B570,10,GDDR6,150,,,PCIe 4.0 x8,,2500,380
+intel-arc-a770-16gb,Intel,Arc A770 16GB,2022,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/229151/intel-arc-a770-graphics-16gb/specifications.html,high,Arc A770 16GB,16,GDDR6,225,,,PCIe 4.0 x16,,2100,560
+intel-arc-a770-8gb,Intel,Arc A770 8GB,2022,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/227955/intel-arc-a770-graphics-8gb/specifications.html,high,Arc A770 8GB,8,GDDR6,225,,,PCIe 4.0 x16,,2100,512
+intel-arc-a750,Intel,Arc A750,2022,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/227954/intel-arc-a750-graphics/specifications.html,high,Arc A750,8,GDDR6,225,,,PCIe 4.0 x16,,2050,512
+intel-arc-a580,Intel,Arc A580,2023,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/227961/intel-arc-a580-graphics/specifications.html,high,Arc A580,8,GDDR6,185,,,PCIe 4.0 x16,,1700,512
+intel-arc-a380,Intel,Arc A380,2022,2026-08-19,https://www.intel.com/content/www/us/en/products/sku/227959/intel-arc-a380-graphics/specifications.html,high,Arc A380,6,GDDR6,75,,,PCIe 4.0 x8,,2000,186

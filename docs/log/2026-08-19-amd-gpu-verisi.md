@@ -1,5 +1,9 @@
 # 2026-08-19 — AMD Radeon RX 6000/7000/9000 GPU verisi
 
+> **Düzeltme (2026-08-19, aynı gün):** `release_year` sayısı 12 yazılmıştı,
+> doğrusu **15**. CSV'den sayarken yanlış saymışım; dosyanın kendisi doğruydu,
+> yalnızca bu rapordaki sayı yanlıştı. Aşağıda üstü çizili olarak düzeltildi.
+
 > **Veri toplandı, içe aktarılamadı.** 23 satırın tamamı zorunlu alan
 > eksikliğinden reddediliyor. Sebep bir veri kalitesi sorunu değil: AMD ürün
 > sayfaları `pcie_version` alanını hiç yayınlamıyor. Karar bekliyor (S21).
@@ -43,7 +47,7 @@ spec `amd-radeon-rx-9070xt.html` (tiresiz) adresinde.
 | `shader_units` | 23 | 0 | "Stream Processors" |
 | `boost_clock_mhz` | 23 | 0 | "Boost Frequency" |
 | `memory_bandwidth_gbs` | 23 | 0 | **AMD hepsinde veriyor** |
-| `release_year` | 12 | 11 | "Launch Date" eski sayfalarda var, yenilerde yok |
+| `release_year` | ~~12~~ **15** | ~~11~~ **8** | "Launch Date" eski sayfalarda var, yenilerde yok |
 | `recommended_psu_watt` | 22 | 1 | 7900 GRE'nin eski şablonunda yok |
 | `length_mm` | 0 | **23** | AMD kart ölçüsü yayınlamıyor |
 | `pcie_version` | 0 | **23** | AMD sayfalarında "PCI Express" hiç geçmiyor |
@@ -53,12 +57,12 @@ spec `amd-radeon-rx-9070xt.html` (tiresiz) adresinde.
 | Alan | NVIDIA 30 satır | AMD 23 satır |
 |---|---|---|
 | `memory_bandwidth_gbs` | 3 dolu | **23 dolu** |
-| `release_year` | 0 dolu | **12 dolu** |
+| `release_year` | 0 dolu | **15 dolu** |
 | `length_mm` | 17 dolu | 0 dolu |
 | `pcie_version` | 30 dolu | **0 dolu** |
 
 AMD, K55'te "bulunmuyor" denen bant genişliğini her kartta veriyor. NVIDIA'nın
-vermediği çıkış tarihini de 12 kartta veriyor. Buna karşılık NVIDIA'nın verdiği
+vermediği çıkış tarihini de 15 kartta veriyor. Buna karşılık NVIDIA'nın verdiği
 PCIe sürümünü ve kart uzunluğunu hiç vermiyor.
 
 ---
