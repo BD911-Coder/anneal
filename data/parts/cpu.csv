@@ -1,2 +1,0 @@
-id,brand,model,release_year,collected_at,source_url,socket,cores,threads,base_clock_mhz,boost_clock_mhz,tdp_watt,memory_type,has_igpu
-amd-ryzen-7-9800x3d,AMD,Ryzen 7 9800X3D,2024,2026-08-19,https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9800x3d.html,AM5,8,16,4700,5200,120,DDR5,true

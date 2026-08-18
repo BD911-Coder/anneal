@@ -209,17 +209,40 @@ o da olmazsa tarayıcı paneli.
 |---|---|---|
 | nvidia.com | `WebFetch` | — |
 | amd.com | `curl` (tarayıcı `User-Agent` başlığıyla) | `WebFetch` → `ECONNRESET` |
-| intel.com | Tarayıcı paneli (`preview_start` + `get_page_text`) | `WebFetch` → 403, `curl` → 403 |
+| intel.com | `curl` (**tam tarayıcı başlık seti** gerekli) | `WebFetch` → 403, tek başına `User-Agent` → 403 |
 
-`curl` için gereken başlık:
+AMD için `User-Agent` yetiyor:
 
 ```
 -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
 ```
 
-**Sayfa yapıları:** AMD spec'leri `<dt>etiket</dt><dd>değer</dd>` çiftlerinde;
-etiketlere tooltip metni karışıyor, ilk anahtar kelimeye indirmek gerekiyor.
-Intel ARK'ta içerik JS bağlamından okunamıyor, `get_page_text` kullanılmalı.
+Intel tek başına `User-Agent`'ı reddediyor (403); şu set 200 döndürüyor:
+
+```
+-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+-H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+-H "Accept-Language: en-US,en;q=0.9"
+-H "sec-ch-ua: \"Chromium\";v=\"126\", \"Not)A;Brand\";v=\"24\""
+-H "sec-ch-ua-platform: \"Windows\""
+-H "Sec-Fetch-Dest: document" -H "Sec-Fetch-Mode: navigate" -H "Sec-Fetch-Site: none"
+--compressed
+```
+
+Tarayıcı paneli de çalışır ama sayfa başına iki tool çağrısı gerektirir;
+`curl` toplu indirme için çok daha ucuz.
+
+**Sayfa yapıları:**
+- AMD: `<dt>etiket</dt><dd>değer</dd>`. Etiketlere tooltip metni karışıyor,
+  ilk anahtar kelimeye indirmek gerekiyor.
+- Intel ARK: `<div class="tech-label"><span>etiket</span>` +
+  `<div class="tech-data"><span>değer</span>`. Tarayıcıda JS bağlamından
+  okunamıyor (`get_page_text` gerekir), ama `curl` ham HTML'i veriyor.
+
+**Intel ARK'ta model listesi toplu alınabilir:** seri sayfası
+(`/ark/products/series/<id>/...`) o ailedeki bütün SKU adreslerini içeriyor.
+Bir SKU sayfasından da kendi seri sayfasının adresi çıkarılabiliyor. Tek tek
+aramak yerine bu yol kullanılmalı.
 
 **Adres desenleri tutarsız:** AMD'de `amd-radeon-rx-9070xt.html` (tiresiz) ama
 `amd-radeon-rx-7900-gre.html` (tireli); 9000 serisinde pazarlama sayfası ile
