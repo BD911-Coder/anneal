@@ -87,13 +87,16 @@ ve `ram_specs` ise ikisinden birini aldığı için iki ayrı enum tanımlıdır
 
 Karar veren: Claude, "Karar yetkisi" bölümündeki yetki dahilinde. Bilgi amaçlı yazıldı.
 
-### K8 — `perf_index` ne append-only'dir ne de olgusal iddia taşır
+### K8 — `perf_index` ne append-only'dir ne de olgusal iddia taşır — **KISMEN DEĞİŞTİRİLDİ, bkz. K14**
 
 Kendi `id`'si, `created_at` ve `updated_at`'i vardır; K3'teki dörtlü alan yoktur.
 
 **Gerekçe:** Bu tablo dış dünya hakkında iddia taşımaz, motorun kendi hesabını
 tutar — kaynağı zaten `model_version` sütunudur. Adında `_snapshots` / `_points`
 geçmediği için SCHEMA.md bölüm 0'daki append-only kuralı da kapsamaz.
+
+> **2026-08-18 tarihinde değiştirildi.** Dörtlü alanın bulunmaması kararı geçerli.
+> `updated_at` kaldırıldı ve tekillik kısıtı eklendi — bkz. K14.
 
 ### K9 — Prisma 7'de kalınır, sürüm düşürülmez
 
@@ -149,3 +152,45 @@ kopyalayamaz, değiştiremez veya kendi projesinde kullanamaz.
 
 **Sonucu:** Bu aynı zamanda dışarıdan katkı (pull request) kabul etmeyi de
 belirsizleştirir. Katkı alınmak istenirse bir lisans seçilmesi gerekir.
+
+---
+
+## 2026-08-18 — Bekleyen kararların kapatılması
+
+Karar veren: proje sahibi (K14, K15, K16); Claude (K17, yetki dahilinde).
+
+### K14 — `perf_index`: `updated_at` yok, (`part_id`, `model_version`) tekil
+
+K8'in `updated_at` kısmını değiştirir. Dörtlü alanın bulunmaması kararı aynen geçerli.
+
+**Gerekçe:** Bir parçanın bir motor sürümünde tek indeksi olur; tekillik kısıtı
+bunu veritabanı seviyesinde garanti eder. Yeniden hesap yeni satır değil, aynı
+satırın güncellenmesidir. "Ne zaman hesaplandı" bilgisini zaten `computed_at`
+tutuyor — `updated_at` aynı gerçeği ikinci kez saklardı.
+
+### K15 — İndeksler `SCHEMA.md`'de tanımlı olmak zorundadır
+
+Belgelenmiş sorgu yolları üzerindeki indeksler erken optimizasyon sayılmaz, ancak
+`SCHEMA.md` bölüm 11'de yazılı olmayan indeks şemaya giremez.
+`raw_imports(status)` bu kural gereği silindi.
+
+**Gerekçe:** "Erken optimizasyon yapma" kuralı ile "bu sorgu indekssiz çalışmaz"
+gerçeği arasındaki gerilim, indeksi bir sorgu yoluna bağlamakla çözülüyor.
+İndeksin gerekçesi belgede yazılıysa optimizasyon erken değil, tasarımın parçasıdır.
+`raw_imports` yalnızca hata ayıklarken elle okunur — belgelenmiş sorgu yolu yok.
+
+### K16 — `main` dal koruması: force-push ve dal silme engellendi, PR zorunlu değil
+
+Yöneticiler dahil (`enforce_admins`).
+
+**Gerekçe:** Force-push ve dal silme geri alınamaz, geçmişi yok eder. PR
+zorunluluğu ise tek kişilik projede tören — inceleyecek ikinci kişi yok, her
+değişiklik için dal açıp kendi PR'ını onaylamak zaman kaybı.
+
+### K17 — Şema kontrol betiği Node ile yazıldı, Python ile değil
+
+`scripts/check-schema.mjs`, `npm run sema:kontrol` ile çalışır. Bağımlılığı yok.
+
+**Gerekçe:** İlk sürüm Python'du. Projede zaten Node var; betiği Node'a çevirmek
+projeye ikinci bir dil çalıştırma zorunluluğu getirmemek demek. Hata bulursa
+`1` ile çıkar, böylece ileride dağıtım öncesi kontrolde kullanılabilir.

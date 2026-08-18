@@ -395,9 +395,11 @@ model PerfIndex {
   computed_at   DateTime @db.Timestamptz(6)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
-  @@index([part_id, model_version])
+  // Bir parçanın bir motor sürümünde tek indeksi olur (K14). Yeniden hesap
+  // aynı satırı günceller; "ne zaman hesaplandı" bilgisini computed_at taşır,
+  // bu yüzden updated_at yoktur.
+  @@unique([part_id, model_version])
   @@map("perf_index")
 }
 
@@ -457,7 +459,6 @@ model RawImport {
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
-  @@index([status])
   @@map("raw_imports")
 }
 

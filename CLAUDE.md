@@ -99,6 +99,10 @@ Bu kural ihlal edilirse söyle, sessizce esnetme.
 - Arayüz bileşenleri için test
 - Erken performans optimizasyonu
 
+**İndeks istisnası:** Belgelenmiş sorgu yolları üzerindeki indeksler erken
+optimizasyon sayılmaz, ancak `SCHEMA.md`'de tanımlı olmak zorundadır.
+`SCHEMA.md` bölüm 11'de yazmayan indeks şemaya girmez.
+
 ---
 
 ## Veri kuralları

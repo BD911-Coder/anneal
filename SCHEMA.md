@@ -52,6 +52,10 @@ Append-only tablolarda (`price_snapshots`, `benchmark_points`) `updated_at`
 **yoktur.** Satır güncellenmediği için "son değişiklik anı" diye bir şey olamaz;
 sütunu tutmak var olmayan bir işlemin mümkün olduğunu ima eder.
 
+`perf_index` de `updated_at` taşımaz: satır güncellenebilir ama "ne zaman
+hesaplandı" bilgisini zaten `computed_at` tutar, ikinci bir zaman damgası
+aynı gerçeği tekrarlar.
+
 ### 1.3 Olgusal iddia alanları
 
 **Kural:** Dış dünya hakkında olgusal bir iddia taşıyan her tabloda şu dört alan bulunur.
@@ -258,6 +262,13 @@ Append-only olduğu için `updated_at` sütunu **yoktur** (bölüm 1.2).
 Aynı parça için farklı `model_version`'lar bir arada durur. Eski sürümler silinmez —
 model değiştiğinde karşılaştırma yapabilmenin tek yolu budur.
 
+**Tekillik kısıtı:** (`part_id`, `model_version`) çifti tekildir. Bir parçanın bir
+motor sürümünde tek indeksi olur; yeniden hesap yeni satır değil, aynı satırın
+güncellenmesidir. Bu tablo append-only değildir.
+
+Olgusal iddia taşımaz — dörtlü alan (bölüm 1.3) burada bulunmaz. Motorun kendi
+hesabıdır, kaynağı `model_version` sütunudur. `updated_at` de yoktur (bölüm 1.2).
+
 ---
 
 ## 5. Sistemler
@@ -454,7 +465,28 @@ Bu tablolar ve alanlar **şimdi yazılmaz**, ama şema onları engellemeyecek ş
 
 ---
 
-## 11. Kararlar
+## 11. İndeksler
+
+Bir indeks ancak **belgelenmiş bir sorgu yolunu** hızlandırıyorsa eklenir ve
+buraya yazılır. Burada olmayan indeks şemaya girmez.
+
+Birincil anahtarların ve tekillik kısıtlarının kendiliğinden ürettiği indeksler
+burada sayılmaz.
+
+| Tablo | İndeks | Hangi sorgu yolu için |
+|---|---|---|
+| `parts` | (`source`) | Dev-seed filtresi. Veri erişim katmanı canlı ortamda her sorguya `source <> 'dev-seed'` ekler; bu sütun her okumada taranır. |
+| `parts` | (`category`) | Kategori listesi sayfası — `/parca/kategori/<category>` (bölüm 9). |
+| `price_snapshots` | (`part_id`, `collected_at`) | "Güncel fiyat = en son `collected_at`'li satır" tanımının kendisi. Tablo append-only olduğu için sürekli büyür; bu yol indekssiz çalışamaz. |
+| `benchmark_points` | (`gpu_part_id`, `game_id`, `resolution`) | Motorun kalibrasyon verisini okuma yolu — belirli GPU + oyun + çözünürlük için ölçümler. |
+| `perf_index` | (`part_id`, `model_version`) **UNIQUE** | Hem tekillik kısıtı (bölüm 4) hem de motorun indeks okuma yolu. |
+
+**Silinen indeks:** `raw_imports(status)` kaldırıldı — `raw_imports` yalnızca hata
+ayıklarken elle okunur, belgelenmiş bir sorgu yolu değildir.
+
+---
+
+## 12. Kararlar
 
 Şemayla ilgili verilen kalıcı kararlar (K1-K7) `docs/KARARLAR.md` dosyasındadır.
 Tek yerde tutulmalarının sebebi: aynı kararın iki dosyada durup zamanla

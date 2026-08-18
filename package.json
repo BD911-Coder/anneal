@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "sema:kontrol": "node scripts/check-schema.mjs"
   },
   "dependencies": {
     "@prisma/client": "^7.9.1",
