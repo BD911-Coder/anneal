@@ -1,18 +1,28 @@
 # Sırlar — asla commit edilmez
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.pem
 *.key
 
 # Bağımlılıklar
 node_modules/
+.pnp
+.pnp.*
+.yarn/*
 
 # Next.js derleme çıktısı
 .next/
 out/
 build/
 dist/
+next-env.d.ts
+
+# Dağıtım
+.vercel
+
+# Prisma üretilen istemci
+lib/generated/
 
 # Veritabanı yedekleri (Git veritabanını yedeklemez, ayrı dışa aktarım kurulur)
 backups/
@@ -32,3 +42,6 @@ Thumbs.db
 # Log
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

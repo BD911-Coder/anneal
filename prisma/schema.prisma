@@ -1,0 +1,446 @@
+// Anneal — veritabanı şeması
+//
+// Bu dosya SCHEMA.md'den türetilmiştir. SCHEMA.md tek kaynaktır.
+// Tablo ve alan adları SCHEMA.md ile birebir aynı tutuldu ki satır satır
+// karşılaştırılabilsin. Alan adlarının snake_case olmasının sebebi budur.
+//
+// Hiçbir ilişkide silme davranışı tanımlanmadı: veri kuralları gereği satır
+// silinmez, Prisma varsayılanı da zaten silmeyi engeller.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Bağlantı adresi prisma.config.ts içinde (Prisma 7 kuralı)
+}
+
+// ---------------------------------------------------------------------------
+// Enum'lar — SCHEMA.md bölüm 1 ve 2
+// ---------------------------------------------------------------------------
+
+enum Source {
+  manual
+  dev_seed     @map("dev-seed")
+  manufacturer
+  affiliate
+  user
+  import
+}
+
+enum Confidence {
+  high
+  medium
+  low
+}
+
+enum PartCategory {
+  gpu
+  cpu
+  motherboard
+  ram
+  psu
+  storage
+  case
+}
+
+// motherboard ve ram tek bellek tipi destekler
+enum MemoryType {
+  DDR4
+  DDR5
+}
+
+// cpu ikisini birden destekleyebilir
+enum CpuMemoryType {
+  DDR4
+  DDR5
+  DDR4_DDR5 @map("DDR4/DDR5")
+}
+
+enum FormFactor {
+  ATX
+  mATX
+  ITX
+  E_ATX @map("E-ATX")
+}
+
+enum Modularity {
+  full
+  semi
+  none
+}
+
+enum StorageType {
+  nvme
+  sata_ssd @map("sata-ssd")
+  hdd
+}
+
+enum Resolution {
+  R1080p @map("1080p")
+  R1440p @map("1440p")
+  R2160p @map("2160p")
+}
+
+enum Preset {
+  low
+  medium
+  high
+  ultra
+}
+
+enum BenchmarkSourceType {
+  review
+  user_submission
+  own_test
+}
+
+enum ImportStatus {
+  pending
+  processed
+  failed
+}
+
+// ---------------------------------------------------------------------------
+// Bölüm 2 — Parça kataloğu
+// ---------------------------------------------------------------------------
+
+model Part {
+  id           String       @id // slug — bir kez atanır, asla değişmez
+  category     PartCategory
+  brand        String
+  model        String
+  release_year Int?
+  is_active    Boolean      @default(true) // piyasadan kalktıysa false, satır silinmez
+
+  // Dışarıdan veri taşıyan tabloların ortak alanları — bölüm 1
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime     @db.Timestamptz(6)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  gpu_specs         GpuSpecs?
+  cpu_specs         CpuSpecs?
+  motherboard_specs MotherboardSpecs?
+  ram_specs         RamSpecs?
+  psu_specs         PsuSpecs?
+  storage_specs     StorageSpecs?
+  case_specs        CaseSpecs?
+  price_snapshots   PriceSnapshot[]
+  perf_index        PerfIndex[]
+  build_items       BuildItem[]
+  click_events      ClickEvent[]
+  benchmarks_as_gpu BenchmarkPoint[]  @relation("benchmark_gpu")
+  benchmarks_as_cpu BenchmarkPoint[]  @relation("benchmark_cpu")
+
+  @@index([category])
+  @@index([source]) // dev-seed filtresi bu sütun üzerinden çalışır
+  @@map("parts")
+}
+
+model GpuSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  chipset              String
+  vram_gb              Int
+  vram_type            String
+  tdp_watt             Int
+  length_mm            Int
+  recommended_psu_watt Int
+  pcie_version         String
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("gpu_specs")
+}
+
+model CpuSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  socket          String
+  cores           Int
+  threads         Int
+  base_clock_mhz  Int
+  boost_clock_mhz Int
+  tdp_watt        Int
+  memory_type     CpuMemoryType
+  has_igpu        Boolean
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("cpu_specs")
+}
+
+model MotherboardSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  socket               String
+  chipset              String
+  form_factor          FormFactor
+  memory_type          MemoryType
+  memory_slots         Int
+  max_memory_gb        Int
+  max_memory_speed_mhz Int
+  m2_slots             Int
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("motherboard_specs")
+}
+
+model RamSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  memory_type  MemoryType
+  capacity_gb  Int // tek modül değil, kit toplamı
+  module_count Int
+  speed_mhz    Int
+  cas_latency  Int
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("ram_specs")
+}
+
+model PsuSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  wattage           Int
+  efficiency_rating String
+  modularity        Modularity
+  length_mm         Int
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("psu_specs")
+}
+
+model StorageSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  storage_type   StorageType
+  capacity_gb    Int
+  interface      String
+  read_speed_mbs Int?
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("storage_specs")
+}
+
+model CaseSpecs {
+  id      String @id @default(uuid())
+  part_id String @unique
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  supported_form_factors   String[] // SCHEMA.md'de text[] olarak tanımlı
+  max_gpu_length_mm        Int
+  max_cpu_cooler_height_mm Int
+  max_psu_length_mm        Int
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("case_specs")
+}
+
+// ---------------------------------------------------------------------------
+// Bölüm 3 — Fiyat (append-only: UPDATE yazılmaz)
+// ---------------------------------------------------------------------------
+
+model PriceSnapshot {
+  id      String @id @default(uuid())
+  part_id String
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  retailer    String
+  price_minor Int // kuruş — 149999 = 1.499,99 TL. Float asla kullanılmaz.
+  currency    String
+  in_stock    Boolean?
+  product_url String?
+
+  source       Source
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  // güncel fiyat = en son collected_at'li satır, sorgu bu indeksten faydalanır
+  @@index([part_id, collected_at])
+  @@map("price_snapshots")
+}
+
+// ---------------------------------------------------------------------------
+// Bölüm 4 — Benchmark ve performans
+// ---------------------------------------------------------------------------
+
+model Game {
+  id           String @id // slug: cyberpunk-2077
+  name         String
+  release_year Int
+  gpu_weight   Float // 0-1, oyunun GPU'ya bağımlılığı
+  cpu_weight   Float // 0-1
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  benchmark_points BenchmarkPoint[]
+
+  @@map("games")
+}
+
+// append-only — elle toplanan gerçek ölçümler, motorun kalibrasyon verisi
+model BenchmarkPoint {
+  id          String  @id @default(uuid())
+  gpu_part_id String
+  gpu_part    Part    @relation("benchmark_gpu", fields: [gpu_part_id], references: [id])
+  cpu_part_id String? // bilinmiyorsa null
+  cpu_part    Part?   @relation("benchmark_cpu", fields: [cpu_part_id], references: [id])
+  game_id     String
+  game        Game    @relation(fields: [game_id], references: [id])
+
+  resolution          Resolution
+  preset              Preset
+  upscaling           String?
+  avg_fps             Float
+  one_percent_low_fps Float?
+
+  source_type  BenchmarkSourceType
+  source       Source
+  source_url   String // burada zorunlu — kaynak defteri budur
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([gpu_part_id, game_id, resolution])
+  @@map("benchmark_points")
+}
+
+// hesaplanmış, sürümlü — eski model_version satırları silinmez
+model PerfIndex {
+  id      String @id @default(uuid())
+  part_id String // sadece gpu ve cpu
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  index_value   Float // 0-100
+  model_version String
+  computed_at   DateTime @db.Timestamptz(6)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([part_id, model_version])
+  @@map("perf_index")
+}
+
+// ---------------------------------------------------------------------------
+// Bölüm 5 — Sistemler
+// ---------------------------------------------------------------------------
+
+model Build {
+  id                  String  @id // kısa, paylaşılabilir slug: k3n9x2
+  title               String? // kullanıcının verdiği ad
+  total_price_minor   Int // kayıt anında dondurulur
+  currency            String
+  perf_index_snapshot Float // kayıt anındaki indeks
+  model_version       String // o indeksi üreten motor sürümü
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  build_items  BuildItem[]
+  click_events ClickEvent[]
+  feedback     Feedback[]
+
+  @@map("builds")
+}
+
+model BuildItem {
+  id       String @id @default(uuid())
+  build_id String
+  build    Build  @relation(fields: [build_id], references: [id])
+  part_id  String
+  part     Part   @relation(fields: [part_id], references: [id])
+
+  quantity                 Int
+  unit_price_minor_at_save Int
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([build_id])
+  @@map("build_items")
+}
+
+// ---------------------------------------------------------------------------
+// Bölüm 6 — Yardımcı tablolar
+// ---------------------------------------------------------------------------
+
+model RawImport {
+  id          String       @id @default(uuid())
+  source      String // SCHEMA.md'de burada enum değil, serbest metin
+  payload     Json
+  imported_at DateTime     @db.Timestamptz(6)
+  status      ImportStatus
+  error       String?
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("raw_imports")
+}
+
+model ClickEvent {
+  id       String  @id @default(uuid())
+  part_id  String
+  part     Part    @relation(fields: [part_id], references: [id])
+  build_id String?
+  build    Build?  @relation(fields: [build_id], references: [id])
+
+  target_url String
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("click_events")
+}
+
+model Feedback {
+  id       String  @id @default(uuid())
+  message  String
+  build_id String?
+  build    Build?  @relation(fields: [build_id], references: [id])
+  page_url String?
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("feedback")
+}
