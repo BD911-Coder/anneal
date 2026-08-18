@@ -18,49 +18,6 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S20 — Aynı slug ikinci kez geldiğinde ne olacak? 🔴 AKIŞI ENGELLİYOR
-
-İçe aktarma script'i yazıldı ve bu durumla **hemen karşılaştı**: `gpu.csv`
-içindeki `nvidia-rtx-5090` satırı, veritabanında zaten dev-seed olarak var.
-
-```
-[ATLA ] nvidia-rtx-5090 — slug zaten var (mevcut source='dev_seed')
-```
-
-Bu tek seferlik bir kaza değil; **kaçınılmaz**. Şu an 29 dev-seed parça var ve
-elle girilecek gerçek parçaların çoğu aynı fiziksel donanım. Slug marka+model'den
-türetildiği ve **asla değişmediği** için (`SCHEMA.md` bölüm 2) aynı parça aynı
-slug'ı almak zorunda.
-
-**Şu anki geçici davranış:** dokunma, atla, `raw_imports.error` alanına sebebini
-yaz. Karar verilene kadar en güvenli olan bu — üzerine yazmak doğru olabilecek
-bir satırı sessizce değiştirebilirdi.
-
-**Seçenekler:**
-
-1. **Üzerine yaz (CSV kazanır).** `parts` ve spec satırı güncellenir; `source`
-   `manufacturer` olur. CSV kaynak veri olduğu için (K50) tutarlı: veritabanı
-   türetilmiş şeydir, CSV'yi düzeltip yeniden aktarmak doğal iş akışı olur.
-   Riski: bir yazım hatası sessizce canlı veriyi bozabilir.
-
-2. **Sadece dev-seed'in üzerine yaz, gerçek verinin üzerine yazma.** Sahte veri
-   gerçek veriyle değiştirilebilir ama gerçek veri gerçek veriyle
-   değiştirilemez — o durumda dur ve söyle. Ara yol; kuralı açıklamak biraz
-   daha zor.
-
-3. **Hep atla (şu anki hâli).** Güvenli ama bir alanı düzeltmek için elle
-   silme gerektirir. Beta'da fiyat/spec düzeltmesi sık olacağı için yorucu.
-
-4. **Dur ve hata ver.** İçe aktarma hiç çalışmaz, insan karar verir.
-
-**Önerim: 2. seçenek.** Gerekçe: dev-seed zaten "yerini gerçek veri alana kadar"
-duran veri. Onu değiştirmek istenen şey. Gerçek veriyi sessizce ezmek ise
-istenmeyen şey — ve ikisi arasındaki farkı veritabanı zaten `source` sütununda
-tutuyor, yeni bir alan gerekmiyor.
-
-**Bu karar verilmeden kalan 36 parça aktarılamaz** — çoğu aynı çakışmaya
-girecek.
-
 ### S18 — Önizleme dağıtımları kapatılsın mı?
 
 Ortam değişkenleri artık sadece Production kapsamında (K46). Sonucu: her dal
@@ -149,6 +106,17 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S20 — Aynı slug ikinci kez geldiğinde ne olacak? ✅ 2026-08-19
+
+**Cevap:** Güncellensin (1. ve 2. seçeneğin birleşimi). Tek koşul: yeni satırın
+kaynağı mevcut satırınkinden düşük güvenilirlikte olmayacak
+(`manufacturer` > `manual` > `affiliate` > `import` > `user` > `dev-seed`).
+Düşükse atlanır ve `raw_imports.error`'a yazılır. Güncelleme olduğunda değişen
+alanlar ekrana yazılır.
+
+Aynı koruma seed script'ine de eklendi: `npm run db:seed` artık gerçek veriyle
+dolu bir slug'ın üzerine yazmıyor. → `docs/KARARLAR.md` K54
 
 ### S19 — Gerçek parça verisi nereden gelecek? ✅ 2026-08-19
 

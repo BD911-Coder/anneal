@@ -309,11 +309,26 @@ function partRow(seed: PartSeed) {
   };
 }
 
+let atlanan = 0;
+
 async function upsertAll<T extends PartSeed & { spec: object }>(
   items: T[],
   specTable: { upsert: (args: unknown) => Promise<unknown> },
 ): Promise<void> {
   for (const item of items) {
+    // K54'un ayni mantigi burada da gecerli: sahte veri gercek verinin
+    // uzerine YAZMAZ. Bu script dev-seed uretiyor; ayni slug artik gercek
+    // bir kaynaktan geliyorsa (source != dev_seed) dokunulmaz.
+    const mevcut = await prisma.part.findUnique({
+      where: { id: item.id },
+      select: { source: true },
+    });
+    if (mevcut && mevcut.source !== "dev_seed") {
+      console.log(`  [ATLA] ${item.id} — gercek veri var (source='${mevcut.source}')`);
+      atlanan++;
+      continue;
+    }
+
     const row = partRow(item);
     await prisma.part.upsert({ where: { id: item.id }, create: row, update: row });
 
@@ -425,6 +440,9 @@ for (const satir of sayim) {
 const devSeedSayisi = await prisma.part.count({ where: { source: "dev_seed" } });
 const toplam = await prisma.part.count();
 console.log(`\nToplam ${toplam} parça, ${devSeedSayisi} tanesi dev-seed.`);
+if (atlanan > 0) {
+  console.log(`${atlanan} parça atlandı: aynı slug gerçek veriyle dolu, üzerine yazılmadı.`);
+}
 
 const fiyatSayisi = await prisma.priceSnapshot.count();
 const fiyatliParca = (await prisma.priceSnapshot.groupBy({ by: ["part_id"] })).length;

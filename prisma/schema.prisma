@@ -173,7 +173,9 @@ model GpuSpecs {
   vram_gb              Int
   vram_type            String
   tdp_watt             Int
-  length_mm            Int
+  // Opsiyonel (K52): ureticiler yalnizca kendi referans kartlarinin olcusunu
+  // verir. Bilinmeyen uzunluk, uzunlugu olmayan kart demek degil.
+  length_mm            Int?
   recommended_psu_watt Int
   pcie_version         String
 

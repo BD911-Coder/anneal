@@ -99,7 +99,10 @@ export function checkCompatibility(input: BuildInput): Finding[] {
   }
 
   // --- C5: ekran kartı kasaya sığmalı --------------------------------------
-  if (ready(gpu?.length_mm, pcCase?.max_gpu_length_mm) && gpu!.length_mm > pcCase!.max_gpu_length_mm) {
+  // length_mm opsiyonel (K52): bilinmiyorsa kural atlanır. Kullanıcıya bunun
+  // atlandığını arayüz söyler; motor "veri eksik" diye bulgu üretmez, çünkü
+  // bulgular SCHEMA.md bölüm 7'deki kurallardır.
+  if (ready(gpu?.length_mm, pcCase?.max_gpu_length_mm) && gpu!.length_mm! > pcCase!.max_gpu_length_mm) {
     errors.push({
       code: "C5",
       level: "error",

@@ -219,6 +219,28 @@ describe("C5 — ekran kartı uzunluğu / kasa", () => {
     expect(kodlar(uyumluSistem)).not.toContain("C5");
   });
 
+  // K52: length_mm opsiyonel. Bilinmeyen uzunluk kuralı atlatır — ama
+  // sessizce hata da uydurmaz. Kullanıcıyı arayüz uyarır.
+  it("uzunluk bilinmiyorsa kural atlanır, hata uydurmaz", () => {
+    const uzunluksuz: BuildInput = {
+      ...uyumluSistem,
+      gpu: { id: gpu.id, tdp_watt: gpu.tdp_watt },
+    };
+    expect(() => checkCompatibility(uzunluksuz)).not.toThrow();
+    expect(kodlar(uzunluksuz)).not.toContain("C5");
+  });
+
+  it("uzunluk bilinmiyorsa diğer kurallar çalışmaya devam eder", () => {
+    const uzunluksuz: BuildInput = {
+      ...uyumluSistem,
+      gpu: { id: gpu.id, tdp_watt: 600 }, // C4'ü tetikleyecek kadar aç
+      psu: { ...psu, wattage: 400 },
+    };
+    const kodListesi = kodlar(uzunluksuz);
+    expect(kodListesi).not.toContain("C5");
+    expect(kodListesi).toContain("C4");
+  });
+
   it("tam sınırda geçer", () => {
     const input = { ...uyumluSistem, gpu: { ...gpu, length_mm: pcCase.max_gpu_length_mm } };
     expect(kodlar(input)).not.toContain("C5");

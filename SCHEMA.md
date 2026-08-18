@@ -132,14 +132,19 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `vram_gb` | int |
 | `vram_type` | text (`GDDR6`, `GDDR7`) |
 | `tdp_watt` | int |
-| `length_mm` | int |
+| `length_mm` | int? |
 | `recommended_psu_watt` | int |
 | `pcie_version` | text |
 | `shader_units` | int? |
 | `boost_clock_mhz` | int? |
 | `memory_bandwidth_gbs` | float? |
 
-Son üç alan **opsiyoneldir** ve K37'nin istisnası değildir: mutlak FPS ya da
+`length_mm` **opsiyoneldir** (K52). Bilinmeyen uzunluk, uzunluğu olmayan kart
+demek değildir; üreticiler yalnızca kendi referans kartlarının ölçüsünü verir.
+Boşsa C5 kuralı atlanır ve **arayüz bunu kullanıcıya söyler** — sessizce
+atlanmaz.
+
+Son üç alan da **opsiyoneldir** ve K37'nin istisnası değildir: mutlak FPS ya da
 indeks türetmek için değil, **aynı mimari içinde göreli ölçekleme** için
 tutulurlar. Nesiller arası karşılaştırmada kullanılmazlar.
 Bkz. `docs/KARARLAR.md` K51.

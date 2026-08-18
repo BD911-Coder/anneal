@@ -56,12 +56,14 @@ export function toEngineCpu(row: {
 export function toEngineGpu(row: {
   part_id: string;
   tdp_watt: number;
-  length_mm: number;
+  length_mm: number | null;
 }): EngineGpu {
   return {
     id: row.part_id,
     tdp_watt: row.tdp_watt,
-    length_mm: row.length_mm,
+    // null -> undefined: motor "yok" ile "bilinmiyor"u ayirt etmiyor,
+    // ikisi de kuralin atlanmasi demek (K52).
+    length_mm: row.length_mm ?? undefined,
   };
 }
 

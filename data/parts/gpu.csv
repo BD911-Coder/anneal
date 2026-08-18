@@ -1,2 +1,0 @@
-id,brand,model,release_year,collected_at,source_url,chipset,vram_gb,vram_type,tdp_watt,length_mm,recommended_psu_watt,pcie_version
-nvidia-rtx-5090,NVIDIA,GeForce RTX 5090,,2026-08-19,https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/,GeForce RTX 5090,32,GDDR7,575,304,1000,PCIe 5.0

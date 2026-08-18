@@ -920,3 +920,68 @@ değil.
 model için vermiyor. Zorunlu olsalardı bulunamayan modeller hiç
 aktarılamazdı — oysa eksik ölçekleme girdisi, eksik uyumluluk alanından
 farklı olarak parçayı kullanılamaz yapmıyor.
+
+### K52 — `gpu_specs.length_mm` opsiyonel
+
+Migration: `20260818221920_gpu_uzunlugu_opsiyonel`.
+
+**Gerekçe:** Bilinmeyen uzunluk, uzunluğu olmayan kart demek değildir.
+Üreticiler yalnızca kendi referans kartlarının (NVIDIA'da Founders Edition)
+ölçüsünü verir; FE üretilmeyen modellerde bu değer hiçbir resmi sayfada yok.
+Alanı zorunlu tutmak motoru korumuyordu — sadece veriyi dışarıda bırakıyordu:
+RTX 3050, 3060, 4060, 5060 gibi FE'siz modellerin tamamı içe aktarılamıyordu.
+
+C5 kuralı zaten eksik alanda kuralı atlıyor (`ready()` koruması), yani motorun
+davranışı değişmedi.
+
+**Arayüz sessiz kalmaz.** Seçili kartın uzunluğu bilinmiyorsa uyumluluk
+bölümünde şu yazılır: "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu
+kontrol edilemedi." Kullanıcı, kontrolün yapılmadığını "sorun bulunamadı"
+sanmamalı.
+
+**Neden motor bulgu üretmiyor:** Bulgular `SCHEMA.md` bölüm 7'deki kurallardır
+ve "veri eksik" bir kural ihlali değildir. Motora W6 gibi bir kural eklemek,
+şemada olmayan bir kuralı koda sokmak olurdu.
+
+### K53 — Aile sayfaları geçerli kaynak sayılır
+
+NVIDIA 30 ve 40 serisini model bazlı değil aile sayfalarında topluyor
+(`rtx-4070-family`, `rtx-3060-3060ti`). Bu sayfalar `source_url` olarak kabul
+edilir.
+
+**Gerekçe:** Kuralın amacı, satırdaki değerlerin gerçekten o modele ait bir
+üretici beyanı olmasıydı. Üretici o model için başka bir spec sayfası
+yayınlamıyorsa, aile sayfası bu amacı karşılar. Ölçüt "sayfa tek modele ait
+olsun" değil, "üreticinin o model için verdiği tek spec sayfası olsun".
+
+Genel ürün listesi ya da pazarlama sayfası hâlâ kabul edilmez.
+
+### K54 — Aynı slug ikinci kez geldiğinde güncellenir (S20 kapanışı)
+
+İçe aktarma artık atlamıyor, **güncelliyor**. Tek koşul: yeni satırın kaynağı
+mevcut satırınkinden düşük güvenilirlikte olmayacak.
+
+Sıra: `manufacturer` > `manual` > `affiliate` > `import` > `user` > `dev-seed`
+
+Düşükse satır atlanır ve sebebi `raw_imports.error`'a yazılır. Güncelleme
+olduğunda hangi alanların değiştiği ekrana yazılır.
+
+**Gerekçe:** dev-seed zaten "yerini gerçek veri alana kadar" duran veridir;
+onu gerçek veriyle değiştirmek istenen şeydir. Gerçek veriyi sahte veriyle
+ezmek ise istenmeyen şeydir — ve ikisi arasındaki farkı veritabanı zaten
+`source` sütununda tutuyor, yeni bir alan gerekmedi.
+
+**Sıralamada bir varsayım var:** Proje sahibi üç değeri saydı (`manufacturer`,
+`manual`, `dev-seed`). Kalan üçü (`affiliate`, `import`, `user`) aradaki
+boşluklara yerleştirildi. Pratikte belirleyici olan yalnızca sıranın en üstü,
+çünkü bu script yalnızca `manufacturer` yazıyor.
+
+### K55 — Ölçekleme modeli `memory_bandwidth_gbs`'e bağımlı olmayacak
+
+Alan şemada kalır, opsiyoneldir, ama ölçekleme modeli onu girdi olarak
+beklemez. `shader_units` × `boost_clock_mhz` yeterli sayılır.
+
+**Gerekçe:** NVIDIA ürün sayfaları bant genişliğini vermiyor — üç örnek
+sayfanın üçünde de yok. Verilen tek şey bellek arayüz genişliği (bit); bellek
+hızı da yazılmadığı için bant genişliği hesaplanamıyor, hesaplamak uydurma
+olurdu. Modeli bulunamayan bir girdiye bağlamak, modeli kullanılamaz yapardı.

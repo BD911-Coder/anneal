@@ -21,7 +21,8 @@ export type EngineCpu = {
 export type EngineGpu = {
   id: string;
   tdp_watt: number;
-  length_mm: number;
+  /** Bilinmiyor olabilir (K52). Boşsa C5 kuralı atlanır. */
+  length_mm?: number;
 };
 
 export type EngineMotherboard = {

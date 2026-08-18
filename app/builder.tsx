@@ -75,6 +75,10 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const errors = findings.filter((finding) => finding.level === "error");
   const warnings = findings.filter((finding) => finding.level === "warning");
 
+  // Kart seçili ama uzunluğu bilinmiyorsa C5 çalışamaz (K52). Kasa seçilmemişse
+  // zaten çalışmazdı; uyarı yine de gösteriliyor çünkü kullanıcı kasayı sonra seçecek.
+  const gpuLengthUnknown = buildInput.gpu !== undefined && buildInput.gpu.length_mm === undefined;
+
   const selectedStorage = catalog.storage.filter((item) => storageIds.includes(item.id));
   const secilenSayisi = Object.values(selection).filter(Boolean).length + selectedStorage.length;
 
@@ -432,6 +436,19 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
         {/* Uyumluluk */}
         <div>
           <h2 className="mb-3 text-lg font-semibold">Uyumluluk</h2>
+
+          {/*
+            Uzunluğu bilinmeyen kart, C5'i sessizce atlatır (K52). Motor bunu
+            bulgu olarak üretmiyor — bulgular SCHEMA.md bölüm 7'deki kurallardır
+            ve "veri eksik" bir kural ihlali değil. Ama kullanıcı, kontrolün
+            yapılmadığını "sorun bulunamadı" sanmamalı; o yüzden burada söyleniyor.
+          */}
+          {gpuLengthUnknown && (
+            <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
+              Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
+              Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et.
+            </p>
+          )}
 
           {findings.length === 0 ? (
             <p className="text-sm">
