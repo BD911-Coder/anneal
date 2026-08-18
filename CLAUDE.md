@@ -172,6 +172,12 @@ Her iş biriminin sonunda `docs/log/YYYY-AA-GG-konu.md` yazılır ve commit edil
 
 Kalıcı kararlar `docs/KARARLAR.md`'ye tarih ve gerekçeyle eklenir.
 
+Cevap bekleyen sorular depo kökündeki `SORULAR.md` dosyasında toplanır.
+Raporlardaki "Açık kalan sorular" bölümü o günün fotoğrafıdır ve değişmez;
+`SORULAR.md` güncel durumu gösterir. Bir soru cevaplandığında maddesi
+"Kapanmış sorular" bölümüne taşınır, kalıcı bir karara dönüştüyse ayrıca
+`docs/KARARLAR.md`'ye yazılır.
+
 ---
 
 ## Beta bitiş ölçütü
