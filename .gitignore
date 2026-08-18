@@ -1,0 +1,34 @@
+# Sırlar — asla commit edilmez
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Bağımlılıklar
+node_modules/
+
+# Next.js derleme çıktısı
+.next/
+out/
+build/
+dist/
+
+# Veritabanı yedekleri (Git veritabanını yedeklemez, ayrı dışa aktarım kurulur)
+backups/
+*.sqlite
+*.db
+
+# Test ve araç çıktıları
+coverage/
+*.tsbuildinfo
+
+# İşletim sistemi / editör
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Log
+*.log
+npm-debug.log*
