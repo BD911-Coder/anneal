@@ -18,12 +18,26 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S2 — Prisma sürücü paketi izni
+### S10 — Supabase bağlantı bilgileri bekleniyor 🔴 ENGELLEYİCİ
 
-Prisma 7 tek başına veritabanına bağlanamıyor; `@prisma/adapter-pg` + `pg`
-paketleri gerekiyor.
+Sürücü paketleri kuruldu, yapılandırma hazır, `.env.local` oluşturuldu — ama
+içi **yer tutucu**. Gerçek değerler olmadan migration çalıştırılamaz.
 
-**Durum:** Ertelendi — veritabanı adımında sorulacak.
+Gereken iki değer (Supabase panelinde **Project Settings → Database**):
+
+| Değişken | Supabase'deki adı | Port |
+|---|---|---|
+| `DATABASE_URL` | Connection pooling → Transaction | 6543 |
+| `DIRECT_URL` | Direct connection | 5432 |
+
+**İki yol var:**
+
+1. **Önerilen:** `.env.local` dosyasını kendin doldur, sonra bana "hazır" de.
+   Parola sohbet geçmişine hiç girmez.
+2. Adresleri bana ver, ben dosyaya yazayım.
+
+Parolada `@ : / ? # [ ]` gibi karakter varsa percent-encode edilmeli
+(`p@ss` → `p%40ss`). İstersen ham parolayı ben kodlarım.
 
 ---
 
@@ -36,22 +50,6 @@ yazılırken bir koşucu gerekecek, muhtemelen `vitest`.
 
 ---
 
-### S9 — İki secret scanning ayarı açılamadı
-
-`secret_scanning_non_provider_patterns` ve `secret_scanning_validity_checks`
-açılmak istendi. GitHub API isteği **HTTP 200 döndürüyor ama ayar `disabled`
-kalıyor** — sessizce reddediliyor. Büyük ihtimalle ücretli özellik
-(GitHub Secret Protection) gerektiriyor.
-
-Etkin olanlar: secret scanning, push protection, dependabot security updates.
-
-**Karar gereken:** Peşine düşülsün mü (GitHub arayüzünden denenip ücretli olup
-olmadığı görülebilir), yoksa mevcut üç koruma yeterli mi sayılsın.
-
-Kaynak: `docs/log/2026-08-18-bekleyen-kararlar.md`
-
----
-
 ## Kapanmış sorular
 
 ### S1 — Şemadaki altı indeks ✅ 2026-08-18
@@ -60,6 +58,11 @@ Kaynak: `docs/log/2026-08-18-bekleyen-kararlar.md`
 bölüm 11'e yazıldı. `CLAUDE.md`'ye kural eklendi: belgelenmiş sorgu yolları
 üzerindeki indeksler erken optimizasyon sayılmaz, ancak `SCHEMA.md`'de tanımlı
 olmak zorundadır. → `docs/KARARLAR.md` K15
+
+### S2 — Prisma sürücü paketi izni ✅ 2026-08-18
+
+**Cevap:** Kuruldu — `@prisma/adapter-pg` 7.9.1 ve `pg` 8.23.0. Ek tip paketi
+(`@types/pg`) gerekmedi, `tsc` temiz geçti. → `docs/KARARLAR.md` K19, K20
 
 ### S3 — `npm audit` üç yüksek seviye uyarı ✅ 2026-08-18
 
@@ -78,12 +81,18 @@ ile çalışıyor. Python yerine Node'a çevrildi. → `docs/KARARLAR.md` K17
 
 ### S7 — GitHub güvenlik ayarları ✅ 2026-08-18 (kısmen)
 
-**Cevap:** Üçü de açılmak istendi. `dependabot_security_updates` açıldı
-(önce vulnerability alerts açılması gerekiyordu). Diğer ikisi açılamadı —
-devamı S9'da.
+**Cevap:** `dependabot_security_updates` açıldı (önce vulnerability alerts
+gerekiyordu). Diğer ikisi açılamadı — S9'da kapandı.
 
 ### S8 — `main` dalı korumasız ✅ 2026-08-18
 
 **Cevap:** Dal koruması kuruldu. Force-push ve dal silme engellendi, yöneticiler
 dahil. PR zorunluluğu konmadı — tek kişilik projede gereksiz tören.
 → `docs/KARARLAR.md` K16
+
+### S9 — İki secret scanning ayarı açılamadı ✅ 2026-08-18
+
+**Cevap:** Peşine düşülmeyecek. İki ayar GitHub'ın ücretli **Secret Protection**
+paketine ait; API 200 dönüp ayarı sessizce yok sayıyor. Mevcut üç koruma
+(secret scanning, push protection, dependabot) yeterli sayıldı.
+→ `docs/KARARLAR.md` K18

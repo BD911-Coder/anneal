@@ -194,3 +194,42 @@ değişiklik için dal açıp kendi PR'ını onaylamak zaman kaybı.
 **Gerekçe:** İlk sürüm Python'du. Projede zaten Node var; betiği Node'a çevirmek
 projeye ikinci bir dil çalıştırma zorunluluğu getirmemek demek. Hata bulursa
 `1` ile çıkar, böylece ileride dağıtım öncesi kontrolde kullanılabilir.
+
+---
+
+## 2026-08-18 — Veritabanı bağlantısı
+
+Karar veren: proje sahibi (K18); Claude (K19, K20, yetki dahilinde).
+
+### K18 — İki secret scanning ayarının peşine düşülmeyecek
+
+`secret_scanning_non_provider_patterns` ve `secret_scanning_validity_checks`
+kapalı kalacak.
+
+**Gerekçe:** Denendi. GitHub API isteği HTTP 200 dönüyor ama ayar `disabled`
+kalıyor — bu iki özellik GitHub'ın ücretli **Secret Protection** paketine ait.
+Ücretli pakete geçmek gerek görülmedi. Mevcut üç koruma yeterli sayıldı:
+secret scanning, push protection, dependabot security updates.
+
+### K19 — İki ayrı bağlantı adresi: `DATABASE_URL` ve `DIRECT_URL`
+
+- `DATABASE_URL` — havuzlanmış (pooled) bağlantı, uygulamanın çalışma anı.
+  `data/client.ts` bunu kullanır.
+- `DIRECT_URL` — doğrudan bağlantı, migration'lar. `prisma.config.ts` bunu kullanır.
+
+**Gerekçe:** Supabase havuzlanmış bağlantıyı pgbouncer üzerinden verir; şema
+değişikliği (migration) bu yol üzerinden güvenilir çalışmaz. Uygulama tarafında
+ise havuzlama gerekli, aksi halde sunucusuz ortamda bağlantı sayısı tükenir.
+İki adresi ayrı tutmak, hangi işin hangi yoldan gittiğini açık kılar.
+
+Değerler `.env.local` dosyasındadır ve asla commit edilmez.
+
+### K20 — Prisma istemcisi `/data` altında, `/lib` altında değil
+
+`data/client.ts` veritabanına erişen tek noktadır. Üretilen istemci kodu
+`lib/generated/prisma` altında kalır (Prisma'nın çıktısı, elle yazılmaz).
+
+**Gerekçe:** CLAUDE.md `/data`'yı veri erişim katmanı olarak tanımlıyor;
+bağlantıyı açan nesne oraya aittir. `/lib` ortak yardımcılar içindir ve oradan
+veritabanı açmak, `/engine`'in yanlışlıkla `/lib` üzerinden veritabanına
+ulaşmasına kapı aralardı.
