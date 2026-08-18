@@ -18,36 +18,6 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S23 — Intel'de `shader_units` boş bırakıldı: üç üretici aynı birimi yayınlamıyor
-
-`gpu-intel.csv`'de 7 satırın 7'sinde `shader_units` **boş**. Sebep: Intel bu
-sütuna girecek karşılaştırılabilir bir sayı yayınlamıyor.
-
-| Üretici | Yayınladığı sayı | RTX 5080 / RX 9070 XT / Arc B580 |
-|---|---|---|
-| NVIDIA | CUDA Cores | 10752 |
-| AMD | Stream Processors | 4096 |
-| Intel | **Xe Vector Engines** | **160** |
-
-NVIDIA ve AMD'nin sayıları aynı şeyi sayıyor (ALU adedi) ve doğrudan
-karşılaştırılabilir. Intel'in yayınladığı sayı ise SIMD motoru adedi —
-B580'in ALU karşılığı 2560 civarı ama Intel bunu **hiçbir yerde yazmıyor**.
-
-160'ı bu sütuna yazmak, 16 kat küçük bir sayıyı aynı kolona koymak olurdu ve
-ölçekleme modelini sessizce bozardı. O yüzden boş bırakıldı.
-
-**Seçenekler:**
-
-1. **Boş kalsın** (şu anki hâli). Intel kartları ölçekleme modeline girmez.
-2. **Xe Vector Engines yazılsın.** K51 zaten "aynı mimari içinde göreli
-   ölçekleme" diyor; Intel-Intel karşılaştırması 512/448/384/128 ile doğru
-   çalışır. Riski: sütun üç farklı birim taşır ve modeli yazan bunu bilmek
-   zorunda kalır.
-3. **Ayrı bir sütun açılsın** (`shader_units_unit` gibi). Şema büyür.
-
-**Önerim: 1.** Eksik veri, yanlış birimde veriden iyidir. Intel için ölçekleme
-gerektiğinde 2. seçenek bilinçli olarak seçilebilir.
-
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
@@ -171,6 +141,14 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S23 — Intel'de `shader_units` boş bırakıldı ✅ 2026-08-19
+
+**Cevap:** `shader_unit_type` alanı eklendi (2. seçeneğin güvenli hâli).
+Intel'in Xe Vector Engines sayısı ham haliyle yazılıyor, tipi
+`xe_vector_engine`. NVIDIA `cuda_core`, AMD `stream_processor`. Kalıcı kural:
+ölçekleme modeli bu alanı yalnızca aynı mimari içinde kullanabilir.
+→ `docs/KARARLAR.md` K57, K58
 
 ### S21 — `pcie_version` ve `recommended_psu_watt` zorunlu ✅ 2026-08-19
 

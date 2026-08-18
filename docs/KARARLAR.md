@@ -1017,3 +1017,44 @@ Kural `CLAUDE.md` "Kalite" bölümüne de yazıldı: yeni bir zorunlu alan
 `npm run sema:kontrol` bu kuralı denetliyor: zorunlu bir spec alanı `engine/`
 ya da `app/` içinde hiç geçmiyorsa uyarı basıyor. Uyarı, hata değil —
 kullanılmayan zorunlu alan bir tasarım kokusudur, kırık kod değil.
+
+---
+
+## 2026-08-19 — shader_units'in birimi
+
+Karar veren: proje sahibi.
+
+### K57 — `gpu_specs.shader_unit_type` eklendi (S23 kapanışı)
+
+Enum: `cuda_core`, `stream_processor`, `xe_vector_engine`. Opsiyonel, ama
+`shader_units` doluysa dolu olmak zorunda.
+Migration: `20260818230404_shader_unit_type`.
+
+Intel'in "Xe Vector Engines" sayısı ham haliyle `shader_units`'e yazılır,
+tipi `xe_vector_engine` olur. NVIDIA `cuda_core`, AMD `stream_processor`.
+
+**Gerekçe:** `shader_units` markalar arası karşılaştırılabilir **değildir**.
+Intel'de yaklaşık 16 kat fark var (B580: 160 Xe Vector Engine, ALU karşılığı
+~2560) ama NVIDIA ile AMD arasında da mimari fark var — aynı CUDA çekirdeği
+sayısı ile aynı stream processor sayısı aynı performans demek değil.
+
+Tip etiketi bu kısıtı **yapısal** hale getiriyor: sayının ne saydığını satırın
+kendisi söylüyor, kodu yazanın hatırlamasına bırakılmıyor. Alternatif —
+Intel'i boş bırakmak — bilgiyi tamamen atardı; ham sayıyı tipsiz yazmak ise
+sessiz yanlış karşılaştırmaya kapı açardı.
+
+### K58 — KALICI KURAL: `shader_units` yalnızca aynı mimari içinde kullanılır
+
+> Performans ölçekleme modeli `shader_units`'i **yalnızca aynı mimari içinde**
+> kullanabilir. Farklı marka ya da farklı nesil arasında bu alanla
+> karşılaştırma yapılmaz.
+
+**Gerekçe:** K37'nin (spec alanlarından performans türetilmez) ve K51'in
+(ölçekleme alanları aynı mimari içindir) doğal sonucu, ama artık açıkça
+yazılı. `shader_unit_type` bu kuralın ihlal edilip edilmediğini kontrol
+edilebilir kılıyor: iki satırın tipi farklıysa karşılaştırma geçersizdir.
+
+Kural `CLAUDE.md` "Veri kuralları" bölümüne de yazıldı.
+
+`npm run sema:kontrol` denetler: `shader_units` dolu olan her CSV satırında
+`shader_unit_type` da dolu olmalı.

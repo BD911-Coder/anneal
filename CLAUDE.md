@@ -122,6 +122,11 @@ optimizasyon sayılmaz, ancak `SCHEMA.md`'de tanımlı olmak zorundadır.
 - Parça slug'ları bir kez atanır, **asla değişmez**.
 - Motorun ürettiği her sayının yanında `model_version` bulunur.
 - URL yapısı `SCHEMA.md` bölüm 9'da sabittir.
+- **`shader_units` yalnızca aynı mimari içinde kullanılır.** Performans
+  ölçekleme modeli bu alanla farklı marka ya da farklı nesil arasında
+  karşılaştırma yapamaz. Sayının ne saydığını `shader_unit_type` söyler
+  (`cuda_core`, `stream_processor`, `xe_vector_engine`) — iki satırın tipi
+  farklıysa karşılaştırma geçersizdir. Bkz. `docs/KARARLAR.md` K57, K58.
 
 ### dev-seed koruması
 
@@ -219,6 +224,12 @@ Intel ARK'ta içerik JS bağlamından okunamıyor, `get_page_text` kullanılmal�
 **Adres desenleri tutarsız:** AMD'de `amd-radeon-rx-9070xt.html` (tiresiz) ama
 `amd-radeon-rx-7900-gre.html` (tireli); 9000 serisinde pazarlama sayfası ile
 spec sayfası ayrı adreslerde. İki varyantı da denemek gerekiyor.
+
+### Prisma
+
+`prisma migrate dev` istemciyi **her zaman yenilemiyor**. Migration'dan sonra
+`npx prisma generate` elle çalıştırılmalı; yenilenmemiş istemci yeni sütunu
+tanımaz ve içe aktarma yarım kayıt bırakabilir. Bu iki kez yaşandı.
 
 ### Spec verisinde çapraz kontrol
 

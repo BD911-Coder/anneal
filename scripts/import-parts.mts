@@ -282,6 +282,9 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
           pcie_version: row.pcie_version || null,
           // K51: olcekleme alanlari, hepsi opsiyonel.
           shader_units: intOrNull(row.shader_units ?? "", "shader_units"),
+          // K57: sayinin ne saydigi. shader_units doluysa bu da dolu olmali.
+          shader_unit_type: (row.shader_unit_type || null) as
+            | "cuda_core" | "stream_processor" | "xe_vector_engine" | null,
           boost_clock_mhz: intOrNull(row.boost_clock_mhz ?? "", "boost_clock_mhz"),
           memory_bandwidth_gbs: floatOrNull(row.memory_bandwidth_gbs ?? "", "memory_bandwidth_gbs"),
           ...provenance,

@@ -136,6 +136,7 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `recommended_psu_watt` | int? |
 | `pcie_version` | text? |
 | `shader_units` | int? |
+| `shader_unit_type` | enum? (`cuda_core`, `stream_processor`, `xe_vector_engine`) |
 | `boost_clock_mhz` | int? |
 | `memory_bandwidth_gbs` | float? |
 
@@ -152,7 +153,16 @@ demek değildir; üreticiler yalnızca kendi referans kartlarının ölçüsün�
 Boşsa C5 kuralı atlanır ve **arayüz bunu kullanıcıya söyler** — sessizce
 atlanmaz.
 
-Son üç alan da **opsiyoneldir** ve K37'nin istisnası değildir: mutlak FPS ya da
+Şu alan markalar arası karşılaştırılabilir **değildir**: `shader_units` (K57).
+`shader_unit_type` bu kısıtı yapısal hale getirir: sayının ne saydığını satırın
+kendisi söyler, hatırlamaya bırakılmaz. `shader_units` doluysa
+`shader_unit_type` da dolu olmak zorundadır; `npm run sema:kontrol` denetler.
+
+> **Kalıcı kural:** Performans ölçekleme modeli `shader_units`'i **yalnızca aynı
+> mimari içinde** kullanabilir. Farklı marka ya da farklı nesil arasında bu
+> alanla karşılaştırma yapılmaz.
+
+Son dört alan da **opsiyoneldir** ve K37'nin istisnası değildir: mutlak FPS ya da
 indeks türetmek için değil, **aynı mimari içinde göreli ölçekleme** için
 tutulurlar. Nesiller arası karşılaştırmada kullanılmazlar.
 Bkz. `docs/KARARLAR.md` K51.

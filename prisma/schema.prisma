@@ -115,6 +115,14 @@ enum Workload {
   productivity
 }
 
+// shader_units'in ne saydigi (K57). Markalar arasi karsilastirilabilir degil;
+// tip etiketi bu kisiti satirin kendisine yaziyor.
+enum ShaderUnitType {
+  cuda_core          // NVIDIA
+  stream_processor   // AMD
+  xe_vector_engine   // Intel — ~16 kat kucuk olcekte
+}
+
 enum ImportStatus {
   pending
   processed
@@ -184,6 +192,7 @@ model GpuSpecs {
   // Nesiller arasi degil, ayni mimari icinde goreli olcekleme icin (K51).
   // Opsiyonel: ureticinin her sayfasinda bulunmuyor.
   shader_units         Int?
+  shader_unit_type     ShaderUnitType?
   boost_clock_mhz      Int?
   memory_bandwidth_gbs Float?
 

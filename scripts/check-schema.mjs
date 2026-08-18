@@ -337,6 +337,32 @@ if (kullanilmayan.length === 0) {
   console.log("          dusunulmeli — zorunluluk, kaynagin o alani yayinlamasina bagimlilik yaratir.");
 }
 
+// K57 — shader_units dolu olan her CSV satirinda shader_unit_type da dolu olmali.
+// Sayinin ne saydigi bilinmeden o sayi kullanilamaz; bos tip, sessizce yanlis
+// karsilastirmaya kapi acar.
+console.log("\n--- shader_units / shader_unit_type (K57) ---");
+const csvDir = "data/parts";
+let k57Sorun = 0;
+for (const file of readdirSync(csvDir).filter((f) => f.startsWith("gpu") && f.endsWith(".csv"))) {
+  const satirlar = readFileSync(`${csvDir}/${file}`, "utf8").trim().split("\n");
+  const basliklar = satirlar[0].split(",").map((h) => h.trim());
+  const iUnits = basliklar.indexOf("shader_units");
+  const iType = basliklar.indexOf("shader_unit_type");
+  if (iUnits === -1) continue;
+  if (iType === -1) {
+    check(`K57 ${file}: shader_unit_type sutunu var`, false, "sutun yok");
+    k57Sorun++;
+    continue;
+  }
+  const eksik = satirlar.slice(1).filter((satir) => {
+    const h = satir.split(",");
+    return (h[iUnits] ?? "").trim() !== "" && (h[iType] ?? "").trim() === "";
+  }).length;
+  check(`K57 ${file}: her shader_units'in tipi var`, eksik === 0, `${eksik} satirda tip bos`);
+  if (eksik > 0) k57Sorun++;
+}
+if (k57Sorun === 0) console.log("  (tum gpu CSV'lerinde tutarli)");
+
 // ---------------------------------------------------------------------------
 console.log("");
 if (problems.length > 0) {
