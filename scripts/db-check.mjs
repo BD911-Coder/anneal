@@ -81,22 +81,54 @@ for (const t of expected.filter((t) => actual.includes(t))) {
   console.log(`  ${t.padEnd(20)} ${c[0].n}`);
 }
 
-// Enum'lar da olusmus mu
+// Enum'lar da olusmus mu — sadece public sema; Supabase kendi semalarinda
+// (auth, storage, realtime) baska enum'lar tutar, onlar bizi ilgilendirmez.
 const { rows: enums } = await client.query(
   `select t.typname, count(e.enumlabel)::int as n
-   from pg_type t join pg_enum e on e.enumtypid = t.oid
+   from pg_type t
+   join pg_enum e on e.enumtypid = t.oid
+   join pg_namespace n on n.oid = t.typnamespace
+   where n.nspname = 'public'
    group by t.typname order by t.typname`,
 );
-console.log("\n--- Enum tipleri ---");
+console.log("\n--- Enum tipleri (public sema) ---");
 for (const e of enums) console.log(`  ${e.typname.padEnd(22)} ${e.n} deger`);
+
+// K7: Prisma'da takma adla yazilan degerler veritabanina dogru inmis mi?
+// Kodda dev_seed yaziyor ama veritabaninda dev-seed olmali.
+console.log("\n--- K7 takma adlari (veritabanindaki gercek degerler) ---");
+const K7 = [
+  ["Source", "dev-seed"],
+  ["CpuMemoryType", "DDR4/DDR5"],
+  ["FormFactor", "E-ATX"],
+  ["StorageType", "sata-ssd"],
+  ["Resolution", "1080p"],
+];
+let k7Sorun = 0;
+for (const [type, label] of K7) {
+  const { rows: r } = await client.query(
+    `select 1 from pg_type t
+     join pg_enum e on e.enumtypid = t.oid
+     join pg_namespace n on n.oid = t.typnamespace
+     where n.nspname = 'public' and t.typname = $1 and e.enumlabel = $2`,
+    [type, label],
+  );
+  const ok = r.length > 0;
+  if (!ok) k7Sorun++;
+  console.log(`  [${ok ? "OK  " : "HATA"}] ${type}.'${label}'`);
+}
 
 await client.end();
 if (pooled && pooled !== client) await pooled.end();
 
 console.log("");
-if (eksik.length || fazla.length) {
+if (eksik.length || fazla.length || k7Sorun > 0) {
   if (eksik.length) console.log(`SONUC: EKSIK TABLO: ${eksik.join(", ")}`);
   if (fazla.length) console.log(`SONUC: BEKLENMEYEN TABLO: ${fazla.join(", ")}`);
+  if (k7Sorun) console.log(`SONUC: ${k7Sorun} K7 takma adi veritabaninda yanlis`);
   process.exit(1);
 }
-console.log(`SONUC: ${expected.length} tablonun ${expected.length}'i mevcut, ${enums.length} enum tipi olusmus.`);
+console.log(
+  `SONUC: ${expected.length} tablonun ${expected.length}'i mevcut, ` +
+  `${enums.length} enum tipi olusmus, K7 takma adlari dogru.`,
+);

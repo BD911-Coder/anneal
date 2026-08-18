@@ -18,26 +18,17 @@ Son güncelleme: 2026-08-18
 
 ## Açık sorular
 
-### S10 — Supabase bağlantı bilgileri bekleniyor 🔴 ENGELLEYİCİ
+### S11 — Veritabanı parolası sohbet geçmişine girdi
 
-Sürücü paketleri kuruldu, yapılandırma hazır, `.env.local` oluşturuldu — ama
-içi **yer tutucu**. Gerçek değerler olmadan migration çalıştırılamaz.
+Bağlantı adresleri parolayla birlikte yazışmada paylaşıldı. **Depoya sızmadı** —
+`.env.local` yok sayılıyor, push protection etkin, commit geçmişi temiz. Ama
+parolanın kendisi artık sohbet kaydında duruyor.
 
-Gereken iki değer (Supabase panelinde **Project Settings → Database**):
+**Önerim:** Supabase panelinden veritabanı parolasını yenile (Project Settings →
+Database → Reset database password). Parola başka hiçbir yerde kayıtlı değil,
+yenilenince sadece `.env.local` güncellenir — bunu ben yaparım.
 
-| Değişken | Supabase'deki adı | Port |
-|---|---|---|
-| `DATABASE_URL` | Connection pooling → Transaction | 6543 |
-| `DIRECT_URL` | Direct connection | 5432 |
-
-**İki yol var:**
-
-1. **Önerilen:** `.env.local` dosyasını kendin doldur, sonra bana "hazır" de.
-   Parola sohbet geçmişine hiç girmez.
-2. Adresleri bana ver, ben dosyaya yazayım.
-
-Parolada `@ : / ? # [ ]` gibi karakter varsa percent-encode edilmeli
-(`p@ss` → `p%40ss`). İstersen ham parolayı ben kodlarım.
+**Karar gereken:** yenilensin mi, yoksa mevcut hâliyle mi devam edilsin.
 
 ---
 
@@ -51,6 +42,13 @@ yazılırken bir koşucu gerekecek, muhtemelen `vitest`.
 ---
 
 ## Kapanmış sorular
+
+### S10 — Supabase bağlantı bilgileri ✅ 2026-08-18
+
+**Cevap:** Bilgiler verildi, `.env.local` dolduruldu, migration
+(`20260818102429_ilk_sema`) çalıştı. 17 tablo, 12 enum ve 5 indeks oluştu;
+`npm run db:kontrol` hepsini doğruluyor. Paroladaki iki `#` percent-encode
+edildi (`%23`) — kodlanmasaydı parola ilk `#`'te kesilecekti.
 
 ### S1 — Şemadaki altı indeks ✅ 2026-08-18
 
