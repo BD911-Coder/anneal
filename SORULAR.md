@@ -12,37 +12,54 @@ proje sahibinin kullandığı okuma yolu `docs/` klasör sayfasına erişemiyor.
 `docs/log/` altındaki raporlar o günün fotoğrafıdır ve değişmez;
 bu dosya güncel durumu gösterir.
 
-Son güncelleme: 2026-08-18
+Son güncelleme: 2026-08-19
 
 ---
 
 ## Açık sorular
 
-### S19 — Gerçek parça verisi nereden gelecek?
+### S20 — Aynı slug ikinci kez geldiğinde ne olacak? 🔴 AKIŞI ENGELLİYOR
 
-Wikidata ölçüldü ve **elendi**: 153 GPU / 284 CPU kaydı var, satmakta olan
-parçaların çoğu eksik, `recommended_psu_watt` ve `pcie_version` gibi alanlar
-hiç tanımlı değil, uzunluk %4 dolu, ve doğrulanmış yanlış değerler var
-(Core i7-3770'in soketi yanlış yazılmış). Ayrıntı:
-`docs/log/2026-08-19-wikidata-fizibilite.md`
+İçe aktarma script'i yazıldı ve bu durumla **hemen karşılaştı**: `gpu.csv`
+içindeki `nvidia-rtx-5090` satırı, veritabanında zaten dev-seed olarak var.
 
-Kaggle veri setleri lisans nedeniyle kapalı (K48).
+```
+[ATLA ] nvidia-rtx-5090 — slug zaten var (mevcut source='dev_seed')
+```
 
-**Önerim: elle giriş.** Kategori başına 5-10 parça, üretici ürün sayfasından.
-`source = 'manufacturer'`, `source_url` = ürün sayfası, `confidence = 'high'`.
-Beta bitiş ölçütü "10 kişi bir sistem toplayabildi" — bunun için binlerce parça
-gerekmiyor ve az sayıda doğru parça, çok sayıda şüpheli parçadan iyidir.
+Bu tek seferlik bir kaza değil; **kaçınılmaz**. Şu an 29 dev-seed parça var ve
+elle girilecek gerçek parçaların çoğu aynı fiziksel donanım. Slug marka+model'den
+türetildiği ve **asla değişmediği** için (`SCHEMA.md` bölüm 2) aynı parça aynı
+slug'ı almak zorunda.
 
-**Karar gereken:**
+**Şu anki geçici davranış:** dokunma, atla, `raw_imports.error` alanına sebebini
+yaz. Karar verilene kadar en güvenli olan bu — üzerine yazmak doğru olabilecek
+bir satırı sessizce değiştirebilirdi.
 
-1. Elle giriş onaylanıyor mu?
-2. Kaç parçayla başlanacak? (Şu an dev-seed'de 29 sahte parça var; gerçek
-   veriyle aynı kategorileri doldurmak yeterli olabilir.)
-3. Giriş nasıl olacak — CSV içe aktarma (daha önce ertelenmişti) yeniden mi
-   açılsın, yoksa seed script'ine benzer elle yazılmış bir dosya mı?
+**Seçenekler:**
 
-Wikidata kalıcı olarak elenmedi; veri CC0 ve topluluk düzenliyor, bir yıl
-sonra tekrar bakılabilir. → `docs/KARARLAR.md` K48
+1. **Üzerine yaz (CSV kazanır).** `parts` ve spec satırı güncellenir; `source`
+   `manufacturer` olur. CSV kaynak veri olduğu için (K50) tutarlı: veritabanı
+   türetilmiş şeydir, CSV'yi düzeltip yeniden aktarmak doğal iş akışı olur.
+   Riski: bir yazım hatası sessizce canlı veriyi bozabilir.
+
+2. **Sadece dev-seed'in üzerine yaz, gerçek verinin üzerine yazma.** Sahte veri
+   gerçek veriyle değiştirilebilir ama gerçek veri gerçek veriyle
+   değiştirilemez — o durumda dur ve söyle. Ara yol; kuralı açıklamak biraz
+   daha zor.
+
+3. **Hep atla (şu anki hâli).** Güvenli ama bir alanı düzeltmek için elle
+   silme gerektirir. Beta'da fiyat/spec düzeltmesi sık olacağı için yorucu.
+
+4. **Dur ve hata ver.** İçe aktarma hiç çalışmaz, insan karar verir.
+
+**Önerim: 2. seçenek.** Gerekçe: dev-seed zaten "yerini gerçek veri alana kadar"
+duran veri. Onu değiştirmek istenen şey. Gerçek veriyi sessizce ezmek ise
+istenmeyen şey — ve ikisi arasındaki farkı veritabanı zaten `source` sütununda
+tutuyor, yeni bir alan gerekmiyor.
+
+**Bu karar verilmeden kalan 36 parça aktarılamaz** — çoğu aynı çakışmaya
+girecek.
 
 ### S18 — Önizleme dağıtımları kapatılsın mı?
 
@@ -132,6 +149,19 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S19 — Gerçek parça verisi nereden gelecek? ✅ 2026-08-19
+
+**Cevap:** Elle giriş, üretici ürün sayfalarından. Wikidata birincil kaynak
+olmayacak (fizibilite raporundaki LGA1155 hatası belirleyici oldu), bir yıl
+sonra tekrar bakılacak. Kaggle lisans nedeniyle kapalı.
+
+Miktar ve dağılım proje sahibi tarafından verildi: CPU 8, GPU 8, anakart 6,
+RAM 4, PSU 4, kasa 4, depolama 4 — toplam 38. Seçim kriteri: on bir uyumluluk
+kuralının her biri en az bir parça çiftiyle tetiklenebilmeli.
+
+Kaynak CSV `data/parts/` altında, depoda versiyonlu.
+→ `docs/KARARLAR.md` K49, K50
 
 ### S17 — `builds` tablosuna `resolution` alanı ✅ 2026-08-18
 

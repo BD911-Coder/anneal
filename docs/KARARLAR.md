@@ -818,3 +818,73 @@ için birincil kaynak olamayacağı yönünde.
 girmeden **önce** kontrol edilir. Kaynağı belirsizse alınmaz. `SCHEMA.md`
 bölüm 1.3'teki `source` ve `source_url` alanları zaten bunu zorunlu kılıyor:
 nereden geldiğini yazamadığın veriyi giremezsin.
+
+---
+
+## 2026-08-19 — Veri kaynağı: elle giriş
+
+Karar veren: proje sahibi (K49, K50).
+
+### K49 — Wikidata birincil veri kaynağı olmayacak
+
+`docs/log/2026-08-19-wikidata-fizibilite.md` raporundaki ölçümler üzerine
+karar verildi: Wikidata GPU/CPU verisi projeye birincil kaynak olarak
+alınmayacak.
+
+**Gerekçe — üçü birden:**
+
+1. **Kapsam yok.** 153 GPU modeli, 284 CPU modeli. 2026 modeli hiç yok,
+   2024'ten tek GPU var. Core i9-14900K gibi en çok satan bir işlemci
+   kayıtlı bile değil.
+2. **Alanlar yok.** `gpu_specs`'in sekiz alanından üçü Wikidata'da hiç
+   tanımlı değil (`recommended_psu_watt`, `chipset`, `pcie_version`),
+   `length_mm` %4 dolu, `vram_gb` için üç rakip özellik var ve hiçbiri
+   modern kartlarda dolu değil.
+3. **Doğruluk düşük.** Belirleyici örnek: Wikidata, Intel Core i7-3770'in
+   soketini `LGA 1151` diye veriyor; doğrusu LGA1155. Bu alan doğrudan
+   uyumluluk kuralı C1'i besliyor — yanlış soket, kullanıcıya takılamayacak
+   bir sistemi "uyumlu" dedirtir. Ayrıca saat frekansı üç ayrı birimde
+   girilmiş ve bir kartın TDP alanında sıcaklık değeri var.
+
+**Lisans sorunu yoktu** — Wikidata CC0 (K48). Eleme tamamen kalite ve kapsam
+gerekçesiyle.
+
+**Kalıcı bir kapatma değil.** Veri CC0 ve topluluk düzenliyor; kapsam bir yıl
+içinde artabilir. **2027 yazında tekrar bakılacak.** O zaman ölçülecek şey
+aynı: `length_mm`, `recommended_psu_watt` ve `pcie_version` doldu mu, ve
+bilinen bir yanlış değer (i7-3770 soketi) düzeldi mi.
+
+### K50 — Parça verisi elle girilir; kaynak CSV depoda durur
+
+Beta'nın parça verisi üretici ürün sayfalarından **elle** toplanır.
+
+**Yöntem:**
+
+| Adım | Nerede |
+|---|---|
+| Kaynak veri | `data/parts/<kategori>.csv` — depoda, versiyonlu |
+| İçe aktarma | `npm run parca:aktar` (`scripts/import-parts.mts`) |
+| 1. aşama | Her CSV satırı ham haliyle `raw_imports`'a |
+| 2. aşama | Normalize edilip `parts` + kategori spec tablosuna |
+
+Damga: `source = 'manufacturer'`, `confidence = 'high'`.
+
+**Neden CSV depoda:** Veri kaynağı git geçmişinde durur; "bu sayı ne zaman ve
+neden değişti" sorusu commit'ten cevaplanır. Veritabanı türetilmiş şeydir,
+kaynak değil.
+
+**Neden iki aşama:** `SCHEMA.md` bölüm 0, kural 3. Normalizasyon mantığında
+hata bulunursa ham satır duruyor olur ve yeniden işlenebilir.
+
+**Satır düzeyinde tek kaynak.** `source_url` şemada satır düzeyindedir, değer
+düzeyinde değil. Bu yüzden bir satırın **bütün** değerleri aynı üretici
+sayfasından gelir. O sayfada olmayan alan **boş bırakılır**; başka bir
+kaynaktan doldurulursa satırın kaynak adresi yalan söyler.
+
+**Zorunlu alan boşsa parça alınmaz.** İçe aktarma o satırı reddeder ve
+`raw_imports.error` alanına sebebini yazar. Uydurma değerle doldurmak yerine
+parça değiştirilir.
+
+**Normalizasyon uydurma değildir.** Sayfada "Gen 5" yazarken `PCIe 5.0`
+yazmak aynı olgunun başka yazımıdır. Sayfada olmayan hat sayısını (`x16`)
+eklemek uydurmadır ve yapılmaz.
