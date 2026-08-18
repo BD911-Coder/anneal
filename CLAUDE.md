@@ -30,6 +30,26 @@ Proje sahibinin teknik bilgisi sınırlıdır ve bu bilinçli bir kısıttır, g
 
 ---
 
+## Karar yetkisi
+
+**Kendi başına karar ver, sadece raporla:**
+
+- Kütüphane sürümleri, yapılandırma dosyaları, klasör içi düzen
+- İsimlendirme, kod organizasyonu, yardımcı fonksiyonlar
+- `SCHEMA.md`'nin kendi içindeki açık çelişkiler → daha spesifik olan bölüm
+  kazanır, kararı `docs/KARARLAR.md`'ye yaz
+- Teknik zorunluluklar (dil/araç kısıtları) → en yakın çözümü uygula
+
+**Dur ve sor:**
+
+- `SCHEMA.md`'ye alan ekleme/çıkarma
+- Yeni bir kütüphane veya servis
+- Beta kapsamı dışına çıkan herhangi bir şey
+- Veri kaybı riski olan işlemler
+- Kurallardan birinin esnetilmesi gereken durum
+
+---
+
 ## Mimari
 
 ### Uygulanan ilkeler
@@ -136,6 +156,21 @@ Proje sahibi her oturum sonunda üç soru sorar. Cevabı hazır tut:
 3. Canlıda çalışıyor mu?
 
 "Dünkü çalışan haline dön" dendiğinde açıklama istemeden geri al, sonra ne olduğunu anlat.
+
+---
+
+## Raporlama
+
+Her iş biriminin sonunda `docs/log/YYYY-AA-GG-konu.md` dosyası yazılır:
+
+- Ne yapıldı (kısa)
+- Hangi kararlar verildi ve neden
+- Ne doğrulandı (komut çıktılarıyla)
+- Açık kalan sorular
+
+Bu dosya da commit edilir.
+
+Verilen her kalıcı karar `docs/KARARLAR.md`'ye tarih ve gerekçeyle eklenir.
 
 ---
 

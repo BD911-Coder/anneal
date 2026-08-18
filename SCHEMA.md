@@ -71,7 +71,7 @@ sütunu tutmak var olmayan bir işlemin mümkün olduğunu ima eder.
 **Muaf tablolar:** `builds`, `build_items`, `click_events`, `feedback`, `raw_imports`.
 Gerekçe: bunlar dış dünya hakkında iddia taşımaz. Kullanıcının kendi eylemini
 (sistem kaydetme, tıklama, geri bildirim) veya ham veriyi olduğu gibi tutarlar.
-`raw_imports.source` ayrı bir istisnadır — bkz. bölüm 11.
+`raw_imports.source` ayrı bir istisnadır — bkz. `docs/KARARLAR.md`, K6.
 
 > `source = 'dev-seed'` olan hiçbir satır canlı ortamda gösterilmez.
 > Bu filtre veri erişim katmanında zorunludur, çağıran kodun tercihine bırakılmaz.
@@ -456,78 +456,12 @@ Bu tablolar ve alanlar **şimdi yazılmaz**, ama şema onları engellemeyecek ş
 
 ## 11. Kararlar
 
-v1.0 şemayı koda dökerken belirsiz kalan noktalar. Burada yazılı olanlar
-**kapanmıştır**, yeniden sorulmaz. Yeni bir belirsizlik çıkarsa buraya eklenir.
+Şemayla ilgili verilen kalıcı kararlar (K1-K7) `docs/KARARLAR.md` dosyasındadır.
+Tek yerde tutulmalarının sebebi: aynı kararın iki dosyada durup zamanla
+birbirinden ayrışmasını önlemek.
 
-### K1 — Append-only tablolarda `updated_at` yok
-
-`price_snapshots` ve `benchmark_points` sadece `created_at` + `collected_at` taşır.
-
-**Gerekçe:** Satır güncellenmiyorsa "son değişiklik anı" diye bir olgu yoktur.
-Sütunu tutmak, olmayan bir işlemin mümkün olduğunu ima eder ve ileride birinin
-UPDATE yazmasına zemin hazırlar.
-
-### K2 — Spec tablolarında ayrı `id` yok, bağlantı tablosunda bileşik anahtar
-
-Yedi kategori spec tablosunda `part_id` birincil anahtardır.
-`build_items` birincil anahtarı (`build_id`, `part_id`) bileşiğidir.
-
-**Gerekçe:** Satırın kimliği zaten sahibinden geliyorsa ikinci bir anahtar aynı
-gerçeği iki yerde saklamaktır. Ayrıca bileşik anahtar, "aynı parça bir sistemde
-iki kez" hatasını veritabanı seviyesinde imkânsız kılar.
-
-### K3 — Olgusal iddia kuralı
-
-Dış dünya hakkında olgusal iddia taşıyan her tabloda `source`, `source_url`,
-`confidence`, `collected_at` bulunur. Muaf olanlar bölüm 1.3'te sayılıdır.
-
-**Gerekçe:** v1.0'daki "dışarıdan veri taşıyan tablo" ifadesi hangi tabloların
-kastedildiğini söylemiyordu ve her seferinde yorum gerektiriyordu. Ölçüt artık net:
-tablo bir şeyin **öyle olduğunu** iddia ediyorsa, nereden bilindiği de yazılır.
-Ek fayda: dev-seed damgası spec tablolarına da düşer.
-
-### K4 — `benchmark_points.source_url` zorunlu
-
-Bölüm 1.3'te opsiyonel, burada zorunlu.
-
-**Gerekçe:** Bu tablo motorun kalibrasyon verisidir. Kaynağı olmayan bir ölçüm,
-sonradan doğrulanamayacağı için veri değil gürültüdür.
-
-### K5 — `case_specs.supported_form_factors` enum dizisi
-
-`text[]` değil, `FormFactor[]`.
-
-**Gerekçe:** Uyumluluk kuralı C6 bu alanı `motherboard_specs.form_factor` ile
-karşılaştırıyor. İkisi de aynı enum olursa yazım hatası (`mATX` / `matx`) sessiz
-bir uyumsuzluk hatası üretemez — veritabanı kabul etmez.
-
-### K6 — `raw_imports.source` serbest metin kalır (bilinçli istisna)
-
-Şemanın geri kalanında `source` enum'dur; burada `text`.
-
-**Gerekçe:** Bu tablonun işi ham veriyi **olduğu gibi** saklamaktır. Kaynak adını
-enum'a bağlamak, yeni bir veri kaynağı denemek için şema değişikliği gerektirirdi —
-oysa `raw_imports`'ın varlık sebebi tam olarak henüz normalleştirilmemiş veriyi
-kabul edebilmektir.
-
-### K7 — Prisma enum değerlerinde takma ad (teknik kısıt)
-
-Prisma enum değerleri tire, eğik çizgi içeremez ve rakamla başlayamaz. Şu değerler
-kodda takma adla yazılır, **veritabanındaki gerçek değer değişmez**:
-
-| SCHEMA.md / veritabanı | Koddaki ad |
-|---|---|
-| `dev-seed` | `dev_seed` |
-| `DDR4/DDR5` | `DDR4_DDR5` |
-| `E-ATX` | `E_ATX` |
-| `sata-ssd` | `sata_ssd` |
-| `1080p`, `1440p`, `2160p` | `R1080p`, `R1440p`, `R2160p` |
-
-`cpu_specs.memory_type` üç değer alabildiği (`DDR4/DDR5` dahil), `motherboard_specs`
-ve `ram_specs` ise ikisinden birini aldığı için iki ayrı enum tanımlıdır:
-`CpuMemoryType` ve `MemoryType`.
-
-### Uygulama notu
+Bu belge **ne** olduğunu tanımlar; `docs/KARARLAR.md` belirsiz kalan noktaların
+**neden** öyle çözüldüğünü anlatır.
 
 Bu şemanın çalışan karşılığı `prisma/schema.prisma` dosyasındadır ve alan adları
 buradakiyle birebir aynıdır. İndeks tanımları orada bulunur; indeks bir alan

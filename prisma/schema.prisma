@@ -4,7 +4,7 @@
 // Tablo ve alan adları SCHEMA.md ile birebir aynı tutuldu ki satır satır
 // karşılaştırılabilsin. Alan adlarının snake_case olmasının sebebi budur.
 //
-// Belirsiz noktaların nasıl çözüldüğü SCHEMA.md bölüm 11'de (Kararlar) yazılıdır.
+// Belirsiz noktaların nasıl çözüldüğü docs/KARARLAR.md dosyasında yazılıdır.
 //
 // Hiçbir ilişkide silme davranışı tanımlanmadı: veri kuralları gereği satır
 // silinmez, Prisma varsayılanı da zaten silmeyi engeller.
@@ -21,7 +21,7 @@ datasource db {
 
 // ---------------------------------------------------------------------------
 // Enum'lar — SCHEMA.md bölüm 1 ve 2
-// Takma adların sebebi SCHEMA.md bölüm 11, K7. Veritabanındaki değerler değişmez.
+// Takma adların sebebi docs/KARARLAR.md, K7. Veritabanındaki değerler değişmez.
 // ---------------------------------------------------------------------------
 
 enum Source {
