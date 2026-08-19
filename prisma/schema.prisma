@@ -285,7 +285,8 @@ model PsuSpecs {
   // (80 PLUS / Cybenetics) ve hicbir kural bu alani kullanmiyor.
   efficiency_rating String?
   modularity        Modularity
-  length_mm         Int
+  // Opsiyonel (K62): fiziksel olcu alanlari asla zorunlu olmaz.
+  length_mm         Int?
 
   source       Source
   source_url   String?

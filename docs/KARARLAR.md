@@ -1107,3 +1107,30 @@ kullanmıyor; zaten S22 listesindeydi. Ayrıca üreticiler aynı sertifika siste
 yayınlamıyor: Corsair RM850e sayfasında 80 PLUS satırı yok, yalnızca
 "Cybenetics Gold" var. Değer sayfada yazdığı gibi girilir — `80+ Gold` da olur,
 `Cybenetics Gold` da.
+
+### K62 — KALICI KURAL: fiziksel ölçü alanları asla zorunlu olmaz
+
+Uzunluk, yükseklik, açıklık gibi fiziksel ölçü alanlarının hiçbiri zorunlu
+olamaz. İlgili kural eksik alanda kendini atlar, arayüz kullanıcıya bildirir.
+
+`psu_specs.length_mm` opsiyonel oldu.
+Migration: `20260818234304_psu_uzunluk_opsiyonel`.
+
+**Gerekçe:** Üreticiler bu değerleri tutarsız yayınlıyor; zorunluluk veriyi
+dışarıda bırakmaktan başka işe yaramıyor.
+
+**Bu üçüncü kez aynı duvara çarpmamız:**
+
+| Ne zaman | Alan | Karar |
+|---|---|---|
+| 1. | `gpu_specs.length_mm` — FE üretilmeyen kartlar | K52 |
+| 2. | `pcie_version`, `recommended_psu_watt` — AMD yayınlamıyor | K56 |
+| 3. | `psu_specs.length_mm` — Corsair eksen etiketlemiyor | **K62** |
+
+Üçünde de aynı desen: şema tek bir üreticinin yayın alışkanlığına göre
+kurulmuş, ikinci üretici gelince kırılmış. Kural artık genel: fiziksel ölçü
+alanı zorunlu yapılmaz, bir üretici yayınlıyor diye.
+
+K56'nın ölçütü (bir alan ancak bir kural ya da arayüz kullanıyorsa zorunlu
+olabilir) tek başına yetmiyordu: `length_mm` **kullanılıyor** (C5, W5) ama
+yine de zorunlu olmamalı. K62 bu boşluğu kapatıyor.

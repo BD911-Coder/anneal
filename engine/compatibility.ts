@@ -161,7 +161,8 @@ export function checkCompatibility(input: BuildInput): Finding[] {
   }
 
   // --- W5: güç kaynağı kasaya sığmayabilir ---------------------------------
-  if (ready(psu?.length_mm, pcCase?.max_psu_length_mm) && psu!.length_mm > pcCase!.max_psu_length_mm) {
+  // length_mm opsiyonel (K62): bilinmiyorsa kural atlanır, arayüz söyler.
+  if (ready(psu?.length_mm, pcCase?.max_psu_length_mm) && psu!.length_mm! > pcCase!.max_psu_length_mm) {
     warnings.push({
       code: "W5",
       level: "warning",

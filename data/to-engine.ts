@@ -106,12 +106,13 @@ export function toEngineRam(row: {
 export function toEnginePsu(row: {
   part_id: string;
   wattage: number;
-  length_mm: number;
+  length_mm: number | null;
 }): EnginePsu {
   return {
     id: row.part_id,
     wattage: row.wattage,
-    length_mm: row.length_mm,
+    // null -> undefined: motor "yok" ile "bilinmiyor"u ayirt etmiyor (K62).
+    length_mm: row.length_mm ?? undefined,
   };
 }
 

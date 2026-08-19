@@ -46,7 +46,8 @@ export type EngineRam = {
 export type EnginePsu = {
   id: string;
   wattage: number;
-  length_mm: number;
+  /** Bilinmiyor olabilir (K62). Boşsa W5 kuralı atlanır. */
+  length_mm?: number;
 };
 
 export type EngineCase = {

@@ -78,6 +78,8 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   // Kart seçili ama uzunluğu bilinmiyorsa C5 çalışamaz (K52). Kasa seçilmemişse
   // zaten çalışmazdı; uyarı yine de gösteriliyor çünkü kullanıcı kasayı sonra seçecek.
   const gpuLengthUnknown = buildInput.gpu !== undefined && buildInput.gpu.length_mm === undefined;
+  // Aynı durum güç kaynağı için (K62): uzunluk bilinmiyorsa W5 çalışamaz.
+  const psuLengthUnknown = buildInput.psu !== undefined && buildInput.psu.length_mm === undefined;
 
   const selectedStorage = catalog.storage.filter((item) => storageIds.includes(item.id));
   const secilenSayisi = Object.values(selection).filter(Boolean).length + selectedStorage.length;
@@ -447,6 +449,13 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
             <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
               Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
               Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et.
+            </p>
+          )}
+
+          {psuLengthUnknown && (
+            <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
+              Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
+              Üreticinin sayfasından teyit et.
             </p>
           )}
 

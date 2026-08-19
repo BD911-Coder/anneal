@@ -46,7 +46,8 @@ const REQUIRED_SPEC: Record<string, string[]> = {
                 "max_memory_gb", "max_memory_speed_mhz", "m2_slots"],
   ram: ["memory_type", "capacity_gb", "module_count", "speed_mhz", "cas_latency"],
   // efficiency_rating burada YOK: K61 ile opsiyonel oldu.
-  psu: ["wattage", "modularity", "length_mm"],
+  // length_mm burada YOK: K62 ile opsiyonel oldu.
+  psu: ["wattage", "modularity"],
   // read_speed_mbs semada opsiyonel.
   storage: ["storage_type", "capacity_gb", "interface"],
   case: ["supported_form_factors", "max_gpu_length_mm", "max_cpu_cooler_height_mm",
@@ -375,7 +376,7 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
           // K61: opsiyonel, sayfada yazdigi gibi girilir.
           efficiency_rating: row.efficiency_rating || null,
           modularity: row.modularity as "full" | "semi" | "none",
-          length_mm: intOrNull(row.length_mm, "length_mm")!,
+          length_mm: intOrNull(row.length_mm, "length_mm"),
           ...provenance,
         };
         await prisma.$transaction(async (tx) => {

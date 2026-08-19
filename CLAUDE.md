@@ -140,6 +140,10 @@ kurallarını besler. Yanlış değer, kullanıcıya "sığar" deyip sığmamas�
 - **Ondalıklı açıklık değerleri aşağı yuvarlanır.** 180.5 mm → 180 (K59).
 - **Şüpheli değer sayfaya tekrar sorulur.** Pazarlama metnindeki değil, spec
   tablosundaki değer alınır.
+- **Fiziksel ölçü alanları asla zorunlu olmaz** (K62). Üreticiler bu değerleri
+  tutarsız yayınlıyor; zorunluluk veriyi dışarıda bırakmaktan başka işe
+  yaramıyor. Kural eksik alanda kendini atlar, arayüz kullanıcıya bildirir.
+  Bu duvara üç kez çarpıldı: K52, K56, K62.
 
 ### dev-seed koruması
 

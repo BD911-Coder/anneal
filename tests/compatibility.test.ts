@@ -326,6 +326,17 @@ describe("W4 — görüntü çıkışı yok", () => {
 });
 
 describe("W5 — güç kaynağı uzunluğu / kasa", () => {
+  // K62: length_mm opsiyonel. Bilinmeyen uzunluk kuralı atlatır.
+  it("uzunluk bilinmiyorsa kural atlanır, hata uydurmaz", () => {
+    const uzunluksuz: BuildInput = {
+      ...uyumluSistem,
+      psu: { id: psu.id, wattage: psu.wattage },
+      case: { ...pcCase, max_psu_length_mm: 100 },
+    };
+    expect(() => checkCompatibility(uzunluksuz)).not.toThrow();
+    expect(kodlar(uzunluksuz)).not.toContain("W5");
+  });
+
   it("sığan güç kaynağında uyarı vermez", () => {
     expect(kodlar(uyumluSistem)).not.toContain("W5");
   });

@@ -18,39 +18,6 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S24 — `psu_specs.length_mm` zorunlu, ama K60 boş bırakılmasını gerektiriyor 🔴
-
-İki kural çarpışıyor:
-
-- **K60:** Fiziksel ölçülerde çıkarım yapılmaz; etiketsiz değer boş bırakılır.
-- **Şema:** `psu_specs.length_mm` zorunlu (`Int`).
-
-İlk çarpışma hemen çıktı:
-
-```
-[HATA ] corsair-rm850e — zorunlu alan bos: length_mm
-```
-
-Corsair sayfası `Dimensions: 140x150x86` diyor, eksen sırası yazmıyor. K60
-gereği boş bırakıldı → satır içeri giremiyor. Corsair'in birçok modelinde bu
-etiketleme aynı; yani tek bir kart değil, bir markanın çoğu ürünü etkilenecek.
-
-**K56 ölçütüyle bakınca:** `length_mm` **kullanılıyor** — W5 kuralı buna bakıyor.
-Yani zorunlu olması K56'ya aykırı değil. Ama `gpu_specs.length_mm` de C5
-tarafından kullanılıyordu ve **K52 ile opsiyonel yapılmıştı**; gerekçe aynıydı:
-bilinmeyen uzunluk, uzunluğu olmayan güç kaynağı demek değil.
-
-**Seçenekler:**
-
-1. **`psu_specs.length_mm` opsiyonel yap.** K52'nin birebir aynısı. W5 zaten
-   eksik alanda kuralı atlıyor (`ready()` koruması). Arayüz, GPU'da olduğu gibi
-   "güç kaynağı uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi" der.
-2. Corsair'i kapsam dışı bırak. 
-3. K60'ı esnet — önerilmez, daha yeni konuldu.
-
-**Önerim: 1.** GPU tarafında aynı sorun aynı gerekçeyle çözülmüştü; iki alanın
-farklı kurala tabi olması için sebep yok.
-
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
@@ -174,6 +141,13 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S24 — `psu_specs.length_mm` zorunlu, K60 boş bırakılmasını gerektiriyor ✅ 2026-08-19
+
+**Cevap:** Opsiyonel oldu (1. seçenek) ve kalıcı kural yazıldı: fiziksel ölçü
+alanları asla zorunlu olmaz. `corsair-rm850e` içeri alındı. Motor tipi,
+dönüştürücü, W5 kuralı ve arayüz uyarısı GPU'daki kalıbın aynısı.
+→ `docs/KARARLAR.md` K62
 
 ### S23 — Intel'de `shader_units` boş bırakıldı ✅ 2026-08-19
 

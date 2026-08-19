@@ -214,7 +214,7 @@ Bkz. `docs/KARARLAR.md` K51.
 | `wattage` | int |
 | `efficiency_rating` | text? (`80+ Gold`, `Cybenetics Gold`) |
 | `modularity` | enum (`full`, `semi`, `none`) |
-| `length_mm` | int |
+| `length_mm` | int? |
 
 `efficiency_rating` **opsiyoneldir** (K61): hiçbir kural kullanmıyor ve her
 üretici aynı sertifika sistemini yayınlamıyor — Corsair bazı modellerde yalnızca
@@ -230,6 +230,10 @@ Cybenetics veriyor, 80 PLUS vermiyor. Değer sayfada yazdığı gibi girilir.
 >    yapılandırmayı kullandığını bilmiyor; yanlış "sığar" demek, gereksiz
 >    uyarıdan çok daha pahalı.
 > 3. **Ondalıklı açıklık değerleri aşağı yuvarlanır.** 180.5 mm → 180.
+> 4. **Fiziksel ölçü alanları asla zorunlu olmaz** (K62). Üreticiler bu
+>    değerleri tutarsız yayınlıyor; zorunluluk veriyi dışarıda bırakmaktan
+>    başka işe yaramıyor. İlgili kural eksik alanda kendini atlar, arayüz
+>    kullanıcıya bildirir.
 
 **`storage_specs`**
 
