@@ -1,2 +1,16 @@
 id,brand,model,release_year,collected_at,source_url,confidence,socket,chipset,form_factor,memory_type,memory_slots,max_memory_gb,max_memory_speed_mhz,m2_slots
-msi-mag-b850-tomahawk-max-wifi,MSI,MAG B850 TOMAHAWK MAX WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-B850-TOMAHAWK-MAX-WIFI/Specification,high,AM5,B850,ATX,DDR5,4,256,8400,4
+msi-mag-b650-tomahawk-wifi,MSI,MAG B650 TOMAHAWK WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-B650-TOMAHAWK-WIFI/Specification,high,AM5,B650,ATX,DDR5,4,256,7600,3
+msi-mag-b650m-mortar-wifi,MSI,MAG B650M MORTAR WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-B650M-MORTAR-WIFI/Specification,high,AM5,B650,mATX,DDR5,4,256,7600,2
+msi-mag-b860-tomahawk-wifi,MSI,MAG B860 TOMAHAWK WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-B860-TOMAHAWK-WIFI/Specification,high,LGA1851,B860,ATX,DDR5,4,256,9200,3
+msi-mag-x870e-tomahawk-wifi,MSI,MAG X870E TOMAHAWK WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-X870E-TOMAHAWK-WIFI/Specification,high,AM5,X870E,ATX,DDR5,4,256,8400,4
+msi-mag-z890-tomahawk-wifi,MSI,MAG Z890 TOMAHAWK WIFI,,2026-08-19,https://www.msi.com/Motherboard/MAG-Z890-TOMAHAWK-WIFI/Specification,high,LGA1851,Z890,ATX,DDR5,4,256,9200,4
+msi-mpg-b650i-edge-wifi,MSI,MPG B650I EDGE WIFI,,2026-08-19,https://www.msi.com/Motherboard/MPG-B650I-EDGE-WIFI/Specification,high,AM5,B650,ITX,DDR5,2,128,7200,2
+msi-mpg-x870e-carbon-wifi,MSI,MPG X870E CARBON WIFI,,2026-08-19,https://www.msi.com/Motherboard/MPG-X870E-CARBON-WIFI/Specification,high,AM5,X870E,ATX,DDR5,4,256,9000,4
+msi-mpg-z890-carbon-wifi,MSI,MPG Z890 CARBON WIFI,,2026-08-19,https://www.msi.com/Motherboard/MPG-Z890-CARBON-WIFI/Specification,high,LGA1851,Z890,ATX,DDR5,4,256,9200,5
+msi-pro-a620m-e,MSI,PRO A620M E,,2026-08-19,https://www.msi.com/Motherboard/PRO-A620M-E/Specification,high,AM5,A620,mATX,DDR5,2,128,6800,1
+msi-pro-b650-p-wifi,MSI,PRO B650 P WIFI,,2026-08-19,https://www.msi.com/Motherboard/PRO-B650-P-WIFI/Specification,high,AM5,B650,ATX,DDR5,4,256,7200,2
+msi-pro-b760m-a-wifi,MSI,PRO B760M A WIFI,,2026-08-19,https://www.msi.com/Motherboard/PRO-B760M-A-WIFI/Specification,high,LGA1700,B760,mATX,DDR5,4,256,6800,2
+msi-pro-b860m-a-wifi,MSI,PRO B860M A WIFI,,2026-08-19,https://www.msi.com/Motherboard/PRO-B860M-A-WIFI/Specification,high,LGA1851,B860,mATX,DDR5,4,256,8800,3
+msi-pro-h610m-e,MSI,PRO H610M E,,2026-08-19,https://www.msi.com/Motherboard/PRO-H610M-E/Specification,high,LGA1700,H610,mATX,DDR5,2,96,5600,1
+msi-pro-h810m-e,MSI,PRO H810M E,,2026-08-19,https://www.msi.com/Motherboard/PRO-H810M-E/Specification,high,LGA1851,H810,mATX,DDR5,2,128,7200,1
+msi-pro-z790-p-wifi,MSI,PRO Z790 P WIFI,,2026-08-19,https://www.msi.com/Motherboard/PRO-Z790-P-WIFI/Specification,high,LGA1700,Z790,ATX,DDR5,4,256,7000,4

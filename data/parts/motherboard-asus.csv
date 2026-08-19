@@ -1,2 +1,4 @@
 id,brand,model,release_year,collected_at,source_url,confidence,socket,chipset,form_factor,memory_type,memory_slots,max_memory_gb,max_memory_speed_mhz,m2_slots
 asus-tuf-gaming-x870-plus-wifi,ASUS,TUF GAMING X870-PLUS WIFI,,2026-08-19,https://www.asus.com/us/motherboards-components/motherboards/tuf-gaming/tuf-gaming-x870-plus-wifi/techspec/,high,AM5,X870,ATX,DDR5,4,256,8000,4
+asus-tuf-gaming-b650e-plus-wifi,ASUS,TUF GAMING B650E-PLUS WIFI,,2026-08-19,https://www.asus.com/us/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b650e-plus-wifi/techspec/,high,AM5,B650,ATX,DDR5,4,256,8000,3
+asus-prime-h770-plus-d4,ASUS,PRIME H770-PLUS D4,,2026-08-19,https://www.asus.com/us/motherboards-components/motherboards/prime/prime-h770-plus-d4/techspec/,high,LGA1700,H770,ATX,DDR4,4,128,5066,3
