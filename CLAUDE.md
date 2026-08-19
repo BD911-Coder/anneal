@@ -235,6 +235,15 @@ Proje sahibi her oturum sonunda üç soru sorar. Cevabı hazır tut:
 
 ## Raporlama
 
+### Oturum başında okunanlar
+
+`SORULAR.md` ile birlikte depo kökündeki **`ROADMAP.md`** de okunur. Hangi fazda
+olunduğu oradan görülür; `SORULAR.md` açık soruları, `ROADMAP.md` sıradaki işi
+söyler.
+
+**Bir iş bitince `ROADMAP.md`'deki ilgili kutu işaretlenir** ve bu işaret, işi
+bitiren commit'e dahil edilir — rapor, kutu ve kod aynı commit'te gider.
+
 Her iş biriminin sonunda `docs/log/YYYY-AA-GG-konu.md` yazılır ve commit edilir:
 
 - Ne yapıldı

@@ -326,10 +326,18 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
             <p className="text-sm opacity-70">Parça seçince toplanacak.</p>
           ) : (
             <div className="text-sm">
-              <p className="text-2xl font-semibold">
-                {formatPriceMinor(priceSummary.totalMinor, priceSummary.currency)}{" "}
-                <span className="align-middle text-xs font-normal opacity-60">tahmini</span>
-              </p>
+              {priceSummary.mixedCurrency ? (
+                <p className="text-sm opacity-70">
+                  Seçilen parçaların fiyatları farklı para birimlerinde (
+                  {priceSummary.currencies.join(", ")}). Toplam hesaplanmıyor — kur
+                  bilgisi olmadan bu sayı yanlış olurdu.
+                </p>
+              ) : (
+                <p className="text-2xl font-semibold">
+                  {formatPriceMinor(priceSummary.totalMinor, priceSummary.currency ?? "USD")}{" "}
+                  <span className="align-middle text-xs font-normal opacity-60">tahmini</span>
+                </p>
+              )}
               <p className="mt-1 opacity-70">
                 {priceSummary.latestIso
                   ? `Son güncelleme: ${formatIsoDate(priceSummary.latestIso)}`
@@ -703,9 +711,9 @@ function toCandidates(
  */
 function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>) {
   let totalMinor = 0;
-  let currency = "TRY";
   let latestIso: string | null = null;
   let missing = 0;
+  const currencies = new Set<string>();
 
   for (const id of partIds) {
     const price = prices[id];
@@ -714,12 +722,19 @@ function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>)
       continue;
     }
     totalMinor += price.price_minor;
-    currency = price.currency;
+    currencies.add(price.currency);
     // "Son güncelleme": toplamı oluşturan fiyatların en yenisi.
     if (!latestIso || price.collected_at > latestIso) latestIso = price.collected_at;
   }
 
-  return { totalMinor, currency, latestIso, missing };
+  // Farklı para birimlerindeki kuruşları toplamak sessizce yanlış bir sayı
+  // üretir: 47900 (USD sent) + 749900 (TRY kuruş) toplanıp tek sembolle
+  // gösterilirdi. Kur bilgisi yok ve olsa bile hangi tarihin kuru olduğu
+  // sorusu açık. Toplam üretilmez, durum kullanıcıya söylenir.
+  const mixedCurrency = currencies.size > 1;
+  const currency = currencies.size === 1 ? [...currencies][0] : null;
+
+  return { totalMinor, currency, mixedCurrency, currencies: [...currencies], latestIso, missing };
 }
 
 /** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */

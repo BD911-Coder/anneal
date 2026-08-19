@@ -15,7 +15,6 @@ import { loadEnvFile } from "node:process";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client.ts";
-import { PRICES_MINOR, PRICE_DATES } from "./seed-prices.ts";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
@@ -357,38 +356,18 @@ await upsertAll(storages, prisma.storageSpecs as any);
 // Fiyatlar — price_snapshots
 // ---------------------------------------------------------------------------
 //
-// Tablo append-only: UPDATE yazılmaz, var olan satır silinmez. Bu yüzden seed
-// yeniden çalıştığında satır tekrarlamasın diye önce hangi (parça, tarih)
-// çiftlerinin zaten yazıldığına bakılır, sadece eksikler eklenir.
+// Bu script artık fiyat YAZMIYOR (K89).
+//
+// Eskiden her parçaya üç TRY snapshot üretiyordu. Gerçek fiyatlar USD olarak
+// gelmeye başlayınca bu satırlar zarar vermeye başladı: aynı sistemde TRY ve
+// USD fiyat bir araya gelince toplam anlamsız oluyor ve arayüz toplamı hiç
+// gösteremiyor. Sahte fiyatın tek işi vardı — akışı denemek — ve o iş artık
+// gerçek fiyatlarla yapılıyor.
+//
+// perf_index'teki bekçinin (K71) aynısı burada da var: script fiyat tablosuna
+// dokunduysa durur.
 
-const mevcutFiyatlar = await prisma.priceSnapshot.findMany({
-  where: { source: "dev_seed" },
-  select: { part_id: true, collected_at: true },
-});
-const yazilmis = new Set(
-  mevcutFiyatlar.map((row) => `${row.part_id}|${row.collected_at.toISOString()}`),
-);
-
-const yeniFiyatlar = [];
-for (const [partId, guncelFiyat] of Object.entries(PRICES_MINOR)) {
-  for (const { at, factor } of PRICE_DATES) {
-    if (yazilmis.has(`${partId}|${at.toISOString()}`)) continue;
-    yeniFiyatlar.push({
-      part_id: partId,
-      // Gerçek bir satıcıdan gelmediği için 'manual'; satıcı adı uydurulmuyor.
-      retailer: "manual",
-      price_minor: Math.round(guncelFiyat * factor), // integer kalmalı
-      currency: "TRY",
-      in_stock: true,
-      product_url: null,
-      ...provenance,
-      collected_at: at, // provenance'ın "şimdi"si değil, snapshot'ın kendi tarihi
-    });
-  }
-}
-if (yeniFiyatlar.length > 0) {
-  await prisma.priceSnapshot.createMany({ data: yeniFiyatlar });
-}
+const fiyatOnce = await prisma.priceSnapshot.count();
 
 // ---------------------------------------------------------------------------
 // Performans indeksi — perf_index'E YAZILMAZ
@@ -426,11 +405,19 @@ if (atlanan > 0) {
   console.log(`${atlanan} parça atlandı: aynı slug gerçek veriyle dolu, üzerine yazılmadı.`);
 }
 
-const fiyatSayisi = await prisma.priceSnapshot.count();
+// K89 bekçisi: bu script price_snapshots'a yazmaz. Yazan bir satır eklenirse
+// burada durur.
+const fiyatSonra = await prisma.priceSnapshot.count();
+if (fiyatSonra !== fiyatOnce) {
+  console.error(
+    `\nHATA: seed price_snapshots'a dokundu (${fiyatOnce} -> ${fiyatSonra}).\n` +
+      "Fiyatlar data/prices/*.csv'den gelir (npm run fiyat:aktar). Seed yazamaz (K89).",
+  );
+  await prisma.$disconnect();
+  process.exit(1);
+}
 const fiyatliParca = (await prisma.priceSnapshot.groupBy({ by: ["part_id"] })).length;
-console.log(
-  `Fiyat: ${fiyatSayisi} snapshot (${yeniFiyatlar.length} yeni), ${fiyatliParca} parçada fiyat var.`,
-);
+console.log(`Fiyat: seed yazmadı, tabloda ${fiyatSonra} snapshot / ${fiyatliParca} parça (K89).`);
 
 // K71 bekçisi: bu script perf_index'e yazmaz. Yazan bir satır eklenirse
 // (ya da bir upsert yan etkiyle satır üretirse) burada durur.

@@ -1908,3 +1908,79 @@ K91 ile **58/58 kartta uzunluk var**. Varyant katmanının gerekçesi buydu:
 **Sınır:** Bu kural yalnızca **ekran kartı** ölçüsü içindir ve yalnızca
 üreticinin kendi spec tablosundaki üçlü için geçerlidir. Kasa, güç kaynağı ve
 soğutucu ölçülerinde K59/K60 aynen yürürlükte.
+
+## 2026-08-20 — Elle fiyat girişi (Faz 1.1)
+
+### K89 — Seed fiyat yazmaz
+
+`scripts/seed.mts` artık `price_snapshots`'a yazmıyor. `PRICES_MINOR` ve
+`PRICE_DATES` kaldırıldı; script başta ve sonda satır sayısını karşılaştırıyor
+ve değiştiyse hata verip çıkıyor — K71'deki `perf_index` bekçisinin aynısı.
+
+Geliştirme veritabanındaki 87 dev-seed TRY satırı (29 parça) silindi.
+
+**Gerekçe:** Sahte fiyatın tek işi akışı denemekti; o iş artık gerçek
+fiyatlarla yapılıyor. Gerçek fiyatlar USD gelince TRY satırları zarar vermeye
+başladı: aynı sistemde iki para birimi bir araya gelince toplam anlamsız
+oluyor ve arayüz toplamı hiç gösteremiyor.
+
+### K90 — Çip satırının fiyatı, kaydı sıkı bir kartından okunur
+
+`gpu_specs` satırı üreticinin referans tasarımıdır; mağazada öyle bir ürün
+yoktur (K86). Çipin fiyatı şöyle belirlenir:
+
+> O çipin, **mağazanın kendi sattığı**, **stokta** olan **en ucuz** kartından
+> okunur.
+
+Kayıt şartları:
+
+- `source_url` = fiyatın okunduğu **kart sayfası**
+- Referans alınan kart CSV satırında `reference_part_id` sütununda yazılı
+- `confidence = medium`
+
+İçe aktarıcı `reference_part_id`'yi **doğruluyor**: kart katalogda yoksa ya da
+o çipin kartı değilse satır reddediliyor ve sebebi `raw_imports.error`'a
+yazılıyor.
+
+**Gerekçe:** Çipin fiyatı bir yaklaşıklıktır — aynı çipin premium kartı
+belirgin şekilde pahalıdır. Yaklaşıklığın hangi karta dayandığı yazılmazsa
+sayı sonradan doğrulanamaz. `medium` bu yaklaşıklığın damgası.
+
+**Bilinen sınır:** `price_snapshots`'ta ayrı bir sütun yok; referans kartın
+slug'ı CSV'de ve `raw_imports.payload`'da duruyor, veritabanı satırında
+`product_url` kartın sayfasını gösteriyor. Sütun eklemek şema değişikliğidir
+ve sorulmadan yapılmadı.
+
+### K91 — Pazaryeri fiyatına iki kat tavanı
+
+Perakendecinin kendi sattığı ürün ile pazaryeri satıcısının sattığı ürün aynı
+sayfada görünür ama aynı şey değildir.
+
+- Mağazanın kendi sattığı satır → `confidence = high`
+- Pazaryeri satıcısı → satıcı adı `seller` sütununa yazılır,
+  `confidence = medium`
+- **Pazaryeri fiyatı, aynı çipin en ucuz mağaza fiyatının 2 katını geçerse
+  ALINMAZ.** O sayı fiyat değil spekülasyondur.
+
+O çipin mağaza satışlı hiçbir kartı yoksa **tavan hesaplanamaz ve satır
+elenir** — sınırsız kabul etmektense atlamak doğru.
+
+Kural içe aktarıcıda uygulanıyor, belgede kalmıyor: tavan CSV'nin kendisinden
+hesaplanıyor ve elenen satırın sebebi `raw_imports.error`'a yazılıyor.
+
+**Bu turda uygulanması:** iki pazaryeri satırı tavanın altında kaldı ve alındı
+(MSI RTX 5080 VENTUS $1829.90 < $3399.98; ASUS TUF RX 9070 XT $1218.90 <
+$1579.98). Mağaza referansı bulunamayan pazaryeri satırları (Seasonic
+FOCUS GX-750, Samsung 990 PRO, WD SN850X, MSI B650 TOMAHAWK, SAPPHIRE PULSE
+RX 9070) hiç yazılmadı.
+
+### K92 — Farklı para birimleri toplanmaz
+
+Arayüz, seçilen parçaların fiyatları farklı para birimlerindeyse **toplam
+üretmez**; hangi birimlerin karıştığını söyler.
+
+**Gerekçe:** `summarizePrice` kuruşları para biriminden bağımsız topluyor ve
+son gördüğü birimin sembolünü basıyordu. 47900 (USD sent) + 389900 (TRY kuruş)
+tek sembolle gösterilirdi. Kur bilgisi yok; olsa bile hangi tarihin kuru
+olduğu ayrı bir soru. Sessizce yanlış bir sayı vermektense toplamı hiç
+vermemek doğru.

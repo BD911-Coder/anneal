@@ -1,0 +1,23 @@
+part_id,retailer,seller,price_usd,in_stock,confidence,collected_at,reference_part_id,product_url
+gigabyte-rtx-5070-gaming-oc,Newegg,Newegg,839.99,true,high,2026-08-20,,https://www.newegg.com/gigabyte-gv-n5070gaming-oc-12gd-geforce-rtx-5070-12gb-graphics-card-triple-fans/p/N82E16814932774
+msi-rtx-5070-gaming-trio-oc,Newegg,Newegg,849.99,true,high,2026-08-20,,https://www.newegg.com/msi-rtx-5070-12g-gaming-trio-oc-geforce-rtx-5070-12gb-graphics-card-triple-fans/p/N82E16814137938
+msi-rtx-5070-ti-ventus-3x-oc,Newegg,Newegg,1179.99,true,high,2026-08-20,,https://www.newegg.com/msi-rtx-5070-ti-16g-ventus-3x-oc-geforce-rtx-5070-ti-16gb-graphics-card-triple-fans/p/N82E16814137933
+gigabyte-rtx-5080-gaming-oc,Newegg,Newegg,1699.99,true,high,2026-08-20,,https://www.newegg.com/gigabyte-gv-n5080gaming-oc-16gd-geforce-rtx-5080-16gb-graphics-card/p/N82E16814932753
+asus-prime-rtx-5080-oc,Newegg,Newegg,1699.99,true,high,2026-08-20,,https://www.newegg.com/asus-prime-rtx5080-o16g-geforce-rtx-5080-16gb-graphics-card/p/N82E16814126744
+msi-rtx-5080-gaming-trio-oc,Newegg,Newegg,1799.99,true,high,2026-08-20,,https://www.newegg.com/msi-rtx-5080-16g-gaming-trio-oc-geforce-rtx-5080-16gb-graphics-card/p/N82E16814137910
+msi-rtx-5080-ventus-3x-oc,Newegg,Slava computers,1829.90,true,medium,2026-08-20,,https://www.newegg.com/msi-rtx-5080-16g-ventus-3x-oc-geforce-rtx-5080-16gb-graphics-card/p/N82E16814137930
+asus-rog-astral-rtx-5090-oc,Newegg,Newegg,4829.99,true,high,2026-08-20,,https://www.newegg.com/asus-rog-astral-rog-astral-rtx5090-o32g-gaming-geforce-rtx-5090-32gb-graphics-card-triple-fans/p/N82E16814126751
+sapphire-pulse-rx-9070-xt,Newegg,Newegg,789.99,true,high,2026-08-20,,https://www.newegg.com/sapphire-tech-pulse-11348-03-20g-radeon-rx-9070-xt-16gb-graphics-card-triple-fans/p/N82E16814202450
+sapphire-nitro-rx-9070-xt-oc,Newegg,Newegg,849.99,true,high,2026-08-20,,https://www.newegg.com/sapphire-tech-nitro-11348-01-20g-radeon-rx-9070-xt-16gb-graphics-card-triple-fans/p/N82E16814202448
+asus-tuf-gaming-rx-9070-xt-oc,Newegg,Slava computers,1218.90,true,medium,2026-08-20,,https://www.newegg.com/asus-tuf-gaming-tuf-rx9070xt-o16g-gaming-radeon-rx-9070-xt-16gb-graphics-card-triple-fans/p/N82E16814126745
+nvidia-rtx-5070,Newegg,Newegg,839.99,true,medium,2026-08-20,gigabyte-rtx-5070-gaming-oc,https://www.newegg.com/gigabyte-gv-n5070gaming-oc-12gd-geforce-rtx-5070-12gb-graphics-card-triple-fans/p/N82E16814932774
+nvidia-rtx-5070-ti,Newegg,Newegg,1179.99,true,medium,2026-08-20,msi-rtx-5070-ti-ventus-3x-oc,https://www.newegg.com/msi-rtx-5070-ti-16g-ventus-3x-oc-geforce-rtx-5070-ti-16gb-graphics-card-triple-fans/p/N82E16814137933
+nvidia-rtx-5080,Newegg,Newegg,1699.99,true,medium,2026-08-20,gigabyte-rtx-5080-gaming-oc,https://www.newegg.com/gigabyte-gv-n5080gaming-oc-16gd-geforce-rtx-5080-16gb-graphics-card/p/N82E16814932753
+nvidia-rtx-5090,Newegg,Newegg,4829.99,true,medium,2026-08-20,asus-rog-astral-rtx-5090-oc,https://www.newegg.com/asus-rog-astral-rog-astral-rtx5090-o32g-gaming-geforce-rtx-5090-32gb-graphics-card-triple-fans/p/N82E16814126751
+amd-rx-9070-xt,Newegg,Newegg,789.99,true,medium,2026-08-20,sapphire-pulse-rx-9070-xt,https://www.newegg.com/sapphire-tech-pulse-11348-03-20g-radeon-rx-9070-xt-16gb-graphics-card-triple-fans/p/N82E16814202450
+amd-rx-9060-xt,Newegg,Newegg,519.99,true,medium,2026-08-20,,https://www.newegg.com/sapphire-tech-pulse-11350-03-20g-radeon-rx-9060-xt-16gb-graphics-card-double-fans/p/N82E16814202457
+amd-ryzen-7-9800x3d,Newegg,Newegg,479.00,true,high,2026-08-20,,https://www.newegg.com/p/N82E16819113877
+amd-ryzen-7-7800x3d,Newegg,Newegg,389.00,true,high,2026-08-20,,https://www.newegg.com/amd-ryzen-7-7800x3d-ryzen-7-7000-series-raphael-zen-4-socket-am5/p/N82E16819113793
+amd-ryzen-9-9950x3d,Newegg,Newegg,699.00,true,high,2026-08-20,,https://www.newegg.com/amd-ryzen-9-9000-series-ryzen-9-9950x3d-granite-ridge-socket-am5-desktop-cpu-processor/p/N82E16819113884
+intel-core-ultra-9-285k,Newegg,Newegg,579.00,true,high,2026-08-20,,https://www.newegg.com/intel-core-ultra-9-285k-arrow-lake-lga-1851-desktop-cpu-processor/p/N82E16819118505
+intel-core-i9-14900k,Newegg,Newegg,499.99,true,high,2026-08-20,,https://www.newegg.com/intel-core-i9-14th-gen-core-i9-14900k-raptor-lake-lga-1700-desktop-cpu-processor/p/N82E16819118462
