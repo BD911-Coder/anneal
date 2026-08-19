@@ -29,10 +29,12 @@ import {
   toEngineCase,
   toEngineCpu,
   toEngineGpu,
+  toEngineGpuVariant,
   toEngineMotherboard,
   toEnginePsu,
   toEngineRam,
 } from "../data/to-engine.ts";
+import { resolveGpuSelection } from "../engine/gpu-selection.ts";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
@@ -49,9 +51,16 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(connectionString) });
 // Sahte veri sayilmaz: kural ancak gercek parcayla tetiklenebiliyorsa gecer.
 const real = { source: { not: "dev_seed" as const } };
 
-const [cpuRows, gpuRows, mbRows, ramRows, psuRows, caseRows] = await Promise.all([
+const [cpuRows, gpuRows, variantRows, mbRows, ramRows, psuRows, caseRows] = await Promise.all([
   prisma.cpuSpecs.findMany({ where: real }),
   prisma.gpuSpecs.findMany({ where: real }),
+  // Kart (AIB) satirlari da kullanicinin secebildigi ekran kartlaridir (K86).
+  // C4 ve C5 icin kartin degeri cipinkinden farkli olabilir; kural sayimi
+  // yalnizca cipe bakarsa gercek katalogun yarisini gormemis olur.
+  prisma.gpuVariantSpecs.findMany({
+    where: { ...real, chip: real },
+    include: { chip: { include: { gpu_specs: true } } },
+  }),
   prisma.motherboardSpecs.findMany({ where: real }),
   prisma.ramSpecs.findMany({ where: real }),
   prisma.psuSpecs.findMany({ where: real }),
@@ -59,14 +68,20 @@ const [cpuRows, gpuRows, mbRows, ramRows, psuRows, caseRows] = await Promise.all
 ]);
 
 const cpus = cpuRows.map(toEngineCpu);
-const gpus = gpuRows.map(toEngineGpu);
+const chipGpus = gpuRows.map(toEngineGpu);
+// Cozumleme arayuzun kullandigi fonksiyonun aynisi: kartin degeri varsa o,
+// yoksa K87'nin kurali isler.
+const variantGpus = variantRows
+  .filter((row) => row.chip.gpu_specs !== null)
+  .map((row) => resolveGpuSelection(toEngineGpu(row.chip.gpu_specs!), toEngineGpuVariant(row)).gpu);
+const gpus = [...chipGpus, ...variantGpus];
 const mbs = mbRows.map(toEngineMotherboard);
 const rams = ramRows.map(toEngineRam);
 const psus = psuRows.map(toEnginePsu);
 const cases = caseRows.map(toEngineCase);
 
 console.log(
-  `Gercek parca: ${cpus.length} cpu, ${gpus.length} gpu, ${mbs.length} anakart, ` +
+  `Gercek parca: ${cpus.length} cpu, ${chipGpus.length} cip + ${variantGpus.length} kart gpu, ${mbs.length} anakart, ` +
     `${rams.length} bellek, ${psus.length} psu, ${cases.length} kasa\n`,
 );
 

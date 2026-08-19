@@ -34,6 +34,10 @@ if (!connectionString) {
 const prisma = new PrismaClient({ adapter: new PrismaPg(connectionString) });
 
 const CSV_DIR = "data/parts";
+// Kart (AIB) satirlari ayri klasorde: dosya adinin ilk parcasi kategori
+// sayildigi icin kok klasorde dursalardi "gpu" diye okunup gpu_specs'e
+// yazilmaya calisilirdi.
+const VARIANT_DIR = `${CSV_DIR}/variants`;
 
 // Kategori basina zorunlu spec alanlari. Bunlardan biri bossa satir
 // aktarilmaz — uydurma deger yazmak yerine parcayi degistirmek gerekir.
@@ -53,6 +57,9 @@ const REQUIRED_SPEC: Record<string, string[]> = {
   // Uc olcu alani burada YOK: K62 ile opsiyonel oldular. Kasa satiri yalnizca
   // desteklenen form faktorleriyle iceri girebilir; olculer bos kalabilir.
   case: ["supported_form_factors"],
+  // Kart (AIB) satiri: tek zorunlu alan cipin slug'i (K86). Uzunluk ve TBP
+  // bir kural tarafindan kullaniliyor ama yine de opsiyonel -- K62 ve K87.
+  gpu_variant: ["chip_part_id"],
 };
 
 /** Prisma enum uyeleri tire/egik cizgi alamiyor (K7). CSV gercek degeri tasir. */
@@ -175,23 +182,27 @@ function collectedAt(value: string): Date {
 
 type Sonuc = { islenen: number; guncellenen: number; atlanan: number; hatali: number };
 
-async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
+async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<void> {
   // Dosya adi deseni: <kategori>[-<kaynak>].csv  ->  gpu-nvidia.csv = gpu
   // Ayni kategoriyi birden fazla kaynaktan ayri dosyalarda tutabilmek icin.
-  const category = fileName.replace(/\.csv$/, "").split("-")[0];
+  //
+  // variants/ alt klasorundeki dosyalar kategoriyi dosya adindan almaz: hepsi
+  // kart (AIB) satiridir ve gpu_variant_specs'e yazilir. Klasor ayrimi ayni
+  // zamanda kok klasoru okuyan eski davranisi bozmuyor.
+  const category = dir === VARIANT_DIR ? "gpu_variant" : fileName.replace(/\.csv$/, "").split("-")[0];
   if (!REQUIRED_SPEC[category]) {
     console.log(`  ${fileName}: bilinmeyen kategori, atlandi`);
     return;
   }
 
-  const rows = parseCsv(readFileSync(`${CSV_DIR}/${fileName}`, "utf8"));
+  const rows = parseCsv(readFileSync(`${dir}/${fileName}`, "utf8"));
   console.log(`\n${fileName} (${category}) — ${rows.length} satir`);
 
   for (const row of rows) {
     // --- 1. ASAMA: ham satir, hicbir cevrim yapilmadan ---------------------
     const raw = await prisma.rawImport.create({
       data: {
-        source: `manual-csv:${CSV_DIR}/${fileName}`,
+        source: `manual-csv:${dir}/${fileName}`,
         payload: row,
         imported_at: new Date(),
         status: "pending",
@@ -242,7 +253,10 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
       }
 
       const partData = {
-        category: category as "cpu" | "gpu" | "motherboard" | "ram" | "psu" | "storage" | "case",
+        // Kart da bir gpu parcasidir; ayirt edici sey hangi spec tablosunda
+        // satirinin oldugudur (K86).
+        category: (category === "gpu_variant" ? "gpu" : category) as
+          "cpu" | "gpu" | "motherboard" | "ram" | "psu" | "storage" | "case",
         brand: row.brand,
         model: row.model,
         release_year: intOrNull(row.release_year, "release_year"),
@@ -317,6 +331,58 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
             update: partData,
           });
           await tx.gpuSpecs.upsert({
+            where: { part_id: row.id },
+            create: { part_id: row.id, ...specData },
+            update: specData,
+          });
+        });
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+      } else if (category === "gpu_variant") {
+        // Kartin cipi katalogda olmali VE cip seviyesinde olmali. Iki seviyeli
+        // hiyerarsi: kartin karti olmaz (SCHEMA.md bolum 2).
+        const cip = await prisma.part.findUnique({
+          where: { id: row.chip_part_id },
+          select: { id: true, category: true, gpu_specs: { select: { part_id: true } } },
+        });
+        if (!cip) throw new Error(`chip_part_id katalogda yok: ${row.chip_part_id}`);
+        if (!cip.gpu_specs) {
+          throw new Error(`chip_part_id bir cip degil (gpu_specs satiri yok): ${row.chip_part_id}`);
+        }
+        if (row.id === row.chip_part_id) throw new Error("kart kendi cipi olamaz");
+        // Ayni parca hem cip hem kart olamaz.
+        const cipMi = await prisma.gpuSpecs.findUnique({ where: { part_id: row.id } });
+        if (cipMi) throw new Error(`bu slug zaten cip satiri: ${row.id}`);
+
+        const oncekiSpec = mevcut
+          ? await prisma.gpuVariantSpecs.findUnique({ where: { part_id: row.id } })
+          : null;
+        const specData = {
+          chip_part_id: row.chip_part_id,
+          // Fiziksel olculer opsiyonel (K62). length_mm'i C5 kullanir.
+          length_mm: intOrNull(row.length_mm ?? "", "length_mm"),
+          height_mm: intOrNull(row.height_mm ?? "", "height_mm"),
+          thickness_slots: floatOrNull(row.thickness_slots ?? "", "thickness_slots"),
+          // tbp_watt'i C4 kullanir ama opsiyonel: yayinlamayan ureticinin karti
+          // disarida kalmasin (K56, K87).
+          tbp_watt: intOrNull(row.tbp_watt ?? "", "tbp_watt"),
+          recommended_psu_watt: intOrNull(row.recommended_psu_watt ?? "", "recommended_psu_watt"),
+          power_connectors: row.power_connectors || null,
+          // K37/K74: bu iki alandan indeks turetilmez, yalnizca gosterim.
+          boost_clock_mhz: intOrNull(row.boost_clock_mhz ?? "", "boost_clock_mhz"),
+          boost_clock_oc_mhz: intOrNull(row.boost_clock_oc_mhz ?? "", "boost_clock_oc_mhz"),
+          fan_count: intOrNull(row.fan_count ?? "", "fan_count"),
+          hdmi_count: intOrNull(row.hdmi_count ?? "", "hdmi_count"),
+          displayport_count: intOrNull(row.displayport_count ?? "", "displayport_count"),
+          usb_c_count: intOrNull(row.usb_c_count ?? "", "usb_c_count"),
+          ...provenance,
+        };
+        await prisma.$transaction(async (tx) => {
+          await tx.part.upsert({
+            where: { id: row.id },
+            create: { id: row.id, ...partData },
+            update: partData,
+          });
+          await tx.gpuVariantSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
             update: specData,
@@ -458,7 +524,13 @@ console.log("Kaynak damgasi: source='manufacturer'; confidence CSV'den, yoksa 'h
 
 const files = readdirSync(CSV_DIR).filter((f) => f.endsWith(".csv")).sort();
 const sonuc: Sonuc = { islenen: 0, guncellenen: 0, atlanan: 0, hatali: 0 };
-for (const file of files) await importFile(file, sonuc);
+// Once cipler: kart satiri cipi olmadan yazilamaz (yabanci anahtar).
+for (const file of files) await importFile(CSV_DIR, file, sonuc);
+
+if (existsSync(VARIANT_DIR)) {
+  const variantFiles = readdirSync(VARIANT_DIR).filter((f) => f.endsWith(".csv")).sort();
+  for (const file of variantFiles) await importFile(VARIANT_DIR, file, sonuc);
+}
 
 console.log(
   `\nOZET: ${sonuc.islenen} yeni, ${sonuc.guncellenen} guncellendi, ` +

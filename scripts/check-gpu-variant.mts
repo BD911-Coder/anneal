@@ -12,7 +12,7 @@
 // yazilsaydi, olculen sey asil kod olmazdi (npm run seed:filtre-kontrol ile
 // ayni gerekce).
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 
 for (const file of [".env.local", ".env"]) {
@@ -67,14 +67,55 @@ const kartlar = await prisma.gpuVariantSpecs.findMany({
 const cipsizKartlar = kartlar.filter((kart) => !kart.chip.gpu_specs).map((k) => k.part_id);
 check("her kartin cipi bir cip satiri", cipsizKartlar.length === 0, cipsizKartlar.join(", "));
 
-// Cip satirlarinin icerigi degismedi mi? Imza tum satirlarin metin halinden
-// uretiliyor; tek bir hucre degisse imza degisir.
-const [{ sig }] = await prisma.$queryRawUnsafe<{ sig: string }[]>(
-  "select md5(string_agg(t::text, '|' order by t.part_id)) as sig from gpu_specs t",
-);
-console.log(`  gpu_specs imzasi         : ${sig}`);
-console.log("  (varyant oncesi olculen imza: 9730f18749f0effdc171610b7b63613d)");
-check("gpu_specs imzasi varyant oncesiyle ayni", sig === "9730f18749f0effdc171610b7b63613d", sig);
+// Cip satirlarinin icerigi degismedi mi?
+//
+// Once satirin tamaminin md5'i aliniyordu; ise yaramadi: ice aktarma ayni
+// degerleri yeniden yazdiginda `updated_at` degisiyor ve imza da degisiyor.
+// Yani imza "veri bozuldu mu" degil "satira dokunuldu mu" sorusunu
+// cevapliyordu. Bunun yerine DB, kaynak CSV ile alan alan karsilastiriliyor:
+// CSV bu tablonun tek kaynagi (data/parts/README.md), esitlik bozulmadigi
+// surece satir bozulmamistir.
+const CSV_ALANLARI = [
+  "chipset", "vram_gb", "vram_type", "tdp_watt", "length_mm",
+  "recommended_psu_watt", "pcie_version", "shader_units", "shader_unit_type",
+  "boost_clock_mhz", "memory_bandwidth_gbs",
+] as const;
+
+function csvSatirlari(dosya: string): Record<string, string>[] {
+  const metin = readFileSync(`data/parts/${dosya}`, "utf8").trim().split(String.fromCharCode(10));
+  const basliklar = metin[0].split(",").map((h) => h.trim());
+  return metin.slice(1).map((satir) => {
+    const hucreler = satir.split(",");
+    const kayit: Record<string, string> = {};
+    basliklar.forEach((ad, i) => (kayit[ad] = (hucreler[i] ?? "").trim()));
+    return kayit;
+  });
+}
+
+const cipSatirlari = await prisma.gpuSpecs.findMany();
+const cipHaritasi = new Map(cipSatirlari.map((row) => [row.part_id, row]));
+const sapmalar: string[] = [];
+let karsilastirilan = 0;
+
+for (const dosya of readdirSync("data/parts").filter((f) => /^gpu-[a-z]+\.csv$/.test(f))) {
+  for (const satir of csvSatirlari(dosya)) {
+    const db = cipHaritasi.get(satir.id) as Record<string, unknown> | undefined;
+    if (!db) {
+      sapmalar.push(`${satir.id}: veritabaninda yok`);
+      continue;
+    }
+    karsilastirilan++;
+    for (const alan of CSV_ALANLARI) {
+      const beklenen = satir[alan] ?? "";
+      const gelen = db[alan] === null || db[alan] === undefined ? "" : String(db[alan]);
+      if (beklenen !== gelen) sapmalar.push(`${satir.id}.${alan}: CSV='${beklenen}' DB='${gelen}'`);
+    }
+  }
+}
+
+console.log(`  CSV ile karsilastirilan  : ${karsilastirilan} cip`);
+check("cip satirlari kaynak CSV ile birebir ayni", sapmalar.length === 0, sapmalar.slice(0, 5).join("; "));
+check("CSV'deki her cip veritabaninda", karsilastirilan === cipSayisi, `${karsilastirilan} != ${cipSayisi}`);
 
 // ---------------------------------------------------------------------------
 // 2. Kart secmeyen kullanicinin akisi

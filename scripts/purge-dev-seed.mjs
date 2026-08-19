@@ -78,6 +78,9 @@ const steps = [
   ["benchmark_points",
    `delete from benchmark_points where gpu_part_id in ${DEV} or cpu_part_id in ${DEV}`],
   ["cpu_specs", `delete from cpu_specs where part_id in ${DEV}`],
+  // Kart satiri cipten ONCE silinir: gpu_variant_specs.chip_part_id parts'a
+  // bakiyor ve cip satiri once silinirse yabanci anahtar patlar (K86).
+  ["gpu_variant_specs", `delete from gpu_variant_specs where part_id in ${DEV} or chip_part_id in ${DEV}`],
   ["gpu_specs", `delete from gpu_specs where part_id in ${DEV}`],
   ["motherboard_specs", `delete from motherboard_specs where part_id in ${DEV}`],
   ["ram_specs", `delete from ram_specs where part_id in ${DEV}`],

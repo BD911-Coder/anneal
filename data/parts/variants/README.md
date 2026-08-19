@@ -3,12 +3,15 @@
 `gpu_variant_specs` satırlarının kaynak CSV'leri (K86). Her satır bir üreticinin
 kendi ürün sayfasından gelir ve `source_url` o sayfanın adresidir.
 
-**Neden alt klasörde:** `npm run parca:aktar` yalnızca `data/parts/` altındaki
-`.csv` dosyalarını okur ve dosya adının ilk parçasını kategori sayar. Bu
-dosyalar `gpu` kategorisine ait **değil** — `gpu_specs` değil
-`gpu_variant_specs` besliyorlar. Alt klasörde durdukları için içe aktarıcı
-onları görmez ve yanlış tabloya yazmaya çalışmaz. Varyant içe aktarıcısı
-yazıldığında bu klasörü hedef alacak.
+**Neden alt klasörde:** `npm run parca:aktar` kök klasörde dosya adının ilk
+parçasını kategori sayar (`gpu-nvidia.csv` → `gpu`). Bu dosyalar `gpu_specs`
+değil `gpu_variant_specs` besliyor; kök klasörde dursalardı yanlış tabloya
+yazılmaya çalışılırdı. İçe aktarıcı bu klasörü **ayrıca** okur ve buradaki her
+satırı kart olarak işler — kategori dosya adından değil klasörden gelir.
+
+İçe aktarma sırası: önce çipler, sonra kartlar. Kartın `chip_part_id`'si
+katalogda **ve** çip seviyesinde (`gpu_specs` satırı olan) olmak zorunda;
+değilse satır hata verir ve `raw_imports`'a sebebiyle yazılır.
 
 ---
 

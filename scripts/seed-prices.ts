@@ -23,10 +23,6 @@ export const PRICES_MINOR: Record<string, number> = {
   "nvidia-rtx-5090": 9499900,
   "amd-rx-9070-xt": 3275000,
 
-  // Ekran kartı varyantları (AIB kartları) — çipin fiyatı değil kartın fiyatı
-  "asus-rog-strix-rtx-5090-oc": 10999900,
-  "zotac-rtx-5090-solid": 9799900,
-  "nvidia-rtx-5090-founders": 9499900,
 
   // Anakartlar
   "asus-tuf-b650-plus": 689900,
