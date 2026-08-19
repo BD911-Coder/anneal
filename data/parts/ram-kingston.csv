@@ -1,0 +1,5 @@
+id,brand,model,release_year,collected_at,source_url,confidence,memory_type,capacity_gb,module_count,speed_mhz,cas_latency
+kingston-fury-kf560c30bbek2-32,Kingston,FURY KF560C30BBEK2-32 32GB (2x16GB) DDR5-6000 CL30,,2026-08-19,https://www.kingston.com/dataSheets/KF560C30BBEK2-32.pdf,high,DDR5,32,2,6000,30
+kingston-fury-kf572c38rwk2-32,Kingston,FURY KF572C38RWK2-32 32GB (2x16GB) DDR5-7200 CL38,,2026-08-19,https://www.kingston.com/dataSheets/KF572C38RWK2-32.pdf,high,DDR5,32,2,7200,38
+kingston-fury-kf432c16bbk2-32,Kingston,FURY KF432C16BBK2/32 32GB (2x16GB) DDR4-3200 CL16,,2026-08-19,https://www.kingston.com/dataSheets/KF432C16BBK2_32.pdf,high,DDR4,32,2,3200,16
+kingston-fury-kf436c18bbk2-32,Kingston,FURY KF436C18BBK2/32 32GB (2x16GB) DDR4-3600 CL18,,2026-08-19,https://www.kingston.com/dataSheets/KF436C18BBK2_32.pdf,high,DDR4,32,2,3600,18

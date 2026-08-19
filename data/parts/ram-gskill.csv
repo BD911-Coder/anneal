@@ -1,0 +1,5 @@
+id,brand,model,release_year,collected_at,source_url,confidence,memory_type,capacity_gb,module_count,speed_mhz,cas_latency
+gskill-trident-z5-neo-32gb-6000,G.SKILL,Trident Z5 Neo F5-6000J3038F16GX2-TZ5N 32GB (2x16GB) DDR5-6000 CL30,,2026-08-19,https://www.gskill.com/specification/165/393/1661410171/F5-6000J3038F16GX2-TZ5N-Specification,high,DDR5,32,2,6000,30
+gskill-trident-z5-neo-64gb-6000,G.SKILL,Trident Z5 Neo F5-6000J3040G32GX2-TZ5N 64GB (2x32GB) DDR5-6000 CL30,,2026-08-19,https://www.gskill.com/specification/165/393/1665020366/F5-6000J3040G32GX2-TZ5N-Specification,high,DDR5,64,2,6000,30
+gskill-trident-z5-neo-48gb-8000,G.SKILL,Trident Z5 Neo F5-8000J4048G24GX2-TZ5N 48GB (2x24GB) DDR5-8000 CL40,,2026-08-19,https://www.gskill.com/specification/165/393/1735094137/F5-8000J4048G24GX2-TZ5N-Specification,high,DDR5,48,2,8000,40
+gskill-ripjaws-v-128gb-2400,G.SKILL,Ripjaws V F4-2400C15Q2-128GVR 128GB (8x16GB) DDR4-2400 CL15,,2026-08-19,https://www.gskill.com/specification/165/184/1535686644/F4-2400C15Q2-128GVR-Specification,high,DDR4,128,8,2400,15

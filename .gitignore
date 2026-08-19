@@ -48,3 +48,6 @@ yarn-error.log*
 
 # Yerel araç yapılandırması
 .claude/
+
+# Oturum ici gecici calisma dosyalari
+.tmp-ram/
