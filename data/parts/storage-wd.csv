@@ -1,2 +1,3 @@
 id,brand,model,release_year,collected_at,source_url,confidence,storage_type,capacity_gb,interface,read_speed_mbs
 wd-black-sn850x-2tb,WD_BLACK,SN850X 2TB,,2026-08-19,https://documents.sandisk.com/content/dam/asset-library/en_us/assets/public/western-digital/product/internal-drives/wd-black-ssd/data-sheet-wd-black-sn850x-nvme-ssd.pdf,high,nvme,2000,PCIe 4.0 x4,7300
+wd-blue-wd20ezbx-2tb,WD,Blue PC Desktop HDD 2TB 7200 RPM (WD20EZBX),,2026-08-19,https://www.westerndigital.com/products/internal-drives/wd-blue-desktop-sata-hdd,high,hdd,2000,SATA,
