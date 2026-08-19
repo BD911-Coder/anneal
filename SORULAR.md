@@ -18,6 +18,89 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
+### S30 — Aynı kaynaktan en fazla kaç satır alınabilir?
+
+`SCHEMA.md` bölüm 4: "Tek bir kaynaktan toplu veri alınmaz. Her satır ayrı
+ayrı, kaynağı yazılarak girilir."
+
+Benchmark toplama planı bu kuralla bir gerilim yaratıyor. İki kartın gücünü
+karşılaştırmanın tek geçerli yolu **aynı kaynakta aynı koşulda ölçülmüş**
+sayılarının oranı — farklı sitelerin FPS'leri doğrudan karşılaştırılamıyor
+(test sahnesi, sürücü, bellek farklı). Yani yöntem, aynı sayfadan en az iki
+satır almayı gerektiriyor.
+
+"Toplu" ile "iki satır" arasındaki sınır bugün yazılı değil.
+
+**Önerilen sınır:** Bir (kaynak alan adı, oyun, çözünürlük, ayar)
+kombinasyonundan **en fazla 8 satır** alınır; o sayfadaki listenin tamamı
+hiçbir zaman alınmaz. Her kartın en az iki **farklı alan adından** ölçümü olur.
+
+8 sayısının gerekçesi: iki çözünürlük basamağını birbirine dikmeye yetecek
+örtüşmeyi sağlıyor, 20-30 kartlık bir inceleme grafiğinin tamamını almaya
+yetmiyor.
+
+**Karar gereken:** 8 uygun mu, daha düşük mü olmalı? Sayı düşerse gereken
+sayfa sayısı ve dolayısıyla iş büyüklüğü artar.
+
+→ `docs/log/2026-08-19-benchmark-toplama-plani.md` bölüm 2
+
+### S31 — İndeks ölçeği neye bağlanacak?
+
+`SCHEMA.md` bölüm 4: `perf_index.index_value` "0–100".
+Bölüm 8'deki bant tablosu bu sayıya **mutlak** anlam yüklüyor (80–100 = 4K
+ultra).
+
+"En hızlı kart = 100" denirse, kataloğa daha hızlı bir kart girdiği gün bütün
+indeksler aşağı kayar ve kullanıcının donanımı değişmediği hâlde "4K ultra"
+sistemi "1440p ultra"ya düşer. Sayı sessizce yalan söylemeye başlar.
+
+**Önerilen çözüm:** Sabit bir referans parça kalıcı olarak 100 kabul edilir
+(aday: RTX 4090 — bant tablosundaki "4K ultra" tanımına oturuyor ve her yerde
+ölçülmüş). Sonucu: daha hızlı kartlar **100'ü aşar**.
+
+`index_value` zaten `Float`, veritabanı kabul ediyor. Ama `SCHEMA.md` "0–100"
+diyor; **şema metni değişmeden uygulanmaz.**
+
+CPU tarafı için ayrı referans gerekir (aday: Ryzen 7 9800X3D).
+
+**Karar gereken:** Sabit referans + 100'ü aşabilen ölçek kabul mü? Değilse
+bantların anlamının veri güncellendikçe kayması kabul mü?
+
+→ `docs/log/2026-08-19-benchmark-toplama-plani.md` bölüm 3
+
+### S32 — Ölçülmeyen kartlar indekssiz mi kalacak?
+
+60 kartın ~50'si incelemelerde düzenli ölçülüyor. Zor bulunacak ~10 kart:
+RTX 3050 6GB, RTX 3060 8GB, RTX 3080 12GB, RTX 5050, RX 6700 (XT değil),
+RX 9070 GRE, Arc A770 8GB, Arc A380/A580.
+
+Proje sahibinin isteği "60 kartın tamamı kapsansın, doğrudan ölçülmeyenler
+interpolasyonla" idi. **Bu K71 ile çelişiyor:** spec alanlarından (shader
+sayısı × saat hızı) türetilen indeks, `benchmark_points`'tan hesaplanmış
+olmuyor — daha fazla matematik içeren bir el yazması sayı oluyor.
+
+Ek olarak:
+
+- K57/K58: `shader_units` yalnızca **aynı mimari içinde** karşılaştırılabilir.
+  Aileler arası interpolasyon zaten geçersiz.
+- `perf_index`'te `confidence` sütunu yok ve olmamalı (K32). "Bu satır
+  ölçülmedi, tahmin edildi" bilgisi hiçbir yere yazılamıyor; kullanıcı ikisini
+  ayırt edemez.
+
+**Önerilen:** v0.2'de interpolasyon yapılmasın. Ölçülmeyen kart indeks almaz,
+arayüz "performans verisi yok" der — bu mekanizma kuruldu ve doğrulandı
+(K71). Proje bu tercihi K52, K56, K60, K62, K71'de beş kez yaptı.
+
+**Yine de isteniyorsa** minimum güvenli hâli, K71'e ek gerektirir:
+(1) yalnızca aynı mimari ailesi içinde, (2) yalnızca aynı chipset'in VRAM
+varyantları ve bir üst/bir alt modeli ölçülmüş kartlar için, (3) ayrı bir
+`model_version` ile (`v0.2-tahmin`) — model sürümü ekranda yazdığı için
+ayrımı yapmanın `confidence` sütunu olmadan tek yolu bu.
+
+**Karar gereken:** İnterpolasyon yok mu, yoksa yukarıdaki üç kısıtla var mı?
+
+→ `docs/log/2026-08-19-benchmark-toplama-plani.md` bölüm 3
+
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
