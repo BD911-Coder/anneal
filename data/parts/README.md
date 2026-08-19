@@ -72,8 +72,13 @@ aktarıldığı an değil (`SCHEMA.md` bölüm 1.3).
 
 | Dosya | Kategori | Zorunlu spec alanları |
 |---|---|---|
-| `cpu.csv` | cpu | socket, cores, threads, base_clock_mhz, boost_clock_mhz, tdp_watt, memory_type, has_igpu |
-| `gpu*.csv` | gpu | chipset, vram_gb, vram_type, tdp_watt, recommended_psu_watt, pcie_version |
+| `cpu*.csv` | cpu | socket, cores, threads, base_clock_mhz, boost_clock_mhz, tdp_watt, memory_type, has_igpu |
+| `gpu*.csv` | gpu | chipset, vram_gb, vram_type, tdp_watt |
+| `motherboard*.csv` | motherboard | socket, chipset, form_factor, memory_type, memory_slots, max_memory_gb, max_memory_speed_mhz, m2_slots |
+| `ram*.csv` | ram | memory_type, capacity_gb, module_count, speed_mhz, cas_latency |
+| `storage*.csv` | storage | storage_type, capacity_gb, interface |
+| `case*.csv` | case | supported_form_factors, max_gpu_length_mm, max_cpu_cooler_height_mm, max_psu_length_mm |
+| `psu*.csv` | psu | wattage, modularity |
 
 `gpu` için opsiyonel alanlar: `length_mm` (K52), `shader_units`,
 `boost_clock_mhz`, `memory_bandwidth_gbs` (K51). Bunlar boşsa satır yine
@@ -81,3 +86,19 @@ aktarılır.
 
 Her dosyada ayrıca: `id`, `brand`, `model`, `release_year` (opsiyonel),
 `collected_at`, `source_url`.
+
+`storage` icin opsiyonel: `read_speed_mbs`. `psu` icin opsiyonel:
+`efficiency_rating` (K61), `length_mm` (K62).
+
+`ram_specs.capacity_gb` **kit toplamidir**, tek modul degil.
+`module_count` kitteki modul sayisi — C3 kurali bunu anakartin yuva sayisiyla
+karsilastiriyor.
+
+### Uretici basina calisan yol (RAM)
+
+| Marka | Yol |
+|---|---|
+| Crucial | `curl`; degerler sayfaya gomulu JSON'da (`"name"/"value"` ciftleri) |
+| Kingston | SKU basina veri sayfasi PDF'i (`kingston.com/dataSheets/<PARTNO>.pdf`) — aile sayfasi CAS gecikmesini SKU bazinda vermiyor (K63) |
+| G.SKILL | `/specification/165/<seri>/<id>/<PARTNO>-Specification` sunucu tarafinda uretiliyor, `curl` yetiyor. SKU id'leri urun listesi sayfasindan alinir (o sayfa JS ile yukleniyor) |
+| Corsair | `curl`; SKU basina sayfa, spec tablosu duz HTML |

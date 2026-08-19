@@ -18,6 +18,65 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
+### S25 — Üç kural tek bir parçaya bağlı
+
+`npm run kural:kontrol` 11 kuralın hepsinin tetiklenebildiğini gösteriyor, ama
+bazıları çok ince bir ipe bağlı:
+
+| Kural | Tek bağ | Tetikleyen kombinasyon |
+|---|---|---|
+| W4 | `amd-ryzen-5-7500f` | 1 |
+| W5 | `seasonic-focus-gx-750` | 1 |
+| C5 | `fractal-design-node-304` + RTX 3090/3090 Ti | 2 |
+| W2 | `crucial-pro-ddr5-128gb-5600` + `msi-pro-h610m-e` | 2 |
+
+O parça katalogdan çıkarsa kural sessizce ölü koda döner. Script bunu yakalar
+ama uyarı vermiyor, yalnızca sayıyı yazıyor.
+
+**Karar gereken:** Eşik konsun mu? Örneğin "5'ten az kombinasyon = uyarı".
+Yoksa sayı bilgi olarak kalsın mı?
+
+### S26 — Intel F serisi işlemciler `has_igpu` yüzünden eklenemiyor
+
+i5-14400F ve i7-14700F piyasada en çok satılan işlemciler arasında. Intel'in
+ARK spec sayfaları F serisinde grafik bölümünü **hiç göstermiyor** — "yok"
+demiyor, alan sayfada bulunmuyor. Alanın yokluğundan `has_igpu = false`
+çıkarmak K60'ın yasakladığı çıkarım, bu yüzden eklenmediler (K65).
+
+AMD aynı durumu açıkça yazıyor: Ryzen 5 7500F sayfasında
+`Graphics Model = Discrete Graphics Card Required`.
+
+**Karar gereken:** Intel'in başka bir sayfası (ürün karşılaştırma, ARK
+filtreleri) bunu açıkça söylüyor mu ve satır kaynağı sayılır mı? Yoksa
+`has_igpu` opsiyonel mi olmalı — ama o zaman W4 eksik alanda kendini atlar
+ve kullanıcı "görüntü alamazsın" uyarısını hiç görmez.
+
+### S27 — `case_specs`'in üç ölçü alanı K62'ye rağmen zorunlu
+
+K62 kalıcı kural: fiziksel ölçü alanları asla zorunlu olmaz. Ama
+`case_specs.max_gpu_length_mm`, `max_cpu_cooler_height_mm` ve
+`max_psu_length_mm` hâlâ zorunlu.
+
+Bu turda sorun çıkmadı: Fractal Design üçünü de yayınlıyor. Üçünü birden
+yayınlamayan bir üretici geldiğinde çıkacak — K52, K56 ve K62'de üç kez
+olduğu gibi.
+
+**Karar gereken:** Şimdi mi opsiyonel yapılsın, yoksa dördüncü kez duvara
+çarpılınca mı?
+
+### S28 — Gerçek parçalara bağlı sahte fiyatlar duruyor
+
+`npm run seed:temizle` dev-seed parçalarını sildi, ama gerçek parçalara bağlı
+**36 dev-seed fiyat** ve **7 `perf_index`** satırına dokunmadı (K64).
+Sebebi: fiyat kaynağı henüz kurulmadı; silinseydi geliştirme ortamında hiç
+fiyat ve performans verisi kalmazdı.
+
+Bunları canlıdan uzak tutan tek şey şu an veri erişim katmanının otomatik
+filtresi ve dağıtım öncesi kontrolü.
+
+**Karar gereken:** Gerçek fiyat kaynağı kurulunca bu satırlar silinecek —
+o ana kadar duracaklar. Ara bir adım gerekiyor mu?
+
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:

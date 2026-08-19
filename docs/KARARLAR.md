@@ -1134,3 +1134,66 @@ alanı zorunlu yapılmaz, bir üretici yayınlıyor diye.
 K56'nın ölçütü (bir alan ancak bir kural ya da arayüz kullanıyorsa zorunlu
 olabilir) tek başına yetmiyordu: `length_mm` **kullanılıyor** (C5, W5) ama
 yine de zorunlu olmamalı. K62 bu boşluğu kapatıyor.
+
+### K63 — Üretici veri sayfası (PDF) satır kaynağı olabilir
+
+Kingston'ın aile sayfaları CAS gecikmesini SKU başına vermiyor; yalnızca
+"CL30, CL32, CL36" biçiminde aralık yayınlıyor. Aynı sayfadaki filtre verisi
+hız ve kapasiteyi SKU'ya bağlıyor ama gecikmeyi bağlamıyor.
+
+`cas_latency` zorunlu bir alan olduğu için o sayfadan satır yazılamaz.
+Kingston'ın SKU başına yayınladığı veri sayfası (`kingston.com/dataSheets/
+<PARTNO>.pdf`) bütün değerleri tek belgede veriyor ve `source_url` oraya
+verildi.
+
+**Gerekçe:** `data/parts/README.md`'nin ölçütü "üreticinin o model için verdiği
+tek spec sayfası" — belgenin HTML mi PDF mi olduğu ölçüt değil. WD SN850X
+satırı zaten bir PDF veri sayfasından geliyordu; kural değişmedi, yazıya
+döküldü.
+
+### K64 — Sahte veri temizliği parçalarla sınırlı, fiyatlarla değil
+
+`npm run seed:temizle` dev-seed **parçalarını** ve onlara bağlı bütün satırları
+siler. Gerçek parçalara bağlı dev-seed fiyat ve `perf_index` satırlarına
+dokunmaz.
+
+İlk çalıştırmada: 17 parça, 51 fiyat, 1 perf_index, 32 build_items ve 5 sistem
+kaydı silindi; gerçek parçalara bağlı 36 fiyat ve 7 perf_index satırı kaldı.
+
+**Gerekçe:** Parçaların gerçek karşılığı var, fiyatların yok — fiyat kaynağı
+henüz kurulmadı. Silinirse geliştirme ortamında hiç fiyat ve performans verisi
+kalmaz, sayfa boş görünür. Sahte fiyatı canlıdan uzak tutan şey zaten veri
+erişim katmanının otomatik filtresi (dev-seed korumasının 2. katmanı).
+
+Beş sistem kaydı (`builds`) tamamen silindi. Üçü dev-seed parçaya bağlıydı ve
+yalnızca o satırları silmek eksik parçalı, hiçbir işe yaramayan sistem kayıtları
+bırakırdı. Hepsi 17 Ağustos tarihli test kayıtlarıydı.
+
+### K65 — `has_igpu = false` yalnızca üretici açıkça söylüyorsa yazılır
+
+Intel'in ARK spec sayfaları F serisi işlemcilerde grafik bölümünü **hiç
+göstermiyor** — "yok" demiyor, alan sayfada bulunmuyor. Alanın yokluğundan
+`has_igpu = false` çıkarmak, K60'ın yasakladığı çıkarımın aynısı.
+
+Bu yüzden Core i5-14400F ve i7-14700F **eklenmedi**.
+
+AMD Ryzen 5 7500F sayfası `Graphics Model = Discrete Graphics Card Required`
+diyor — açık ifade. O satır yazıldı ve W4 kuralını tetikleyebilen tek işlemci o.
+
+**Gerekçe:** `has_igpu` zorunlu bir alan ve W4 kuralını doğrudan besliyor.
+Yanlış `false`, kullanıcıya olmayan bir uyarı gösterir; yanlış `true`, ekran
+kartı olmayan bir sistemi onaylar. İkisi de sayfada yazmayan bir sayıdan
+daha pahalı.
+
+### K66 — Kuralların tetiklenebilirliği veriyle birlikte denetlenir
+
+`npm run kural:kontrol` her uyumluluk kuralı için gerçek parçalardan oluşan
+somut bir kombinasyon arar, bulduğunu ekrana yazar, bulamazsa hata verir.
+
+**Gerekçe:** Veri gerçek oldu diye kuralların çalıştığı kanıtlanmış olmaz.
+Veritabanında bir kuralı tetikleyecek parça çifti kalmadıysa o kural sessizce
+ölü koda döner. Testler kuralın mantığını doğruluyor; bu script kuralın
+**bugünkü veri kümesinde anlamı olduğunu** doğruluyor. İkisi farklı sorular.
+
+İlk çalıştırmada W4 tetiklenemedi: veritabanındaki 39 işlemcinin hepsinde
+tümleşik grafik vardı. Boşluk gerçekti, kural değil veri eksikti (bkz. K65).

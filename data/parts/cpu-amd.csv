@@ -18,3 +18,4 @@ amd-ryzen-7-7700,AMD,Ryzen 7 7700,2023,2026-08-19,https://www.amd.com/en/product
 amd-ryzen-5-7600x3d,AMD,Ryzen 5 7600X3D,2024,2026-08-19,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600x3d.html,high,AM5,6,12,4100,4700,65,DDR5,true
 amd-ryzen-5-7600x,AMD,Ryzen 5 7600X,2022,2026-08-19,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600x.html,high,AM5,6,12,4700,5300,105,DDR5,true
 amd-ryzen-5-7600,AMD,Ryzen 5 7600,2023,2026-08-19,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600.html,high,AM5,6,12,3800,5100,65,DDR5,true
+amd-ryzen-5-7500f,AMD,Ryzen 5 7500F,2023,2026-08-19,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7500f.html,high,AM5,6,12,3700,5000,65,DDR5,false
