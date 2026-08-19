@@ -1408,7 +1408,7 @@ uygulanmaz.
 
 ```
 gpu_idx(RTX 4070)      = 100
-cpu_idx(Ryzen 5 7600)  = 100
+cpu_idx(Ryzen 5 9600X) = 100
 ```
 
 `perf_index.index_value` artık "0–100" değil. Üst sınır yok; daha hızlı parçalar
@@ -1425,9 +1425,12 @@ ayrıca her yerde ölçülmüş bir kart, yani bol oran kenarı sağlıyor — �
 dayandığı düğümün iyi bağlı olması gerekiyor.
 
 **İşlemci referansı Claude'un seçimi** (yetki dahilinde, proje sahibi yalnızca
-ekran kartı referansını belirtti): Ryzen 5 7600 — orta segment, inceleme
-tablolarında çok sık, üstünde 9800X3D altında i3-14100 var. Değiştirilmek
-istenirse tek yerde değişir.
+ekran kartı referansını belirtti). İlk seçim Ryzen 5 7600 idi; Faz 2'de
+**Ryzen 5 9600X ile değiştirildi.** Sebep ölçüm: kaynağın per-oyun işlemci
+grafiklerinde 7600 yok, yalnızca paket ortalamasında var — yani referans
+ölçülemiyordu ve ölçek çakılacak bir düğüm bulamıyordu. 9600X aynı ölçütü
+karşılıyor (orta segment, üstünde 9800X3D altında i5-14400F) **ve** per-oyun
+grafiklerinde ölçülü.
 
 **Yan sonuç, bilerek kabul edildi:** İki referans da 100 olduğu için
 **referans sistem her çözünürlükte tam 100 verir** (ağırlıklar ne olursa olsun,
@@ -1477,7 +1480,8 @@ göstermekten iyidir.
 2. Tek bir (oyun, çözünürlük, ayar) grubunun **tamamı asla alınmaz** —
    grup 8 satırdan kısa olsa bile.
 3. Kombinasyon başına **en fazla 8 satır** (K72'den devam ediyor).
-4. Her parçanın en az iki **farklı alan adından** ölçümü olur.
+4. ~~Her parçanın en az iki **farklı alan adından** ölçümü olur.~~
+   ⚠️ **DEĞİŞTİRİLDİ (2026-08-19, K80 ile).** Yürürlükte değil.
 
 **Gerekçe:** 25 sayısı keyfiydi ve yanlış şeyi ölçüyordu. Telif açısından önemli
 olan alınan mutlak miktar değil, **alınan miktarın kaynağın bütününe oranı**.
@@ -1584,3 +1588,81 @@ sayısıdır; gerçek toplama K78'e uyduğunda daha iyi çıkması beklenir.
 
 Arayüzde bugün bu sayı gösterilirken hangi ölçüme dayandığı da yazılır. Gerçek
 toplama bittikten sonra ölçüm tekrarlanır ve metin güncellenir.
+
+### K80 — Ölçüt iki kaynak değil, sapmanın görülebilir olması
+
+K75'in 4. maddesi ("her parçanın en az iki farklı alan adından ölçümü olur")
+kaldırıldı. Yerine:
+
+> **Her yayında sistematik sapma ölçülür ve kaydedilir.** Ölçüm, bağımsız bir
+> kaynakla — mutlak FPS veren, kendisi kaynak olmayan — karşılaştırılır.
+> **Sapma kaydedilmeden indeks yayınlanmaz.**
+
+Bugünkü bağımsız kaynak: Tom's Hardware GPU Benchmarks Hierarchy. Veri kaynağı
+olarak kullanılamıyor (11 oyunun geometrik ortalaması, `game_id` karşılığı yok)
+ama tam da bu yüzden **kaynağımızdan bağımsız** ve 48 kartı mutlak FPS ile
+kapsıyor.
+
+**Gerekçe:** Maddenin amacı iki kaynak toplamak değildi, sistematik sapmanın
+**görülebilir** olmasıydı. Ölçülüp kaydedilen çapraz kontrol bunu sağlıyor.
+İki zayıf kaynağı ortalamak, bir iyi kaynağı ölçülü kullanmaktan iyi değil —
+ortalama sapmayı yok etmiyor, yalnızca gizliyor.
+
+**Bu bir gerileme değil, ölçütün doğru tanımlanmasıdır.** Eski madde bir
+*araç*ı (iki alan adı) *amaç* sanıyordu. Yeni madde amacı doğrudan şart
+koşuyor ve daha sıkı: eski hâlinde iki kaynak toplanır ama sapma hiç
+ölçülmeyebilirdi.
+
+**Neden şimdi:** Faz 1'de yedi alan adı sınandı, per-oyun FPS'i makine
+tarafından okunabilir biçimde yayınlayan koşulsuz kaynak sayısı 1 çıktı.
+Faz 1-A'da TechSpot ve PCGamesHardware tarayıcı paneliyle yeniden incelendi:
+
+- **TechSpot** — grafikler raster resim. DOM'da `data-chart`/`data-series`
+  yok, script'lerde `series`/`datasets`/`labels:[` deseni yok, metinde FPS
+  yok. Gömülü veri yükü **yok**.
+- **PCGamesHardware** — sayfa yalnızca kart seçim listesini metin olarak
+  veriyor (ad + saat + bellek), FPS vermiyor. Ayrıca onay duvarı (consent)
+  ve "Plus" ödeme duvarı var.
+
+İkinci kaynak arayışı tükendi; ölçüt yeniden tanımlandı.
+
+**Uygulama:** `lib/perf-margin.ts` her yayında güncellenir. Sapma ölçümü
+yapılmadan `perf_index` satırları yayına alınmaz.
+
+### K81 — `games` satırları elle girilir, `confidence = low`
+
+`games` tablosundaki `name`, `release_year`, `gpu_weight`, `cpu_weight`
+alanları elle girildi. Satırlar `source = manual`, `confidence = low` taşıyor;
+`source_url` ölçümün alındığı inceleme sayfasını gösteriyor.
+
+`gpu_weight` ve `cpu_weight` **hepsi 0.5** — yer tutucu.
+
+**Gerekçe:** Oyun başına ağırlık hiçbir yerde yayınlanmıyor; uydurulacak bir
+sayı olurdu. 0.5/0.5 görünür bir yer tutucu: oyunları birbirinden ayırdığını
+iddia etmiyor. Hiçbir uyumluluk kuralı, arayüz ya da v0.2 indeks hesabı bu
+alanları kullanmıyor — kullanılacakları gün ölçülmeleri gerekecek.
+
+Alan zorunlu olduğu için boş bırakılamıyordu; `SCHEMA.md`'yi bunun için
+değiştirmek yerine yer tutucu tercih edildi ve işaretlendi.
+
+### K82 — Ölçek değişince motorun üç yeri düzeltildi
+
+K73 ölçeği sabit referansa bağlayınca `/engine/performance.ts`'in üç yeri
+yanlış hale geldi ve düzeltildi:
+
+| Ne | Önce | Sonra |
+|---|---|---|
+| `MODEL_VERSION` | `v0.1` | `v0.2` |
+| `clampIndex` | 100'de kırpıyordu | tavan yok, taban 0 |
+| `BANDS` | 0–25 … 80–100 | 0–40 … 130+ |
+
+**`clampIndex` en tehlikelisiydi:** 100'de kırpmak RTX 5090'ın 216'lık
+indeksini RTX 4070 seviyesine indiriyordu. Sessizce yanlış sonuç veren tam da
+bu tür bir hata — test yazılmasının sebebi bu.
+
+**`MODEL_VERSION` ayrışması sayfayı boşaltıyordu:** arayüz indeksleri motorun
+sürümüyle okuyor; `perf_index` v0.2 yazılıp motor v0.1 kalınca sayfa hiç indeks
+bulamadı. Tarayıcıda görüldü, düzeltildi.
+
+Arayüzdeki sabit "/ 100" metni de kaldırıldı: 100 artık tavan değil, referans
+sistemin değeri.

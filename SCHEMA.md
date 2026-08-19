@@ -535,7 +535,7 @@ system_index = gpu_idx * w_gpu + cpu_idx * w_cpu
 
 ```
 gpu_idx(RTX 4070)      = 100   (referans ekran kartı)
-cpu_idx(Ryzen 5 7600)  = 100   (referans işlemci)
+cpu_idx(Ryzen 5 9600X) = 100   (referans işlemci)
 ```
 
 Daha hızlı parçalar 100'ü aşar; üst sınır yoktur.

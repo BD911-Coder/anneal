@@ -286,8 +286,12 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
             <div className="flex flex-col gap-2 text-sm">
               <p>
                 <span className="text-2xl font-semibold">{performance.system_index}</span>
-                <span className="opacity-60"> / 100</span>{" "}
-                <span className="text-xs opacity-60">tahmini sistem indeksi</span>
+                {/* "/ 100" kaldirildi (K73): olcek artik sabit referans parcaya
+                    bagli ve 100 tavan degil, orta nokta. RTX 4070 + Ryzen 5 9600X
+                    sistemi 100 verir; daha hizli sistemler 100'u asar. */}
+                <span className="text-xs opacity-60">
+                  tahmini sistem indeksi — referans sistem 100
+                </span>
               </p>
               <p>
                 <span className="opacity-60">Bant:</span> {performance.band}{" "}

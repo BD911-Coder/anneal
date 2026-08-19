@@ -78,9 +78,9 @@ describe("sistem indeksi — çözünürlük ağırlıkları (SCHEMA.md bölüm 
 
   it("hesabın hangi sürümden geldiği çıktıda yazıyor", () => {
     expect(compute({ resolution: "1080p", gpu_index: 50, cpu_index: 50 }).model_version).toBe(
-      "v0.1",
+      "v0.2",
     );
-    expect(MODEL_VERSION).toBe("v0.1");
+    expect(MODEL_VERSION).toBe("v0.2");
   });
 });
 
@@ -97,27 +97,34 @@ describe("bantlar", () => {
 
   it("bant içindeki değerler doğru etiketi alıyor", () => {
     expect(bandFor(0)).toBe("1080p düşük ayar");
-    expect(bandFor(12.5)).toBe("1080p düşük ayar");
-    expect(bandFor(35)).toBe("1080p orta/yüksek ayar");
-    expect(bandFor(55)).toBe("1440p yüksek ayar");
-    expect(bandFor(72)).toBe("1440p ultra / 4K yüksek");
-    expect(bandFor(95)).toBe("4K ultra");
+    expect(bandFor(20)).toBe("1080p düşük ayar");
+    expect(bandFor(55)).toBe("1080p orta/yüksek ayar");
+    expect(bandFor(80)).toBe("1440p yüksek ayar");
+    expect(bandFor(110)).toBe("1440p ultra / 4K yüksek");
+    expect(bandFor(150)).toBe("4K ultra");
   });
 
   it("üst sınır bir sonraki banda aittir (K33)", () => {
-    expect(bandFor(24.9)).toBe("1080p düşük ayar");
-    expect(bandFor(25)).toBe("1080p orta/yüksek ayar");
-    expect(bandFor(44.9)).toBe("1080p orta/yüksek ayar");
-    expect(bandFor(45)).toBe("1440p yüksek ayar");
-    expect(bandFor(64.9)).toBe("1440p yüksek ayar");
-    expect(bandFor(65)).toBe("1440p ultra / 4K yüksek");
-    expect(bandFor(79.9)).toBe("1440p ultra / 4K yüksek");
-    expect(bandFor(80)).toBe("4K ultra");
+    expect(bandFor(39.9)).toBe("1080p düşük ayar");
+    expect(bandFor(40)).toBe("1080p orta/yüksek ayar");
+    expect(bandFor(64.9)).toBe("1080p orta/yüksek ayar");
+    expect(bandFor(65)).toBe("1440p yüksek ayar");
+    expect(bandFor(89.9)).toBe("1440p yüksek ayar");
+    expect(bandFor(90)).toBe("1440p ultra / 4K yüksek");
+    expect(bandFor(129.9)).toBe("1440p ultra / 4K yüksek");
+    expect(bandFor(130)).toBe("4K ultra");
   });
 
-  it("tam 100 son banttadır — tablonun dışına düşmez", () => {
-    expect(bandFor(100)).toBe("4K ultra");
-    expect(compute({ resolution: "2160p", gpu_index: 100, cpu_index: 100 }).band).toBe("4K ultra");
+  // K73: referans sistem (iki parça da 100) her çözünürlükte tam 100 verir.
+  it("referans sistem 100'de ve ortadaki bantta durur", () => {
+    const sonuc = compute({ resolution: "2160p", gpu_index: 100, cpu_index: 100 });
+    expect(sonuc.system_index).toBe(100);
+    expect(sonuc.band).toBe("1440p ultra / 4K yüksek");
+  });
+
+  it("100'ün üstü tablonun dışına düşmez", () => {
+    expect(bandFor(216)).toBe("4K ultra");
+    expect(bandFor(1000)).toBe("4K ultra");
   });
 
   it("bant, gösterilen sistem indeksiyle tutarlıdır", () => {
@@ -197,11 +204,13 @@ describe("eksik ve bozuk girdi", () => {
     expect(sonuc.band).toBe("1080p düşük ayar");
   });
 
-  it("0-100 dışındaki değerler kırpılır", () => {
-    const yuksek = compute({ resolution: "1080p", gpu_index: 140, cpu_index: 120 });
-    expect(yuksek.gpu_index).toBe(100);
-    expect(yuksek.cpu_index).toBe(100);
-    expect(yuksek.system_index).toBe(100);
+  // K73: tavan yok. Eskiden 100'de kırpılıyordu; ölçek "kataloğun en hızlısı
+  // = 100" iken doğruydu, artık RTX 5090'ı RTX 4070 seviyesine indirirdi.
+  it("100'ün üstü kırpılmaz, negatif sıfıra çekilir", () => {
+    const yuksek = compute({ resolution: "1080p", gpu_index: 216, cpu_index: 144 });
+    expect(yuksek.gpu_index).toBe(216);
+    expect(yuksek.cpu_index).toBe(144);
+    expect(yuksek.system_index).toBe(183.6); // 216*0.55 + 144*0.45
 
     const dusuk = compute({ resolution: "1080p", gpu_index: -20, cpu_index: 50 });
     expect(dusuk.gpu_index).toBe(0);

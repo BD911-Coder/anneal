@@ -19,6 +19,9 @@
     "dagitim:kontrol": "node scripts/check-deploy.mjs",
     "dagitim:migration": "node scripts/migrate-deploy.mjs",
     "parca:aktar": "node scripts/import-parts.mts",
+    "olcum:aktar": "node scripts/import-benchmarks.mts",
+    "indeks:hesapla": "node scripts/compute-perf-index.mts",
+    "indeks:sapma": "node scripts/check-index-margin.mts",
     "kural:kontrol": "node scripts/check-rules.mts"
   },
   "dependencies": {

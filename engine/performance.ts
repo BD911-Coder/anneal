@@ -19,7 +19,7 @@ import type {
  * perf_index satırları da bu sürümle yazılır. Sayı değişirse eski hesaplarla
  * yenisi karıştırılmasın diye bu sabit tek yerde durur.
  */
-export const MODEL_VERSION = "v0.1";
+export const MODEL_VERSION = "v0.2";
 
 /**
  * Çözünürlüğe göre ağırlıklar. Çözünürlük yükseldikçe yük ekran kartına kayar,
@@ -36,12 +36,15 @@ export const RESOLUTION_WEIGHTS: Record<Resolution, { gpu: number; cpu: number }
  * girer, birinciye değil. SCHEMA.md tablosu sınırı hangi banda saydığını
  * söylemiyordu; bir yana karar vermek şarttı (docs/KARARLAR.md K33).
  */
+// K73: ölçek sabit referans parçaya bağlı (RTX 4070 / Ryzen 5 9600X = 100),
+// kataloğun en hızlısına değil. Referans sistem her çözünürlükte tam 100 verir.
+// Sınırlar GEÇİCİ: ölçülmüş sistemlere karşı doğrulanmadan kesinleşmiş sayılmaz.
 export const BANDS: { max: number; label: string }[] = [
-  { max: 25, label: "1080p düşük ayar" },
-  { max: 45, label: "1080p orta/yüksek ayar" },
-  { max: 65, label: "1440p yüksek ayar" },
-  { max: 80, label: "1440p ultra / 4K yüksek" },
-  { max: 100, label: "4K ultra" },
+  { max: 40, label: "1080p düşük ayar" },
+  { max: 65, label: "1080p orta/yüksek ayar" },
+  { max: 90, label: "1440p yüksek ayar" },
+  { max: 130, label: "1440p ultra / 4K yüksek" },
+  { max: Infinity, label: "4K ultra" },
 ];
 
 /** İki indeks arasındaki bu farktan sonrası darboğaz sayılır. */
@@ -61,8 +64,15 @@ const BOTTLENECK_MESSAGE: Record<Bottleneck, string> = {
  * Bozuk bir perf_index satırı (105 gibi) hesabı sessizce şişirmesin; bant
  * tablosunun da 100 üstü karşılığı yok.
  */
+/**
+ * Negatif indeks anlamsız, tavan yok (K73).
+ *
+ * Eskiden 100'de kırpılıyordu; ölçek "kataloğun en hızlısı = 100" iken doğruydu.
+ * Artık 100 sabit bir referans parça ve ondan hızlı parçalar 100'ü aşıyor —
+ * kırpmak RTX 5090'ı RTX 4070 seviyesine indirirdi.
+ */
 function clampIndex(value: number): number {
-  return Math.min(100, Math.max(0, value));
+  return Math.max(0, value);
 }
 
 /**

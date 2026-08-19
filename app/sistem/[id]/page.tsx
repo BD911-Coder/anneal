@@ -79,8 +79,10 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             <div>
               <p className="text-xl font-semibold">
                 {build.perf_index_snapshot}
-                <span className="text-sm font-normal opacity-60"> / 100</span>{" "}
-                <span className="text-xs font-normal opacity-60">tahmini sistem indeksi</span>
+                {/* K73: 100 tavan degil, sabit referans sistemin degeri. */}
+                <span className="text-xs font-normal opacity-60">
+                  tahmini sistem indeksi — referans sistem 100
+                </span>
               </p>
               <p className="opacity-70">
                 {bandFor(build.perf_index_snapshot)}{" "}

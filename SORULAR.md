@@ -18,43 +18,43 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S34 — Tek doğrulanmış kaynakla K75.4 karşılanamıyor
+### S35 — Darboğaz eşiği yeni ölçekle uyumsuz
 
-K75'in 4. maddesi: *"Her parçanın en az iki farklı alan adından ölçümü olur."*
+`BOTTLENECK_THRESHOLD = 15` (SCHEMA.md bölüm 8) 0–100 ölçeği için seçilmişti.
+K73 ile ölçek sabit referansa bağlandı ve yayılım değişti: GPU indeksleri
+61–216, CPU indeksleri 100–144.
 
-Faz 1'de yedi alan adı sınandı. Per-oyun FPS'i **HTML metin** olarak yayınlayan,
-koşulsuz kullanılabilir kaynak sayısı: **1** (ComputerBase).
+Dahası iki indeks **farklı referanslara** göre normalize: GPU'da RTX 4070 = 100,
+CPU'da Ryzen 5 9600X = 100. İkisinin farkını almak giderek anlamsızlaşıyor.
 
-| Alan adı | Sonuç |
-|---|---|
-| computerbase.de | Kullanılabilir (GPU + CPU) |
-| notebookcheck.net | Koşullu — dizüstü kartlar, ve tablo ölçümle **interpolasyonu karıştırıyor** |
-| tomshardware.com | Kaynak değil (paket ortalaması), ama **çapraz kontrol aracı** |
-| techspot.com | Grafikler JPG |
-| guru3d.com | HTML'de sayı yok, içerik JS |
-| pcgameshardware.de | HTML'de sayı yok, veri JS bileşeninde |
-| techpowerup.com | Kullanım şartlarıyla elendi (Faz 0) |
+Gözlenen sonuç: **RTX 5090 + Ryzen 7 9800X3D** — piyasanın en hızlı oyun
+işlemcisi — arayüzde "İşlemci sınırlıyor" diyor (216 − 144 = 72 > 15).
 
-Bu maddeyle bugün **hiçbir parça indekslenemez**. Madde keyfi değil: tek
-kaynağın sistematik sapması (Faz 0'da %20.3'e varıyordu) ancak ikinci bir
-kaynakla görülüyor.
+**Seçenekler:** eşiği yeni ölçeğe göre kalibre etmek, ya da göstergeyi farktan
+**orana** çevirmek (`gpu_idx / cpu_idx` katı), ki referans farkından etkilenmez.
+İkincisi daha sağlam ama SCHEMA.md bölüm 8 formülünü değiştiriyor.
 
-**Dört yol:**
+→ `docs/log/2026-08-19-faz2-ilk-indeksler.md` bölüm 7
 
-| Yol | Ne gerekiyor | Risk |
-|---|---|---|
-| **A.** Derin kaynak araştırması — JS ile çizilen grafiklerin veri yükü sayfada gömülü olabilir, tarayıcı paneliyle bakılır | ~1 oturum, sonuç garantisiz | Emek boşa gidebilir |
-| **B.** K75.4'ü gevşet: tek kaynak yeterli, **ama** Tom's Hardware ile çapraz kontrol zorunlu, sapma her yayında ölçülüp `lib/perf-margin.ts`'e yazılır | Karar | Sistematik sapma indekse girer; ölçülür ama düzeltilmez |
-| **C.** İkinci kaynak `own_test` — proje sahibinin kendi makinesi | Donanım, zaman | Tek makine tek kart; kapsamayı çözmez |
-| **D.** Notebookcheck'i hücre ayıklamasıyla kullan | Ayıklama disiplini + masaüstü eşleme | Yanlış satır alma riski kazancından büyük |
+### S36 — K75'in %10 oranı neye göre sayılıyor?
 
-**Claude'un önerisi: A, başarısız olursa B.** Bir oturumluk derin arama ucuz;
-B dürüst bir geri çekilme çünkü sapmayı gizlemiyor, ölçüp yazıyor — K79 bu
-disiplini zaten kurdu.
+K75: "Bir sayfanın yayınladığı veri noktalarının en fazla %10'u alınır."
 
-**Bu karar verilmeden Faz 2 (toplama) başlamamalı.**
+"Veri noktası" tanımı net değil. CPU sayfasında:
 
-→ `docs/log/2026-08-19-faz1-kaynak-dogrulama.md` bölüm 4
+- HTML satırı sayısı: 187 → alınan 42 = **%22**
+- Ortalama bloğu (persentil hariç): ~90 → **%47**
+- Kataloğumuzla eşleşen satır: ~40 → **%100'e yakın**
+- Sayfadaki bütün grafik değerleri (20 grafik × ~12): ~240 → **%17**
+
+Aynı toplama, tanıma göre %17 ile %100 arasında görünüyor. Kural uygulanabilir
+olması için sayım yöntemi yazılmalı.
+
+**Öneri:** "sayfada yayınlanan sayı adedi" — yani bütün grafiklerdeki bütün
+değerler, persentil ve bizim kataloğumuzda olmayan parçalar dahil. Bu, kaynağın
+emeğinin bütününü ölçüyor ve dışarıdan doğrulanabilir.
+
+→ `docs/log/2026-08-19-faz2-ilk-indeksler.md` bölüm 4
 
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
@@ -179,6 +179,26 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S34 — Tek doğrulanmış kaynakla K75.4 karşılanamıyor ✅ 2026-08-19
+
+**Proje sahibinin kararı: önce A, olmazsa B — ama B bir gerileme değil.**
+
+**A denendi, başarısız.** TechSpot ve PCGamesHardware tarayıcı paneliyle
+incelendi: TechSpot'ta gömülü veri yükü yok (grafikler raster resim, DOM'da
+`data-chart` yok, script'lerde seri deseni yok); PCGH yalnızca kart seçim
+listesini metin veriyor, ayrıca onay ve ödeme duvarı var.
+
+**B uygulandı.** K75.4 kaldırıldı, yerine K80: *"Her yayında sistematik sapma
+ölçülür ve kaydedilir. Ölçüm bağımsız bir kaynakla — mutlak FPS veren, kendisi
+kaynak olmayan — karşılaştırılır. Sapma kaydedilmeden indeks yayınlanmaz."*
+
+Proje sahibinin gerekçesi: maddenin amacı iki kaynak değil, sistematik sapmanın
+**görülebilir** olmasıydı. İki zayıf kaynağı ortalamak, bir iyi kaynağı ölçülü
+kullanmaktan iyi değil. → `docs/KARARLAR.md` K80
+
+**Sonuç:** Faz 2 yayınlandı. 21 parça indekslendi, sapma %4.8 ortalama /
+%12.3 en büyük ölçüldü ve `lib/perf-margin.ts`'e işlendi.
 
 ### S33 — K72 tavanı ile toplama hedefi uyuşmuyor ✅ 2026-08-19
 
