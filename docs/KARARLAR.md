@@ -1385,3 +1385,101 @@ Kaydedilen sistem sayfasi:
 ```
 
 Konsolda hata yok, boş sayı gösterilmiyor, sayfa çökmüyor.
+
+## 2026-08-19 — Benchmark toplama kararları
+
+Karar veren: proje sahibi (K72, K73, K74).
+
+### K72 — Kaynak başına iki katmanlı satır tavanı
+
+`benchmark_points` toplarken:
+
+1. Bir (**kaynak alan adı**, oyun, çözünürlük, ayar) kombinasyonundan en fazla
+   **8 satır**.
+2. Aynı **alan adından toplam en fazla 25 satır** — bütün kombinasyonlar dahil.
+3. O sayfadaki listenin tamamı hiçbir zaman alınmaz.
+4. Her parçanın en az iki **farklı alan adından** ölçümü olur.
+
+**Gerekçe:** İlk sınır tek başına yetmiyordu. 8 kombinasyon × 8 satır = 64 satır
+tek kaynaktan gelebilirdi; bu artık "dağınık kaynaklardan tek tek" değil, o
+kaynağın derlemesinin önemli bir kısmı. İkinci tavan bunu kapatıyor.
+
+Sınırın var olma sebebi `SCHEMA.md` bölüm 4'teki kural: FPS sayısının kendisi
+bir olgudur ve olgular telifle korunmaz, ama **derlemenin kendisi** korunur.
+Tek tek sayı almakla bir veri tabanının önemli kısmını çekmek hukuken farklı
+şeyler.
+
+**Yöntemsel gerilim ve neden sıfır olamıyor:** İki kartın gücünü karşılaştırmanın
+tek geçerli yolu aynı kaynakta aynı koşulda ölçülmüş sayılarının oranı — farklı
+sitelerin FPS'leri doğrudan karşılaştırılamıyor (test sahnesi, sürücü, bellek
+farklı). Yani yöntem aynı sayfadan en az iki satır almayı **zorunlu** kılıyor.
+Tavan bu zorunluluğu karşılıyor, ötesine izin vermiyor.
+
+25 sayısı: bir kartı iki çözünürlük basamağına birden bağlamaya ve örtüşme
+kartlarını dikmeye yetiyor; 60 kartlık kataloğun anlamlı bir kısmını tek
+kaynaktan almaya yetmiyor.
+
+### K73 — İndeks ölçeği sabit referans parçaya bağlanır, 100 aşılabilir
+
+```
+gpu_idx(RTX 4070)      = 100
+cpu_idx(Ryzen 5 7600)  = 100
+```
+
+`perf_index.index_value` artık "0–100" değil. Üst sınır yok; daha hızlı parçalar
+100'ü aşar. Sütun zaten `Float`, veritabanı değişmedi — değişen `SCHEMA.md`
+bölüm 4 ve bölüm 8.
+
+**Gerekçe:** Göreli ölçekte — "kataloğun en hızlısı = 100" — yeni bir kart
+çıktığı gün bütün indeksler aşağı kayar. Kullanıcının donanımı değişmediği hâlde
+bandı düşer: dün "4K ultra" olan sistem bugün "1440p ultra" olur. Sabit
+referansta bu olmaz, geçmişe dönük tutarlılık bozulmaz.
+
+**Neden orta segment referans:** Hem üstünde hem altında yer kalsın. RTX 4070
+ayrıca her yerde ölçülmüş bir kart, yani bol oran kenarı sağlıyor — ölçeğin
+dayandığı düğümün iyi bağlı olması gerekiyor.
+
+**İşlemci referansı Claude'un seçimi** (yetki dahilinde, proje sahibi yalnızca
+ekran kartı referansını belirtti): Ryzen 5 7600 — orta segment, inceleme
+tablolarında çok sık, üstünde 9800X3D altında i3-14100 var. Değiştirilmek
+istenirse tek yerde değişir.
+
+**Yan sonuç, bilerek kabul edildi:** İki referans da 100 olduğu için
+**referans sistem her çözünürlükte tam 100 verir** (ağırlıklar ne olursa olsun,
+`100·w_gpu + 100·w_cpu = 100`). Bant tablosunun sabit dayanağı bu.
+
+**Bantlar yeniden yazıldı ama geçici.** Eski sınırlar (0–25 … 80–100) referans
+değişince anlamını yitirdi. Yenileri (0–40 … 130+) şimdilik referans sistemin
+100'de durduğu varsayımıyla yerleştirildi ve gerçek veri geldiğinde ölçülmüş
+sistemlere karşı doğrulanmalı. Bilinen risk: ağırlıklı toplam orta segment
+işlemciyi 100 saydığı için zayıf kartlı sistemleri yukarı çekebilir
+(RTX 3060 + Ryzen 5 7600, 1080p'de `50·0.55 + 100·0.45 ≈ 73`). Doğrulanmadan
+bantlar kesinleşmiş sayılmaz.
+
+### K74 — İnterpolasyon yapılmaz, ölçülmeyen parça indekssiz kalır
+
+Doğrudan ölçülmemiş bir parçaya, spec alanlarından (shader sayısı × saat hızı,
+VRAM, bant genişliği) türetilmiş indeks yazılmaz. O parça `perf_index` almaz;
+arayüz "performans verisi yok" der.
+
+**Gerekçe — üç ayrı sebep, her biri tek başına yeterli:**
+
+1. **K71'in yasakladığı şeyin matematikli hâli olurdu.** K71 dün yazıldı:
+   `perf_index` satırları yalnızca `benchmark_points`'tan hesaplanarak üretilir.
+   Spec'ten türetilen sayı `benchmark_points`'tan gelmiyor; içinde daha fazla
+   aritmetik olan bir el yazması sayı oluyor.
+2. **K57/K58 zaten aileler arası karşılaştırmayı geçersiz sayıyor.**
+   `shader_units` yalnızca aynı mimari içinde anlamlı. İnterpolasyon en iyi
+   ihtimalle aile içinde yapılabilirdi, ki kapsamayı çözmezdi.
+3. **Kullanıcı ayırt edemezdi.** `perf_index`'te `confidence` sütunu yok ve
+   olmamalı (K32) — tablo dış dünya hakkında iddia taşımıyor. "Bu satır
+   ölçülmedi, tahmin edildi" bilgisi hiçbir yere yazılamıyor. Ölçülmüş indeksle
+   tahmin edilmiş indeks ekranda aynı görünürdü.
+
+Kapsamanın eksik kalması kabul edildi: ~60 kartın ~10'u incelemelerde nadir
+ölçülüyor (RTX 3050 6GB, RTX 3060 8GB, RTX 3080 12GB, RTX 5050, RX 6700,
+RX 9070 GRE, Arc A770 8GB, Arc A380/A580). Bunlar indekssiz kalacak.
+
+**Bu, aynı duvara altıncı çarpış:** K52, K56, K60, K62, K71 ve şimdi K74.
+Hepsinde aynı tercih yapıldı — eksik veriyi göstermek, uydurulmuş veriyi
+göstermekten iyidir.

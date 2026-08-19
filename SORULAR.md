@@ -18,88 +18,47 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S30 — Aynı kaynaktan en fazla kaç satır alınabilir?
+### S33 — K72 tavanı ile toplama hedefi uyuşmuyor
 
-`SCHEMA.md` bölüm 4: "Tek bir kaynaktan toplu veri alınmaz. Her satır ayrı
-ayrı, kaynağı yazılarak girilir."
+Faz 0 fizibilitesi bir çelişki ölçtü.
 
-Benchmark toplama planı bu kuralla bir gerilim yaratıyor. İki kartın gücünü
-karşılaştırmanın tek geçerli yolu **aynı kaynakta aynı koşulda ölçülmüş**
-sayılarının oranı — farklı sitelerin FPS'leri doğrudan karşılaştırılamıyor
-(test sahnesi, sürücü, bellek farklı). Yani yöntem, aynı sayfadan en az iki
-satır almayı gerektiriyor.
+K72: alan adı başına toplam **25 satır**. Plan hedefi **~306 satır**.
 
-"Toplu" ile "iki satır" arasındaki sınır bugün yazılı değil.
+```
+306 / 25 = 13 farklı alan adı gerekiyor
+```
 
-**Önerilen sınır:** Bir (kaynak alan adı, oyun, çözünürlük, ayar)
-kombinasyonundan **en fazla 8 satır** alınır; o sayfadaki listenin tamamı
-hiçbir zaman alınmaz. Her kartın en az iki **farklı alan adından** ölçümü olur.
+Ve hepsinde makine tarafından okunabilir **per-oyun** veri olmalı. Faz 0'da
+bulunan:
 
-8 sayısının gerekçesi: iki çözünürlük basamağını birbirine dikmeye yetecek
-örtüşmeyi sağlıyor, 20-30 kartlık bir inceleme grafiğinin tamamını almaya
-yetmiyor.
+| | Adet |
+|---|---|
+| İncelenen alan adı | 7 |
+| Kullanım şartları nedeniyle elenen | 1 (TechPowerUp) |
+| Per-oyun HTML metin verisi **doğrulanmış** | **1** (ComputerBase) |
+| Yalnızca paket ortalaması, `game_id` yok | 1 (Tom's Hardware) |
+| Okunabilirliği ölçülmemiş | 4 |
 
-**Karar gereken:** 8 uygun mu, daha düşük mü olmalı? Sayı düşerse gereken
-sayfa sayısı ve dolayısıyla iş büyüklüğü artar.
+Kalan dördü de doğrulansa 5 × 25 = **125 satır**, hedefin %40'ı. Köprü
+kartları da aynı bütçeden yendiği için gerçek kapsama daha düşük olur.
 
-→ `docs/log/2026-08-19-benchmark-toplama-plani.md` bölüm 2
+**Üç yol:**
 
-### S31 — İndeks ölçeği neye bağlanacak?
+| Yol | Sonuç |
+|---|---|
+| **A.** Tavanı yükselt (25 → 60-80) | Hedef tutar. Telif riski artar, K72'nin gerekçesi zayıflar. |
+| **B.** Parça başına 2 ölçüm | ~204 satır, yine 8+ alan adı. Faz 0 zaten "2 ölçüm az" dedi (çapraz kontrolde %20'ye varan sapma). |
+| **C.** Kapsamı daralt: en çok tercih edilen ~30 GPU + ~20 CPU | ~150 satır, 6 alan adı yeter. Kalanlar indekssiz kalır. |
 
-`SCHEMA.md` bölüm 4: `perf_index.index_value` "0–100".
-Bölüm 8'deki bant tablosu bu sayıya **mutlak** anlam yüklüyor (80–100 = 4K
-ultra).
+**Claude'un önerisi: C, gerekirse sonra A.** Kapsamı daraltmak tavanı
+gevşetmekten az risk taşıyor ve K74 ile tutarlı: indeksi olmayan parça
+kullanıcıya "veri yok" diyor, yalan söylemiyor. En çok tercih edilen kartlarda
+sağlam indeks olması, bütün kartlarda yarım yamalak indeks olmasından iyi.
 
-"En hızlı kart = 100" denirse, kataloğa daha hızlı bir kart girdiği gün bütün
-indeksler aşağı kayar ve kullanıcının donanımı değişmediği hâlde "4K ultra"
-sistemi "1440p ultra"ya düşer. Sayı sessizce yalan söylemeye başlar.
+**Bu karar verilmeden faz 2 (toplama) başlamamalı** — hedef satır sayısı,
+seçilecek kaynak sayısını ve dolayısıyla işin büyüklüğünü belirliyor.
 
-**Önerilen çözüm:** Sabit bir referans parça kalıcı olarak 100 kabul edilir
-(aday: RTX 4090 — bant tablosundaki "4K ultra" tanımına oturuyor ve her yerde
-ölçülmüş). Sonucu: daha hızlı kartlar **100'ü aşar**.
-
-`index_value` zaten `Float`, veritabanı kabul ediyor. Ama `SCHEMA.md` "0–100"
-diyor; **şema metni değişmeden uygulanmaz.**
-
-CPU tarafı için ayrı referans gerekir (aday: Ryzen 7 9800X3D).
-
-**Karar gereken:** Sabit referans + 100'ü aşabilen ölçek kabul mü? Değilse
-bantların anlamının veri güncellendikçe kayması kabul mü?
-
-→ `docs/log/2026-08-19-benchmark-toplama-plani.md` bölüm 3
-
-### S32 — Ölçülmeyen kartlar indekssiz mi kalacak?
-
-60 kartın ~50'si incelemelerde düzenli ölçülüyor. Zor bulunacak ~10 kart:
-RTX 3050 6GB, RTX 3060 8GB, RTX 3080 12GB, RTX 5050, RX 6700 (XT değil),
-RX 9070 GRE, Arc A770 8GB, Arc A380/A580.
-
-Proje sahibinin isteği "60 kartın tamamı kapsansın, doğrudan ölçülmeyenler
-interpolasyonla" idi. **Bu K71 ile çelişiyor:** spec alanlarından (shader
-sayısı × saat hızı) türetilen indeks, `benchmark_points`'tan hesaplanmış
-olmuyor — daha fazla matematik içeren bir el yazması sayı oluyor.
-
-Ek olarak:
-
-- K57/K58: `shader_units` yalnızca **aynı mimari içinde** karşılaştırılabilir.
-  Aileler arası interpolasyon zaten geçersiz.
-- `perf_index`'te `confidence` sütunu yok ve olmamalı (K32). "Bu satır
-  ölçülmedi, tahmin edildi" bilgisi hiçbir yere yazılamıyor; kullanıcı ikisini
-  ayırt edemez.
-
-**Önerilen:** v0.2'de interpolasyon yapılmasın. Ölçülmeyen kart indeks almaz,
-arayüz "performans verisi yok" der — bu mekanizma kuruldu ve doğrulandı
-(K71). Proje bu tercihi K52, K56, K60, K62, K71'de beş kez yaptı.
-
-**Yine de isteniyorsa** minimum güvenli hâli, K71'e ek gerektirir:
-(1) yalnızca aynı mimari ailesi içinde, (2) yalnızca aynı chipset'in VRAM
-varyantları ve bir üst/bir alt modeli ölçülmüş kartlar için, (3) ayrı bir
-`model_version` ile (`v0.2-tahmin`) — model sürümü ekranda yazdığı için
-ayrımı yapmanın `confidence` sütunu olmadan tek yolu bu.
-
-**Karar gereken:** İnterpolasyon yok mu, yoksa yukarıdaki üç kısıtla var mı?
-
-→ `docs/log/2026-08-19-benchmark-toplama-plani.md` bölüm 3
+→ `docs/log/2026-08-19-faz0-fizibilite.md` bölüm 4
 
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
@@ -224,6 +183,38 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S32 — Ölçülmeyen kartlar indekssiz mi kalacak? ✅ 2026-08-19
+
+**Proje sahibinin kararı:** İnterpolasyon **yapılmayacak**. "İtirazın benim
+isteğimden doğru — K71'in yasakladığı şeyin matematikli hâli olurdu ve
+`perf_index`'te `confidence` olmadığı için kullanıcı ayırt edemezdi."
+
+Ölçülmeyen kartlar indekssiz kalır, arayüz "performans verisi yok" der.
+→ `docs/KARARLAR.md` K74
+
+### S31 — İndeks ölçeği neye bağlanacak? ✅ 2026-08-19
+
+**Proje sahibinin kararı:** Sabit referans parça, 100 aşılabilir. Referans
+**orta segment** olsun (RTX 4070) — hem üstünde hem altında yer kalsın.
+`SCHEMA.md` bölüm 8'deki "0-100" ifadesi düzeltilsin, bant tablosu referansa
+göre yeniden yazılsın.
+
+**Cevap:** Uygulandı. `gpu_idx(RTX 4070) = 100`, `cpu_idx(Ryzen 5 7600) = 100`
+(işlemci referansı Claude'un seçimi, yetki dahilinde). İki referans da 100
+olduğu için referans sistem her çözünürlükte tam 100 veriyor; bant tablosunun
+dayanağı bu. Bantlar yeniden yazıldı ama **geçici** — gerçek veriyle
+doğrulanmadan kesinleşmiş sayılmaz. → `docs/KARARLAR.md` K73
+
+### S30 — Aynı kaynaktan en fazla kaç satır alınabilir? ✅ 2026-08-19
+
+**Proje sahibinin kararı:** 8 satır/kombinasyon sınırı kabul, **ek olarak aynı
+alan adından toplam 25 satır tavanı**. Gerekçe: 8 kombinasyon × 8 satır = 64
+satır tek kaynaktan gelirdi, bu artık "dağınık" değil.
+
+→ `docs/KARARLAR.md` K72
+
+**Not:** Faz 0 bu tavanın toplama hedefiyle uyuşmadığını ölçtü — **S33**.
 
 ### S29 — `perf_index` sahte veriyi canlıdan ayıramıyor ✅ 2026-08-19
 

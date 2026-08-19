@@ -340,7 +340,7 @@ bir varsayılan, yanlış etiketlenmiş satırı sessizce meşrulaştırırdı.
 |---|---|---|
 | `part_id` | FK | Sadece `gpu` ve `cpu` |
 | `workload` | enum | `gaming`, `ai_inference`, `video_encode`, `productivity` |
-| `index_value` | float | 0–100 |
+| `index_value` | float | Referans parça = 100. Daha hızlı parçalar 100'ü **aşar** (K73). |
 | `model_version` | text | `v0.1` |
 | `computed_at` | timestamptz | |
 
@@ -529,15 +529,42 @@ ağırlıklar (çözünürlüğe göre):
 system_index = gpu_idx * w_gpu + cpu_idx * w_cpu
 ```
 
+### Ölçek — sabit referans (K73)
+
+İndeks bir sıralama değil, **sabit bir referans parçaya göre orandır**:
+
+```
+gpu_idx(RTX 4070)      = 100   (referans ekran kartı)
+cpu_idx(Ryzen 5 7600)  = 100   (referans işlemci)
+```
+
+Daha hızlı parçalar 100'ü aşar; üst sınır yoktur.
+
+**Neden en hızlı parça 100 değil:** ölçek kataloğun en hızlısına bağlanırsa,
+daha hızlı bir kart eklendiği gün bütün indeksler aşağı kayar. Kullanıcının
+donanımı değişmediği hâlde bandı düşer ve aşağıdaki tablo sessizce anlam
+değiştirir. Sabit referansta bu olmaz; geçmişe dönük tutarlılık korunur.
+
+Referansların ikisi de **orta segment** seçildi: üstünde de altında da yer
+kalsın diye. İkisi de 100 olduğu için **referans sistem her çözünürlükte tam
+100 verir** — ağırlıklar ne olursa olsun. Bant tablosunun sabit dayanağı budur.
+
 ### Bantlar
 
 | İndeks | Etiket |
 |---|---|
-| 0–25 | 1080p düşük ayar |
-| 25–45 | 1080p orta/yüksek ayar |
-| 45–65 | 1440p yüksek ayar |
-| 65–80 | 1440p ultra / 4K yüksek |
-| 80–100 | 4K ultra |
+| 0–40 | 1080p düşük ayar |
+| 40–65 | 1080p orta/yüksek ayar |
+| 65–90 | 1440p yüksek ayar |
+| 90–130 | 1440p ultra / 4K yüksek |
+| 130+ | 4K ultra |
+
+> **Bu sınırlar geçicidir.** Referans değişince eski sınırlar (0–25 … 80–100)
+> anlamını yitirdi ve yenileri şimdilik referans sistemin 100'de durduğu
+> varsayımıyla yerleştirildi. Gerçek `benchmark_points` verisi geldiğinde
+> ölçülmüş sistemlere karşı **doğrulanmaları gerekiyor**; özellikle ağırlıklı
+> toplamın orta segment işlemciyi 100 sayması, zayıf kartlı sistemleri
+> olduğundan yukarı çekebilir. Doğrulanmadan bantlar kesinleşmiş sayılmaz.
 
 ### Darboğaz göstergesi (basit)
 
