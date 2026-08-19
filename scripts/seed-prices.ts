@@ -71,27 +71,9 @@ export const PRICE_DATES = [
   { at: new Date("2026-08-17T12:00:00Z"), factor: 1 },
 ] as const;
 
-/**
- * Parça id'si -> performans indeksi (0-100). Sadece gpu ve cpu.
- *
- * Ölçüm değil, elle konmuş sıralama. En güçlü ekran kartı 100 kabul edildi,
- * diğerleri ona göre yerleştirildi. Kombinasyonlar üç darboğaz durumunu da
- * üretecek şekilde seçildi: RTX 5090 + Ryzen 5 7600 işlemci sınırlı,
- * RTX 5060 + i9 ekran kartı sınırlı, RTX 5090 + i9 dengeli.
- */
-export const PERF_INDEXES: Record<string, number> = {
-  // Ekran kartları
-  "nvidia-rtx-5090": 100,
-  "amd-rx-9070-xt": 62,
-  "nvidia-rtx-5070": 54,
-  "nvidia-rtx-5060": 33,
-
-  // İşlemciler
-  "intel-core-i9-15900k": 92,
-  "amd-ryzen-7-7800x3d": 78,
-  "intel-core-i5-14600k": 68,
-  "amd-ryzen-5-7600": 55,
-};
-
-/** İndekslerin hesaplandığı an. Sabit — seed her çalıştığında değişmemeli. */
-export const PERF_COMPUTED_AT = new Date("2026-08-17T12:00:00Z");
+// PERF_INDEXES ve PERF_COMPUTED_AT kaldırıldı (K71).
+//
+// Burada 8 parçanın indeksi elle yazılıydı — ölçüm değil, gözle konmuş bir
+// sıralama. perf_index hesaplanmış bir tablo; satırları yalnızca
+// benchmark_points verisinden türetilir. Ölçüm toplanana kadar bu tablo boş
+// kalır ve arayüz "henüz yeterli veri yok" der.

@@ -144,8 +144,17 @@ if (problems.length > 0) {
 }
 
 console.log("SONUC: dev-seed fiyatlar gelistirmede gorunuyor, canlida gorunmuyor.");
-console.log(
-  "\nNOT: perf_index'te `source` sutunu yok (SCHEMA.md 1.3 ve 4). Gercek bir parcaya\n" +
-    "bagli sahte indeks bu yolla ayirt edilemez; yukaridaki perf sayisi iki ortamda da\n" +
-    "ayni cikar. Bkz. SORULAR.md S29.",
-);
+// perf_index filtreyle korunamaz: `source` sutunu yok ve olmayacak (K32).
+// Cozum damgalamak degil, sahte satirin hic olmamasiydi (K71) — bu yuzden
+// asagidaki sayi iki ortamda da ayni cikar ve dogru olan da bu.
+if (dev.perfIndexes !== live.perfIndexes) {
+  console.log(
+    `\nNOT: perf indeksi iki ortamda farkli (${dev.perfIndexes} / ${live.perfIndexes}).` +
+      " perf_index'te filtre yok; bu fark beklenmiyordu.",
+  );
+} else if (dev.perfIndexes > 0) {
+  console.log(
+    `\nNOT: ${dev.perfIndexes} perf indeksi iki ortamda da gorunuyor. perf_index` +
+      " filtrelenmez (K32); satirlarin benchmark_points'tan hesaplandigindan emin ol (K71).",
+  );
+}

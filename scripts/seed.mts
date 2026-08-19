@@ -15,10 +15,7 @@ import { loadEnvFile } from "node:process";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client.ts";
-// Motor sürümü tek yerde tanımlı: perf_index satırları ile sayfanın okuduğu
-// sürüm ayrışırsa sayfa hiç indeks bulamaz.
-import { MODEL_VERSION } from "../engine/performance.ts";
-import { PERF_COMPUTED_AT, PERF_INDEXES, PRICES_MINOR, PRICE_DATES } from "./seed-prices.ts";
+import { PRICES_MINOR, PRICE_DATES } from "./seed-prices.ts";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
@@ -392,41 +389,24 @@ if (yeniFiyatlar.length > 0) {
 }
 
 // ---------------------------------------------------------------------------
-// Performans indeksi — perf_index
+// Performans indeksi — perf_index'E YAZILMAZ
 // ---------------------------------------------------------------------------
 //
-// Bu tablo append-only DEĞİL: (part_id, workload, model_version) tekildir,
-// yeniden hesap aynı satırı günceller (SCHEMA.md bölüm 4, K35).
+// Bu script eskiden buraya elle konmuş 8 indeks yazıyordu. Artık yazmıyor ve
+// yazmayacak (K71): perf_index hesaplanmış bir tablodur, satırları yalnızca
+// benchmark_points verisinden türetilir. Hesaplanmış bir tabloda el yazması
+// sayının olması, sayının nereden geldiğini sorulamaz hale getiriyor.
 //
-// perf_index'te `source` sütunu yoktur — motorun kendi hesabıdır, dış dünya
-// hakkında iddia taşımaz. Dolayısıyla bu satırlar 'dev-seed' damgası TAŞIYAMAZ;
-// sahteliklerini bağlı oldukları parçadan alırlar (docs/KARARLAR.md K32).
+// Fiyattaki çözüm burada işlemiyordu: fiyat satırı 'dev-seed' damgası taşıyıp
+// canlıda filtrelenebiliyor, perf_index'te `source` sütunu yok ve olmayacak
+// (K32 — tablo dış dünya hakkında iddia taşımaz). Damgalanamayan sahte satır
+// gerçek parçaya bağlandığında canlıya çıkıyordu.
 //
-// workload beta'da hep 'gaming' (K35). Alanın varsayılanı yok, bu yüzden her
-// satırda açıkça yazılıyor — hangi iş yükünün indeksi olduğu söylenmeden
-// satır yazılamaz.
-const WORKLOAD = "gaming" as const;
+// Sonuç: ölçüm verisi toplanana kadar hiçbir parçanın indeksi yok. Motor bunu
+// zaten karşılıyor (computePerformance -> { ok: false, missing }), arayüz de
+// "henüz yeterli veri yok" diyor. Bu bir hata değil, verinin bulunmadığı hal.
 
-for (const [partId, indexValue] of Object.entries(PERF_INDEXES)) {
-  const row = {
-    part_id: partId,
-    workload: WORKLOAD,
-    index_value: indexValue,
-    model_version: MODEL_VERSION,
-    computed_at: PERF_COMPUTED_AT,
-  };
-  await prisma.perfIndex.upsert({
-    where: {
-      part_id_workload_model_version: {
-        part_id: partId,
-        workload: WORKLOAD,
-        model_version: MODEL_VERSION,
-      },
-    },
-    create: row,
-    update: row,
-  });
-}
+const perfOnce = await prisma.perfIndex.count();
 
 const sayim = await prisma.part.groupBy({
   by: ["category"],
@@ -450,7 +430,18 @@ console.log(
   `Fiyat: ${fiyatSayisi} snapshot (${yeniFiyatlar.length} yeni), ${fiyatliParca} parçada fiyat var.`,
 );
 
-const indeksSayisi = await prisma.perfIndex.count({ where: { model_version: MODEL_VERSION } });
-console.log(`Performans indeksi: ${indeksSayisi} parça, model_version '${MODEL_VERSION}'.`);
+// K71 bekçisi: bu script perf_index'e yazmaz. Yazan bir satır eklenirse
+// (ya da bir upsert yan etkiyle satır üretirse) burada durur.
+const perfSonra = await prisma.perfIndex.count();
+if (perfSonra !== perfOnce) {
+  console.error(
+    `\nHATA: seed perf_index'e dokundu (${perfOnce} -> ${perfSonra}).\n` +
+      "perf_index satırları yalnızca benchmark_points'tan hesaplanarak üretilir (K71).\n" +
+      "Seed bu tabloya yazamaz; ekleyen kod geri alınmalı.",
+  );
+  await prisma.$disconnect();
+  process.exit(1);
+}
+console.log(`Performans indeksi: seed yazmadı, tabloda ${perfSonra} satır var (K71).`);
 
 await prisma.$disconnect();

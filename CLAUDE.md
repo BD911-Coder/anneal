@@ -122,6 +122,13 @@ optimizasyon sayılmaz, ancak `SCHEMA.md`'de tanımlı olmak zorundadır.
 - Parça slug'ları bir kez atanır, **asla değişmez**.
 - Motorun ürettiği her sayının yanında `model_version` bulunur.
 - URL yapısı `SCHEMA.md` bölüm 9'da sabittir.
+- **`perf_index` satırları yalnızca `benchmark_points`'tan hesaplanarak
+  üretilir** (K71). Elle, seed ile ya da CSV ile satır yazılmaz. Hesaplanmış
+  bir tabloda el yazması sayı olmaz; sayının nereden geldiği sorulamaz hale
+  gelir. Bu tabloda `source` sütunu yok (K32), yani sahte satır damgalanamaz
+  ve canlıda filtrelenemez — tek koruma satırın hiç yazılmaması. Ölçüm verisi
+  toplanana kadar tablo boştur ve arayüz "henüz yeterli veri yok" der; bu bir
+  hata değildir.
 - **`shader_units` yalnızca aynı mimari içinde kullanılır.** Performans
   ölçekleme modeli bu alanla farklı marka ya da farklı nesil arasında
   karşılaştırma yapamaz. Sayının ne saydığını `shader_unit_type` söyler
@@ -264,6 +271,33 @@ aramak yerine bu yol kullanılmalı.
 **Adres desenleri tutarsız:** AMD'de `amd-radeon-rx-9070xt.html` (tiresiz) ama
 `amd-radeon-rx-7900-gre.html` (tireli); 9000 serisinde pazarlama sayfası ile
 spec sayfası ayrı adreslerde. İki varyantı da denemek gerekiyor.
+
+### `/data` içe aktarma yolları — takma ad değil, göreli yol + `.ts`
+
+`/data` altındaki dosyalar birbirini ve üretilen Prisma istemcisini **göreli
+yolla ve `.ts` uzantısıyla** içe aktarır:
+
+```ts
+import { prisma } from "./client.ts";                       // "./client" DEĞİL
+import { PrismaClient } from "../lib/generated/prisma/client.ts";  // "@/lib/..." DEĞİL
+```
+
+**Sebebi:** `@/` takma adını yalnızca Next'in derleyicisi çözüyor; çıplak Node
+çözemiyor. Uzantısız göreli yolu da Node ESM çözemiyor. İkisi birleşince
+`/data` katmanı hiçbir script'ten içe aktarılamıyordu — yani veri erişim
+katmanı yalnızca tarayıcıda çalıştırılarak sınanabiliyordu.
+
+Bunun somut bedeli: dev-seed filtresinin canlıda çalıştığını ölçmek için
+sorguyu script içinde **kopyalamak** gerekiyordu, ki o zaman sınanan şey asıl
+kod olmuyordu. `npm run seed:filtre-kontrol` bu yüzden var ve bu yüzden
+gerçek `getCurrentPrices`'ı çağırabiliyor.
+
+`allowImportingTsExtensions` tsconfig'te zaten açık (`scripts/*.mts` için
+gerekiyordu). Next derlemesi `.ts` uzantılı içe aktarmayı sorunsuz çözüyor;
+`npm run build` ile doğrulandı.
+
+**Yeni dosya eklerken:** `/data` içinde bu deseni sürdür. `/app` içinden
+`@/data/...` kullanmak sorun değil — orayı Next derliyor.
 
 ### Prisma
 

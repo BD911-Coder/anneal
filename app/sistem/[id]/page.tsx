@@ -94,12 +94,19 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
           ) : (
             // İndeks yerine 0 yazılmıyor: hesaplanamadı ile "çok yavaş" aynı şey
             // değil (K44). Sebebi yazılıyor.
+            //
+            // Sebep iki türlü olabilir ve kayıt hangisi olduğunu taşımıyor:
+            // sistemde ekran kartı ya da işlemci yoktu, veya o parçaların ölçüm
+            // verisi henüz toplanmamıştı (K71). İkisini de kapsayan bir cümle
+            // yazılıyor — kayda bakıp hangisi olduğunu uydurmaktansa.
             <div>
-              <p className="opacity-70">Performans tahmini için ekran kartı gerekiyor.</p>
+              <p className="opacity-70">Performans tahmini için yeterli veri yok.</p>
               <p className="text-xs opacity-50">
-                Bu sistem {RESOLUTION_LABEL[build.resolution]} seçiliyken kaydedildi, ama
-                performans indeksi ekran kartı ve işlemcinin ikisini birden gerektiriyor.
-                Sistem geçerli; sadece hızı hakkında bir sayı üretilemiyor.
+                Bu sistem {RESOLUTION_LABEL[build.resolution]} seçiliyken kaydedildi. İndeks
+                ekran kartı ve işlemcinin ikisini birden gerektiriyor ve her ikisinin de
+                ölçüm verisinin bulunmasını şart koşuyor; kaydedildiği anda bu koşul
+                sağlanmıyordu. Sistem geçerli, fiyatı dondu; sadece hızı hakkında bir sayı
+                üretilemedi.
               </p>
             </div>
           )}

@@ -1318,3 +1318,70 @@ kombinasyon genelde ikinci bir parçanın da işin içinde olduğunu gösteriyor
 
 Intel F serisi eklendikten sonra uyarı alan kural sayısı 4'ten 3'e indi:
 C5 (2), W2 (2), W5 (1).
+
+### K71 — KALICI KURAL: `perf_index` satırları yalnızca hesaplanarak üretilir
+
+`perf_index` satırları **yalnızca `benchmark_points` verisinden hesaplanarak**
+yazılır. Elle, seed ile, CSV ile ya da başka bir yoldan satır girilmez.
+
+Elle konmuş 7 satır silindi:
+
+```
+delete from perf_index  ->  7 satir
+perf_index: 0, benchmark_points: 0
+```
+
+`scripts/seed-prices.ts`'teki `PERF_INDEXES` ve `PERF_COMPUTED_AT` sabitleri
+kaldırıldı; `scripts/seed.mts` bu tabloya artık yazmıyor ve **yazamıyor**:
+script başında ve sonunda satır sayısını okuyup karşılaştırıyor, sayı
+değişmişse hata verip çıkıyor.
+
+```
+Performans indeksi: seed yazmadı, tabloda 0 satır var (K71).
+```
+
+**Gerekçe:** Sorun damgalama değildi, satırların uydurma olmasıydı.
+Hesaplanmış bir tabloda el yazması sayı olmaz — sayının nereden geldiği
+sorulamaz hale gelir.
+
+`perf_index`'e `source` sütunu **eklenmedi**; K32 geçerli, tablo dış dünya
+hakkında iddia taşımıyor. Fiyattaki çözüm (dev-seed damgası + canlıda filtre,
+K64/K67) burada uygulanamıyordu: damgalanamayan sahte satır gerçek bir parçaya
+bağlandığında canlıda görünüyordu. Ölçüm:
+
+```
+CANLI (IS_LIVE=true)   gorunur fiyat: 0   gorunur perf indeksi: 7
+```
+
+Fiyat filtreleniyordu, indeks filtrelenemiyordu. Çözüm satırları silmek oldu.
+
+**Beklenen durum bir hata değil:** ölçüm verisi toplanana kadar hiçbir parçanın
+indeksi yok. Motor bunu zaten karşılıyordu (`computePerformance` eksik indekste
+`{ ok: false, missing }` döndürüyor, K44); eksik olan arayüzün doğru cümleyi
+kurmasıydı.
+
+**Arayüzde ayrım yapıldı.** Eksik indeksin iki sebebi var ve kullanıcıya farklı
+şey söylerler:
+
+| Durum | Mesaj |
+|---|---|
+| Parça seçilmemiş | "Tahmin için hem işlemci hem ekran kartı gerekiyor." |
+| Parça seçili, ölçüm yok | "Performans tahmini için henüz yeterli veri yok." |
+
+Birincisini kullanıcı düzeltir, ikincisini düzeltemez. Aynısı yükseltme önerisi
+bölümünde ve kaydedilmiş sistem sayfasında da yapıldı.
+
+Doğrulandı (`npm run dev`, gerçek tarayıcı):
+
+```
+Ryzen 7 7800X3D + RTX 5090 secili:
+  "Performans tahmini için henüz yeterli veri yok."
+  "Yükseltme önerisi de performans verisine dayanıyor..."
+Yalniz Ryzen 7 7800X3D secili:
+  "Tahmin için hem işlemci hem ekran kartı gerekiyor."
+  "Ekran kartı seçilmedi. / İşlemci için performans verisi yok."
+Kaydedilen sistem sayfasi:
+  "Performans tahmini için yeterli veri yok." — fiyat dondu, sayfa calisti
+```
+
+Konsolda hata yok, boş sayı gösterilmiyor, sayfa çökmüyor.

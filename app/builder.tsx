@@ -105,6 +105,13 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
     cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
   });
 
+  // Eksik indeksin iki ayrı sebebi var ve kullanıcıya farklı şey söylerler:
+  // parça seçilmemiş olabilir (kullanıcı düzeltir), ya da parça seçili ama
+  // ölçüm verisi henüz toplanmamış olabilir (kullanıcı düzeltemez).
+  // İkincisi bugün normal hal: perf_index yalnızca benchmark_points'tan
+  // hesaplanıyor ve o veri henüz yok (K71).
+  const olcumEksik = !performance.ok && performance.missing.every((kind) => selection[kind]);
+
   // Yükseltme önerisi. Bütçe boşken de çalışır: 0 TL farkla daha iyi bir parça
   // varsa (aynı fiyata daha güçlü) onu da göstermek doğru.
   const budgetMinor = parseBudgetToMinor(budgetText);
@@ -298,12 +305,26 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
             </div>
           ) : (
             <div className="text-sm opacity-70">
-              <p>Tahmin için hem işlemci hem ekran kartı gerekiyor.</p>
-              <ul className="mt-1 list-inside list-disc">
-                {performance.missing.map((kind) => (
-                  <li key={kind}>{eksikSebebi(kind)}</li>
-                ))}
-              </ul>
+              {olcumEksik ? (
+                <>
+                  <p>Performans tahmini için henüz yeterli veri yok.</p>
+                  <p className="mt-1 text-xs opacity-80">
+                    Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor ve fiyat
+                    toplanıyor. Eksik olan ölçüm verisi: performans indeksi gerçek
+                    karşılaştırma sonuçlarından hesaplanıyor ve o veri henüz toplanmadı.
+                    Uydurma bir sayı göstermektense hiç göstermiyoruz.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>Tahmin için hem işlemci hem ekran kartı gerekiyor.</p>
+                  <ul className="mt-1 list-inside list-disc">
+                    {performance.missing.map((kind) => (
+                      <li key={kind}>{eksikSebebi(kind)}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -326,7 +347,13 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
           </label>
 
           <div className="mt-3 text-sm">
-            {!performance.ok ? (
+            {olcumEksik ? (
+              <p className="opacity-70">
+                Yükseltme önerisi de performans verisine dayanıyor. Ölçüm toplanana kadar
+                &ldquo;bu para neyi ne kadar artırır&rdquo; sorusuna dürüst bir cevap
+                veremiyoruz.
+              </p>
+            ) : !performance.ok ? (
               <p className="opacity-70">
                 Öneri için önce işlemci ve ekran kartı seçilmeli — artışın neye göre
                 ölçüleceği belli olmuyor.
@@ -413,8 +440,9 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
           <p className="mt-2 text-xs opacity-60">
             Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan değişmez.
-            İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır. Ekran kartı
-            seçilmemişse sistem yine kaydedilir, indeks yerine sebebi görünür.
+            İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır. İndeks
+            hesaplanamıyorsa — parça seçilmediği için ya da ölçüm verisi olmadığı için —
+            sistem yine kaydedilir, indeks yerine sebebi görünür.
           </p>
 
           {shareUrl && (

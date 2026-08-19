@@ -26,8 +26,8 @@ export default async function HomePage() {
       <header>
         <h1 className="text-2xl font-semibold">Anneal</h1>
         <p className="text-sm opacity-70">
-          Sistem oluşturucu — {toplamParca} parça. Fiyatlar ve performans tahmini örnek
-          veridir.
+          Sistem oluşturucu — {toplamParca} parça. Parça bilgileri üretici sayfalarından.
+          Fiyatlar örnek veridir; performans tahmini için ölçüm verisi henüz toplanmadı.
         </p>
       </header>
 

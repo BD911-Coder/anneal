@@ -18,41 +18,6 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S29 — `perf_index` sahte veriyi canlıdan ayıramıyor
-
-`npm run seed:filtre-kontrol` fiyat tarafının temiz olduğunu ölçtü: dev-seed
-fiyatlar geliştirmede görünüyor, canlıda görünmüyor. **`perf_index`'te durum
-farklı.** Tabloda `source` sütunu yok (SCHEMA.md bölüm 1.3 ve 4: "motorun kendi
-hesabı, dış dünya hakkında iddia taşımaz"), bu yüzden filtre parçanın kendi
-damgasına bakıyor. Parça gerçek olduğunda satır da gerçek sayılıyor.
-
-Ölçüm çıktısı iki ortamda da aynı:
-
-```
-GELISTIRME  gorunur perf indeksi: 7
-CANLI       gorunur perf indeksi: 7
-```
-
-Bu 7 satır seed script'inin ürettiği uydurma sayılar ve `nvidia-rtx-5090`,
-`amd-ryzen-7-7800x3d` gibi **gerçek** parçalara bağlı. Yani canlıya çıkarlar.
-
-Fiyatta uygulanan mantık — "gerçek parçanın yanında uydurma değer canlıya
-çıkamaz" — burada da geçerli ama filtre çalışamıyor.
-
-**Seçenekler:**
-
-1. `perf_index`'e `source` sütunu eklenir, `visibleRows()` orada da kullanılır.
-   Şema değişikliği; SCHEMA.md bölüm 1.3'teki gerekçeyle çelişiyor.
-2. Bu 7 satır silinir. O zaman geliştirmede hiç performans verisi kalmaz —
-   fiyat için reddedilen çözümün aynısı, ama burada filtre olmadığı için
-   tercih sebebi olabilir.
-3. `perf_index` satırları yalnızca gerçek `benchmark_points`'tan üretilir ve
-   seed hiç perf satırı yazmaz. En doğrusu; ölçüm verisi girilene kadar
-   geliştirmede performans ekranı boş olur.
-
-Karar şema değişikliği ya da veri silme gerektiriyor; ikisi de sorulmadan
-yapılmaz.
-
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
@@ -176,6 +141,27 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S29 — `perf_index` sahte veriyi canlıdan ayıramıyor ✅ 2026-08-19
+
+**Proje sahibinin kararı:** 7 uydurma satır **silinecek**. `source` sütunu
+eklenmeyecek — K32 hâlâ geçerli, tablo dış dünya iddiası taşımıyor. Sorun
+damgalama değil, satırların uydurma olması. Hesaplanmış bir tabloda el yazması
+sayı olmaz. Bu kural seed script'ine de konacak, arayüz durumu düzgün
+karşılayacak.
+
+**Cevap:** Uygulandı.
+
+- 7 satır silindi (`delete from perf_index -> 7 satir`). `benchmark_points`
+  zaten 0'dı, yani satırların hiçbiri hesaplanmış değildi.
+- `scripts/seed-prices.ts`'ten `PERF_INDEXES` ve `PERF_COMPUTED_AT` kaldırıldı.
+- `scripts/seed.mts` bu tabloya yazmıyor **ve yazamıyor**: başta ve sonda satır
+  sayısını okuyup karşılaştırıyor, değişmişse hata verip çıkıyor.
+  Çıktı: `Performans indeksi: seed yazmadı, tabloda 0 satır var (K71).`
+- Arayüz "parça seçilmedi" ile "ölçüm verisi yok" durumlarını ayırıyor;
+  gerçek tarayıcıda üç ekranda da doğrulandı, konsolda hata yok.
+
+→ `docs/KARARLAR.md` K71, `CLAUDE.md` veri kuralları
 
 ### S28 — Gerçek parçalara bağlı sahte fiyatlar duruyor ✅ 2026-08-19
 
