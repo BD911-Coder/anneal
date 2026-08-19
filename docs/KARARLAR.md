@@ -1875,3 +1875,36 @@ tiplerini), veritabanı/ağ/React yok. `npm run sema:kontrol` saflık kontrolü
 `engine/gpu-selection.ts saf` diyor. `EngineGpu` tipi **değişmedi**; motorun
 geri kalanı çip/kart ayrımını görmüyor, `checkCompatibility` yine tek bir
 `EngineGpu` alıyor.
+
+### K91 — Etiketsiz ölçü üçlüsünde en büyük değer uzunluktur
+
+**Proje sahibinin kararı (2026-08-20).** Üreticinin kendi spec tablosunda ekran
+kartı ölçüsü `348 x 146 x 72 mm` gibi **eksen etiketi olmadan** verilmişse, en
+büyük değer `length_mm`'e yazılır. Ondalık **yukarı** yuvarlanır: 357.6 → 358.
+Kalan iki eksen boş bırakılır — hangisinin yükseklik olduğu belirsizdir.
+
+**Neden K60'ın istisnası değil:** K60 "etiketsiz bir sayıdan hangi eksenin
+uzunluk olduğu çıkarılabilse bile yazılmaz" diyor. Buradaki dayanak çıkarım
+değil **fiziksel sınır**: ekran kartının en uzun ekseni PCIe yuvasına paralel
+olmak zorundadır; diğer iki eksen braket yüksekliği (~160 mm) ve kart kalınlığı
+(~90 mm) ile sınırlıdır. 358 mm'lik bir kartın "yüksekliği" olamaz.
+
+**Yuvarlama neden yukarı:** K59'un üçüncü maddesi kasa **açıklığını** aşağı
+yuvarlıyor. İkisinin ortak mantığı aynı: **belirsizlikte kuralı yanıltmayan yön
+seçilir.** Açıklıkta güvenli yön aşağı, kart uzunluğunda yukarıdır. Kartı kısa
+göstermek, C5'in "sığar" demesine ve satın alınan kartın takılamamasına yol açar.
+
+**Aynı ilke başka alanlarda:** MSI bazı kartlarda güç tüketimini `115 W or 120 W`
+biçiminde iki değerle veriyor. C4'ü yanıltmayan yön büyük olandır; `tbp_watt`'a
+120 yazılır. (K59'un "en küçüğü yaz" maddesi kasa açıklığı içindir ve buraya
+uygulanmaz — orada küçük olan güvenli yöndü.)
+
+**Ölçülen bedel:** Strict K60 ile ilk parti 58 kartın yalnızca 24'ünde uzunluk
+olurdu (GIGABYTE ve SAPPHIRE eksenleri etiketliyor, ASUS ve MSI etiketlemiyor).
+K91 ile **58/58 kartta uzunluk var**. Varyant katmanının gerekçesi buydu:
+`gpu_specs.length_mm` 60 çipin 18'inde doluydu ve dolu olanlar referans kart
+ölçüsüydü.
+
+**Sınır:** Bu kural yalnızca **ekran kartı** ölçüsü içindir ve yalnızca
+üreticinin kendi spec tablosundaki üçlü için geçerlidir. Kasa, güç kaynağı ve
+soğutucu ölçülerinde K59/K60 aynen yürürlükte.

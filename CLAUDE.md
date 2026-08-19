@@ -268,6 +268,24 @@ o da olmazsa tarayıcı paneli.
 | nvidia.com | `WebFetch` | — |
 | amd.com | `curl` (tarayıcı `User-Agent` başlığıyla) | `WebFetch` → `ECONNRESET` |
 | intel.com | `curl` (**tam tarayıcı başlık seti** gerekli) | `WebFetch` → 403, tek başına `User-Agent` → 403 |
+| asus.com, rog.asus.com | `curl` (tam başlık seti) | — |
+| **msi.com** | `curl` (tam başlık seti) **+ sıralı istek** | Paralel istek → Akamai 403. `WebFetch` → 403 |
+| **gigabyte.com** | `curl` (tam başlık seti) **+ sıralı istek** | Paralel istek → 403 |
+| sapphiretech.com | `curl` (tam başlık seti) | `robots.txt` yok (404 sayfası döner) |
+| zotac.com | — | Ürün sayfaları JS ile geliyor, `curl` boş liste veriyor |
+
+**MSI ve GIGABYTE paralel isteği engelliyor.** İkisi de Akamai arkasında:
+`xargs -P 4` ile 30 adres denendiğinde **hepsi** 403 döndü, aynı adresler tek
+tek istendiğinde 200 döndü. Toplu indirme için 2-3 saniye aralıklı **sıralı**
+döngü gerekiyor. Bu iki sitede `robots.txt` bile tam başlık seti olmadan 403
+veriyor — yani "yasak mı" sorusu ancak doğru başlıklarla sorulabiliyor.
+
+**ZOTAC'ın `Crawl-delay: 10`'u var** ve ürün adresleri tahmin edilemiyor
+(liste sayfası JS ile doluyor). **PALIT `robots.txt`'inde `Disallow: /en/`
+var** — İngilizce ürün sayfaları alınmaz.
+
+Firecrawl MCP'si (yetkilendirilmişse) **adres bulmak** için iyi çalışıyor ama
+dönen `description` alanı çok uzun; sayfa içeriği için `curl` çok daha ucuz.
 
 AMD için `User-Agent` yetiyor:
 
@@ -293,6 +311,14 @@ Tarayıcı paneli de çalışır ama sayfa başına iki tool çağrısı gerekti
 **Sayfa yapıları:**
 - AMD: `<dt>etiket</dt><dd>değer</dd>`. Etiketlere tooltip metni karışıyor,
   ilk anahtar kelimeye indirmek gerekiyor.
+- **AIB kartlarında etiket/değer sırası ikiye ayrılıyor:** ASUS ve MSI
+  sayfalarında etiketler önce bir liste olarak, sonra değerleriyle birlikte
+  geçiyor. Etiketten sonraki ilk satırı almak **etiket listesindeki boş
+  geçişi** yakalar; her geçişi deneyip en dolusunu almak ve başka bir etikete
+  rastlayınca durmak gerekiyor.
+- **Ölçü ekseni:** GIGABYTE (`L=360 W=150 H=75 mm`) ve SAPPHIRE
+  (`330.8(L) X 128.5(W)`) ekseni etiketliyor; ASUS ve MSI etiketsiz üçlü
+  veriyor (`348 x 146 x 72 mm`) — K91 uygulanır.
 - Intel ARK: `<div class="tech-label"><span>etiket</span>` +
   `<div class="tech-data"><span>değer</span>`. Tarayıcıda JS bağlamından
   okunamıyor (`get_page_text` gerekir), ama `curl` ham HTML'i veriyor.
