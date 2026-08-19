@@ -1,2 +1,5 @@
 id,brand,model,release_year,collected_at,source_url,confidence,supported_form_factors,max_gpu_length_mm,max_cpu_cooler_height_mm,max_psu_length_mm
 fractal-design-north,Fractal Design,North,,2026-08-19,https://www.fractal-design.com/products/cases/north/north/chalk-white/,medium,ATX|mATX|ITX,355,170,155
+fractal-design-meshify-2-compact,Fractal Design,Meshify 2 Compact,,2026-08-19,https://www.fractal-design.com/products/cases/meshify/meshify-2-compact/black-tg-light-tint/,medium,ATX|mATX|ITX,341,169,165
+fractal-design-node-304,Fractal Design,Node 304,,2026-08-19,https://www.fractal-design.com/products/cases/node/node-304/black/,medium,ITX,310,165,160
+fractal-design-terra,Fractal Design,Terra,,2026-08-19,https://www.fractal-design.com/products/cases/terra/terra/jade/,medium,ITX,322,48,130
