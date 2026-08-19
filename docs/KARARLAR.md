@@ -1750,3 +1750,128 @@ sayfasında **iki tur aynı adreste** duruyor (bellek-kanalı karşılaştırmas
 büyük sıralama). `source_url` tek başına turları ayırmıyordu; CPU satırlarına
 çapa eklendi (`#rangliste-22`). Grup anahtarı `source_url` içerdiği için bu,
 iki turu ayrı grup yapıyor ve karışmalarını engelliyor.
+
+### K86 — Ekran kartı varyantı (AIB kartı) bir `parts` satırıdır
+
+`gpu_specs` çip seviyesinde kalır (`nvidia-rtx-5080` = referans tasarım).
+Piyasada satılan kart, `category = 'gpu'` olan **normal bir `parts` satırıdır**
+ve yeni `gpu_variant_specs` tablosuyla çipine bağlanır (`chip_part_id`).
+
+**Gerekçe:** `price_snapshots`, `build_items`, `click_events`, `perf_index` ve
+`/parca/<slug>` adresi — beşi de `parts.id`'ye bağlı. Kart bir `parts` satırı
+olduğunda beşi de **değişmeden** çalışır: fiyat karta yazılır, sistem kartı
+kaydeder, ileride kartın kendi indeksi olabilir. Migration tek bir
+`CREATE TABLE` oldu; mevcut hiçbir tabloya dokunulmadı.
+
+**Reddedilen alternatifler:**
+
+1. **Bağımsız `gpu_variants` tablosu** (kendi `id`'si, `parts` dışında):
+   `price_snapshots`, `build_items` ve `perf_index`'in her birine ikinci bir
+   nullable FK gerekirdi. "Fiyat ya parçaya ya varyanta bağlı" olan bir tablo
+   her okuma yolunu ikiye çatallar; her yeni sorguda birinin unutulması mümkün.
+2. **`gpu_specs`'e varyant sütunları:** aynı çipin beş kartı = `chipset`,
+   `vram_gb`, `shader_units` değerlerinin beş kopyası. Kopyalanan gerçek ayrışır.
+3. **`parts.parent_part_id` self-FK:** yalnızca ekran kartında anlamı olan bir
+   sütun yedi kategoriye birden eklenirdi.
+
+**Zorunlu tek alan `chip_part_id`.** K56'nın sorusuna ("hangi kural bunu
+kullanıyor?") yalnızca o alan için cevap var: C4/C5 geri düşüşü, `perf_index`
+çözümlemesi ve değişmeyen speclerin okunması. `length_mm` ve `tbp_watt` bir
+kural tarafından kullanılıyor ama yine de opsiyonel — fiziksel ölçü zorunlu
+olmaz (K62) ve TBP'yi zorunlu yapmak yayınlamayan üreticinin kartını dışarıda
+bırakırdı (`pcie_version` dersi).
+
+**`perf_index` iki seviyeli okunur:** `perf_index[kart] ?? perf_index[çip]`.
+Tabloda değişiklik yok. Hangi seviyeden geldiği okuma anında türetilir ve
+arayüz söyler; `source` sütunu açılmadı (K32 hâlâ geçerli). **Bugün kart
+satırına indeks yazılmaz** — yazılabilmesinin tek yolu `benchmark_points`'ta
+kart bazlı ölçüm bulunmasıdır (K71). Fabrika boost farkından indeks üretmek
+K74'ün reddettiği interpolasyondur.
+
+**Mevcut 60 çip satırına dokunulmadı.** Ölçüldü: `gpu_specs` imzası (60 satırın
+metin hâlinin md5'i) migration ve seed sonrasında birebir aynı —
+`9730f18749f0effdc171610b7b63613d`.
+
+### K87 — Eksik veride kural davranışı: yaklaşık geri düşer, kesin atlanır
+
+**Kural:** Yaklaşık ve pay içeren bir kural, eksik veride referans değere geri
+düşer. Kesin ve paysız bir kural atlanır. Her iki durumda da arayüz kullanıcıya
+durumu söyler; sessizce ne varsayılır ne atlanır.
+
+Ekran kartındaki karşılığı:
+
+| Durum | C4 (güç) | C5 (uzunluk) |
+|---|---|---|
+| Kart seçili, değeri var | kartın `tbp_watt`'ı | kartın `length_mm`'i |
+| Kart seçili, değeri boş | **çipin `tdp_watt`'ı** | **kural atlanır** |
+| Kart seçili değil | çipin `tdp_watt`'ı | çipin referans `length_mm`'i |
+
+**Gerekçe:** C4'ün formülünde ×1.3 payı var; referans değerle çalışması,
+kartın kendi değeriyle çalışmasından biraz daha kaba bir tahmindir ama yine
+tahmindir. Onu atlamak, en yüksek sonuçlu kontrolü — güç kaynağı yetiyor mu —
+en sık durumda sessiz bırakırdı.
+
+C5'te pay yoktur ve AIB kartları referanstan **uzun** olur: ROG Strix ~358 mm,
+referans ~304 mm. Kart seçiliyken referans ölçüye geri düşmek, 358 mm'lik karta
+"sığar" demek olurdu; sonucu satın alınıp takılamayan bir karttır. K52'nin
+kurduğu davranışın aynısı: bilinmeyen ölçüde kural kendini atlar, arayüz söyler.
+
+**Ölçüldü** (`npm run varyant:kontrol`):
+
+```
+secim                             tdp   kaynak           uzunluk  kaynak           gerekli W  bulgular
+CIP  nvidia-rtx-5090              575   chip_reference   304      chip_reference   1034       W5
+KART asus-rog-strix-rtx-5090-oc   600   variant          358      variant          1066       C5,W3,W5
+KART nvidia-rtx-5090-founders     575   chip_reference   304      variant          1034       W5
+KART zotac-rtx-5090-solid         575   variant          -        unknown          1034       W5
+```
+
+Founders'ın TBP'si yok → güç çipten okundu. Zotac'ın uzunluğu yok → C5 atlandı,
+çipin 304 mm'sine düşülmedi. Strix hem uzunluk hem TBP verdi → ikisi de kartın.
+
+### K88 — Güç konnektörü şimdilik serbest metin
+
+`gpu_variant_specs.power_connectors` tek bir `text?` alanıdır: `2x 8-pin + 1x 6-pin`.
+Yapılandırılmış hâli (tip enum'u + adet, ya da alt tablo) **ertelendi**.
+
+**Gerekçe (proje sahibi):** Hiçbir kural bu alanı okumuyor (K56). Kullanılmayan
+bir yapıya migration harcanmaz. Kural gerektiğinde — "PSU'nun kartın istediği
+konnektörü var mı" — yapılandırılır; o kural `psu_specs`'te de karşılık
+gerektirir ve beta kapsamı dışındadır.
+
+Serbest metnin bilinen bedeli: alan sorgulanamaz ve yazım birliği kod
+tarafından zorlanamaz. Kabul edildi. → `SORULAR.md` S38.
+
+### K89 — Kategori listesi çipleri gösterir, kartlar çipin altında
+
+`/parca/kategori/gpu` ve sistem oluşturucudaki ekran kartı listesi **yalnızca
+çipleri** listeler (sorgu `gpu_specs` ile join'li). Kart seçimi, çip seçildikten
+sonra açılan opsiyonel ikinci bir kutudur ve yalnızca o çipin kartlarını gösterir.
+
+**Gerekçe:** 60 çip yerine yüzlerce kart listelemek seçimi kolaylaştırmaz,
+zorlaştırır. Kullanıcı önce "hangi güç sınıfı" sorusunu cevaplar, sonra isterse
+"hangi kart" sorusunu. İkinci kutu, o çipin kartı yoksa **hiç görünmez**:
+doldurulacak boş bir alan göstermek, seçim yapılması gerektiği izlenimi verir.
+
+Yan sonuç: `build_items`'a kart seçiliyse **kartın** `part_id`'si yazılır, çipin
+değil. Satın alınan, fiyatı toplanan ve kaydedilen satır odur; çip zaten
+`chip_part_id` üzerinden bulunur.
+
+### K90 — Çip/kart çözümlemesi `/engine` içinde, `/data`'da değil
+
+`resolveGpuSelection` ve `resolvePerfIndex` fonksiyonları
+`engine/gpu-selection.ts` dosyasındadır. Taslakta bu çözümlemenin
+`/data/to-engine.ts` içinde olacağı yazıyordu; yer değişti.
+
+**Gerekçe:** Bu iki fonksiyon **sessizce yanlış sonuç verebilen** yerlerdir —
+yanlış sayıyı seçerlerse kural "sığar" der ve kart sığmaz. CLAUDE.md testi tam
+olarak bu tür yerler için istiyor ve test yalnızca `/engine` için yazılıyor.
+`/data` içinde kalsalardı ya test edilemezlerdi ya da "sadece /engine test
+edilir" kuralı esnetilirdi. Ayrıca aynı çözümleme iki yerden çağrılıyor
+(arayüz ve `saveBuild`); tek tanım olmasaydı ikisi zamanla ayrışırdı.
+
+**`/engine` kuralı korunuyor:** dosya hiçbir şey içe aktarmıyor (yalnızca kendi
+tiplerini), veritabanı/ağ/React yok. `npm run sema:kontrol` saflık kontrolü
+`engine/gpu-selection.ts saf` diyor. `EngineGpu` tipi **değişmedi**; motorun
+geri kalanı çip/kart ayrımını görmüyor, `checkCompatibility` yine tek bir
+`EngineGpu` alıyor.

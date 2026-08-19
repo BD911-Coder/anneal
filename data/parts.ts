@@ -8,6 +8,7 @@ import type {
   EngineCase,
   EngineCpu,
   EngineGpu,
+  EngineGpuVariant,
   EngineMotherboard,
   EnginePsu,
   EngineRam,
@@ -19,6 +20,7 @@ import {
   toEngineCase,
   toEngineCpu,
   toEngineGpu,
+  toEngineGpuVariant,
   toEngineMotherboard,
   toEnginePsu,
   toEngineRam,
@@ -28,6 +30,19 @@ export type CatalogItem<TSpec> = {
   id: string;
   label: string;
   spec: TSpec;
+};
+
+/**
+ * Ekran kartı varyantı (AIB kartı) — çipin altındaki opsiyonel katman (K86).
+ *
+ * `chip_part_id` burada duruyor çünkü arayüz kartları çiplerine göre süzüyor:
+ * kullanıcı önce çipi seçer, sonra istersen kartı.
+ */
+export type GpuVariantItem = {
+  id: string;
+  label: string;
+  chip_part_id: string;
+  spec: EngineGpuVariant;
 };
 
 /** Depolama hiçbir uyumluluk kuralında kullanılmıyor, motor tipi de yok (S12). */
@@ -40,7 +55,9 @@ export type StorageItem = {
 
 export type BuilderCatalog = {
   cpu: CatalogItem<EngineCpu>[];
+  /** Çip seviyesi — `gpu_specs` satırı olanlar. Kartlar ayrı listede. */
   gpu: CatalogItem<EngineGpu>[];
+  gpu_variant: GpuVariantItem[];
   motherboard: CatalogItem<EngineMotherboard>[];
   ram: CatalogItem<EngineRam>[];
   psu: CatalogItem<EnginePsu>[];
@@ -59,9 +76,16 @@ function label(part: { brand: string; model: string }): string {
 }
 
 export async function getBuilderCatalog(): Promise<BuilderCatalog> {
-  const [cpus, gpus, motherboards, rams, psus, cases, storages] = await Promise.all([
+  const [cpus, gpus, gpuVariants, motherboards, rams, psus, cases, storages] = await Promise.all([
     prisma.cpuSpecs.findMany(withPart),
     prisma.gpuSpecs.findMany(withPart),
+    // Çipi görünmeyen kart listelenmez: bağlanacağı çip yoksa kart da yok
+    // sayılır. dev-seed filtresi böylece iki uçta da geçerli olur.
+    prisma.gpuVariantSpecs.findMany({
+      where: { part: visibleParts(), chip: visibleParts() },
+      include: { part: true },
+      orderBy: { part_id: "asc" as const },
+    }),
     prisma.motherboardSpecs.findMany(withPart),
     prisma.ramSpecs.findMany(withPart),
     prisma.psuSpecs.findMany(withPart),
@@ -72,6 +96,12 @@ export async function getBuilderCatalog(): Promise<BuilderCatalog> {
   return {
     cpu: cpus.map((row) => ({ id: row.part_id, label: label(row.part), spec: toEngineCpu(row) })),
     gpu: gpus.map((row) => ({ id: row.part_id, label: label(row.part), spec: toEngineGpu(row) })),
+    gpu_variant: gpuVariants.map((row) => ({
+      id: row.part_id,
+      label: label(row.part),
+      chip_part_id: row.chip_part_id,
+      spec: toEngineGpuVariant(row),
+    })),
     motherboard: motherboards.map((row) => ({
       id: row.part_id,
       label: label(row.part),

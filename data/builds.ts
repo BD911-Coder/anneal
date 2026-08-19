@@ -9,7 +9,13 @@
 // ve indeks burada, veritabanından okunarak yeniden hesaplanır — yoksa
 // tarayıcıdan istediği toplamı yazan biri sahte bir sistem kaydedebilirdi.
 
-import { MODEL_VERSION, freezeSystemIndex } from "@/engine/performance";
+// Göreli yol + `.ts`: bu iki içe aktarma çalışma anında çözülüyor ve `@/`
+// takma adını yalnızca Next'in derleyicisi çözebiliyor. Takma adla yazıldığında
+// /data katmanı hiçbir script'ten çağrılamıyor — npm run varyant:kontrol'ün
+// saveBuild'i gerçekten çalıştırabilmesinin sebebi bu satırlar (CLAUDE.md,
+// araç notları). `import type` erimediği için orada takma ad sorun değil.
+import { resolvePerfIndex } from "../engine/gpu-selection.ts";
+import { MODEL_VERSION, freezeSystemIndex } from "../engine/performance.ts";
 import type { Resolution } from "@/engine/types";
 
 import { prisma } from "./client.ts";
@@ -69,7 +75,14 @@ export async function saveBuild(
 
   const parts = await prisma.part.findMany({
     where: { id: { in: ids }, ...visibleParts() },
-    select: { id: true, category: true },
+    // gpu_variant_specs de okunuyor: kaydedilen ekran kartı bir AIB kartı
+    // olabilir ve o kartın indeksi çipinden gelir (K86). Bağ olmadan hangi
+    // çipin indeksinin donacağı bilinemez.
+    select: {
+      id: true,
+      category: true,
+      gpu_variant_specs: { select: { chip_part_id: true } },
+    },
   });
   if (parts.length !== ids.length) {
     const found = new Set(parts.map((part) => part.id));
@@ -86,14 +99,22 @@ export async function saveBuild(
   const unpriced = ids.filter((id) => !prices[id]);
   if (unpriced.length > 0) return { ok: false, reason: "missing_price", parts: unpriced };
 
-  const gpuId = parts.find((part) => part.category === "gpu")?.id;
+  // Ekran kartı iki satır olabilir: çip (gpu_specs) ya da kart (gpu_variant_specs).
+  // Kart kaydedilmişse indeks çipinden okunur — arayüzün yaptığının aynısı,
+  // aynı fonksiyonla (K86). İkisi birden gönderilirse kart kazanır: kullanıcının
+  // gördüğü ve fiyatı donan satır odur.
+  const gpuParts = parts.filter((part) => part.category === "gpu");
+  const gpuVariant = gpuParts.find((part) => part.gpu_variant_specs);
+  const gpuChipId =
+    gpuVariant?.gpu_variant_specs?.chip_part_id ??
+    gpuParts.find((part) => !part.gpu_variant_specs)?.id;
   const cpuId = parts.find((part) => part.category === "cpu")?.id;
   // İndeks kullanıcının kaydettiği çözünürlükte donar (K43). Hesaplanamıyorsa
   // null yazılır ve kayıt yine de yapılır: ekran kartsız (iGPU) bir sistem
   // geçerlidir, kaydedilememesi hatadır (K44).
   const indexSnapshot = freezeSystemIndex({
     resolution,
-    gpu_index: gpuId ? perfIndexes[gpuId] : undefined,
+    gpu_index: resolvePerfIndex(perfIndexes, gpuChipId, gpuVariant?.id).value,
     cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
   });
 

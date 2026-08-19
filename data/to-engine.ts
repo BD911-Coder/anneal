@@ -11,6 +11,7 @@ import type {
   EngineCase,
   EngineCpu,
   EngineGpu,
+  EngineGpuVariant,
   EngineMotherboard,
   EnginePsu,
   EngineRam,
@@ -63,6 +64,25 @@ export function toEngineGpu(row: {
     tdp_watt: row.tdp_watt,
     // null -> undefined: motor "yok" ile "bilinmiyor"u ayirt etmiyor,
     // ikisi de kuralin atlanmasi demek (K52).
+    length_mm: row.length_mm ?? undefined,
+  };
+}
+
+/**
+ * Kart (AIB) satırı -> motorun varyant tipi.
+ *
+ * Değişmeyen alanlar burada yok: onlar çipin `gpu_specs` satırından okunur.
+ * Kuralların kullandığı iki alan var, ikisi de opsiyonel — hangisi eksikse ne
+ * olacağını `resolveGpuSelection` biliyor (K87).
+ */
+export function toEngineGpuVariant(row: {
+  part_id: string;
+  tbp_watt: number | null;
+  length_mm: number | null;
+}): EngineGpuVariant {
+  return {
+    id: row.part_id,
+    tbp_watt: row.tbp_watt ?? undefined,
     length_mm: row.length_mm ?? undefined,
   };
 }

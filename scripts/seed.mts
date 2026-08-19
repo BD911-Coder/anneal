@@ -139,6 +139,59 @@ const gpus: (PartSeed & {
 ];
 
 // ---------------------------------------------------------------------------
+// Ekran kartı varyantları (AIB kartları) — K86
+// ---------------------------------------------------------------------------
+//
+// Üçü de aynı çipe bağlı ve üçü ayrı bir durumu kapsıyor:
+//   - Strix: uzunluk ve TBP dolu    -> C5 ve C4 kartın değerlerini kullanır
+//   - Zotac: uzunluk BOŞ            -> C5 atlanır, çipin ölçüsüne düşülmez (K87)
+//   - Founders: TBP BOŞ             -> C4 çipin tdp_watt'ına geri düşer (K87)
+//
+// Böylece K87'nin iki yarısı gerçek veriyle de görülebiliyor, sadece testte değil.
+const gpuVariants: (PartSeed & {
+  spec: {
+    chip_part_id: string;
+    length_mm?: number; height_mm?: number; thickness_slots?: number;
+    tbp_watt?: number; recommended_psu_watt?: number; power_connectors?: string;
+    boost_clock_mhz?: number; boost_clock_oc_mhz?: number;
+    fan_count?: number; hdmi_count?: number; displayport_count?: number; usb_c_count?: number;
+  };
+})[] = [
+  {
+    id: "asus-rog-strix-rtx-5090-oc", category: "gpu", brand: "ASUS", model: "ROG Strix GeForce RTX 5090 OC", release_year: 2025,
+    spec: {
+      chip_part_id: "nvidia-rtx-5090",
+      length_mm: 358, height_mm: 150, thickness_slots: 3.5,
+      tbp_watt: 600, recommended_psu_watt: 1000, power_connectors: "1x 16-pin (12V-2x6)",
+      boost_clock_mhz: 2482, boost_clock_oc_mhz: 2580,
+      fan_count: 3, hdmi_count: 2, displayport_count: 3, usb_c_count: 0,
+    },
+  },
+  {
+    // Uzunluk bilerek boş: kart seçiliyken C5'in atlandığı görülebilsin.
+    id: "zotac-rtx-5090-solid", category: "gpu", brand: "ZOTAC", model: "GAMING GeForce RTX 5090 SOLID", release_year: 2025,
+    spec: {
+      chip_part_id: "nvidia-rtx-5090",
+      thickness_slots: 3.5,
+      tbp_watt: 575, recommended_psu_watt: 1000, power_connectors: "1x 16-pin (12V-2x6)",
+      boost_clock_mhz: 2407,
+      fan_count: 3, hdmi_count: 1, displayport_count: 3,
+    },
+  },
+  {
+    // TBP bilerek boş: C4'ün çipin referans değerine düştüğü görülebilsin.
+    id: "nvidia-rtx-5090-founders", category: "gpu", brand: "NVIDIA", model: "GeForce RTX 5090 Founders Edition", release_year: 2025,
+    spec: {
+      chip_part_id: "nvidia-rtx-5090",
+      length_mm: 304, height_mm: 137, thickness_slots: 2,
+      power_connectors: "1x 16-pin (12V-2x6)",
+      boost_clock_mhz: 2407,
+      fan_count: 2, hdmi_count: 1, displayport_count: 3,
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Anakartlar
 // ---------------------------------------------------------------------------
 const motherboards: (PartSeed & {
@@ -344,6 +397,23 @@ console.log("Kaynak damgası: source='dev-seed', confidence='low'\n");
 /* eslint-disable @typescript-eslint/no-explicit-any */
 await upsertAll(cpus, prisma.cpuSpecs as any);
 await upsertAll(gpus, prisma.gpuSpecs as any);
+
+// Kart, çipi olmadan yazılamaz (yabancı anahtar). Çip katalogda yoksa kart
+// atlanır ve sebebi ekrana yazılır — sessiz bir FK hatası vermek yerine.
+const varyantCipleri = [...new Set(gpuVariants.map((v) => v.spec.chip_part_id))];
+const mevcutCipler = new Set(
+  (
+    await prisma.part.findMany({ where: { id: { in: varyantCipleri } }, select: { id: true } })
+  ).map((part) => part.id),
+);
+const yazilabilirVaryantlar = gpuVariants.filter((variant) => {
+  if (mevcutCipler.has(variant.spec.chip_part_id)) return true;
+  console.log(`  [ATLA] ${variant.id} — çipi (${variant.spec.chip_part_id}) katalogda yok`);
+  atlanan++;
+  return false;
+});
+await upsertAll(yazilabilirVaryantlar, prisma.gpuVariantSpecs as any);
+
 await upsertAll(motherboards, prisma.motherboardSpecs as any);
 await upsertAll(rams, prisma.ramSpecs as any);
 await upsertAll(psus, prisma.psuSpecs as any);

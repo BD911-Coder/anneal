@@ -125,8 +125,8 @@ const documentedIndexes = parseDocumentedIndexes(md);
 const { tables: prTables, types: prTypes, indexes: prIndexes, raw: prRaw } = parsePrisma(pr);
 
 const APPEND_ONLY = ["price_snapshots", "benchmark_points"];
-const SPEC = ["gpu_specs", "cpu_specs", "motherboard_specs", "ram_specs",
-              "psu_specs", "storage_specs", "case_specs"];
+const SPEC = ["gpu_specs", "gpu_variant_specs", "cpu_specs", "motherboard_specs",
+              "ram_specs", "psu_specs", "storage_specs", "case_specs"];
 const NO_OWN_ID = [...SPEC, "build_items"];
 const QUARTET = ["source", "source_url", "confidence", "collected_at"];
 const WITH_QUARTET = [...SPEC, "parts", "games", "price_snapshots", "benchmark_points"];
@@ -239,6 +239,8 @@ const ENGINE_TABLE = {
   EngineRam: "ram_specs",
   EnginePsu: "psu_specs",
   EngineCase: "case_specs",
+  // Kart (AIB) tipi de semaya bagli: alanlari gpu_variant_specs'te olmali (K86).
+  EngineGpuVariant: "gpu_variant_specs",
 };
 const engineTypes = parseEngineTypes(readFileSync("engine/types.ts", "utf8"));
 for (const [typeName, table] of Object.entries(ENGINE_TABLE)) {

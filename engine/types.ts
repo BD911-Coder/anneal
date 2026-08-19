@@ -18,11 +18,47 @@ export type EngineCpu = {
   has_igpu: boolean;
 };
 
+// Motorun kullandığı ekran kartı. İki kaynaktan gelebilir: doğrudan çipin
+// referans değerleri, ya da bir kart (AIB) seçildiyse kartın değerleri.
+// Çözümlemeyi gpu-selection.ts yapar; motorun geri kalanı farkı görmez.
 export type EngineGpu = {
   id: string;
   tdp_watt: number;
   /** Bilinmiyor olabilir (K52). Boşsa C5 kuralı atlanır. */
   length_mm?: number;
+};
+
+/**
+ * Ekran kartı varyantı (AIB kartı) — SCHEMA.md bölüm 2, `gpu_variant_specs`.
+ *
+ * Yalnızca kural kullanan iki alanı var: C4'ün TBP'si ve C5'in uzunluğu.
+ * İkisi de opsiyonel; eksik olduklarında ne olacağını K87 söylüyor.
+ */
+export type EngineGpuVariant = {
+  id: string;
+  tbp_watt?: number;
+  length_mm?: number;
+};
+
+/**
+ * Bir değer nereden geldi?
+ *
+ * Arayüz bunu kullanıcıya söylemek zorunda: referans değerle yapılmış bir güç
+ * hesabı, kartın kendi değeriyle yapılmış gibi gösterilemez (K87).
+ */
+export type GpuValueOrigin = "variant" | "chip_reference" | "unknown";
+
+export type ResolvedGpu = {
+  gpu: EngineGpu;
+  tdp_origin: GpuValueOrigin;
+  length_origin: GpuValueOrigin;
+};
+
+/** `perf_index` iki seviyeli okunur: kartın kendi indeksi yoksa çipinki (K86). */
+export type ResolvedPerfIndex = {
+  value?: number;
+  /** `null`: hiçbir seviyede indeks yok. */
+  origin: "variant" | "chip" | null;
 };
 
 export type EngineMotherboard = {

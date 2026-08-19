@@ -22,7 +22,8 @@
     "olcum:aktar": "node scripts/import-benchmarks.mts",
     "indeks:hesapla": "node scripts/compute-perf-index.mts",
     "indeks:sapma": "node scripts/check-index-margin.mts",
-    "kural:kontrol": "node scripts/check-rules.mts"
+    "kural:kontrol": "node scripts/check-rules.mts",
+    "varyant:kontrol": "node scripts/check-gpu-variant.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

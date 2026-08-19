@@ -155,6 +155,10 @@ model Part {
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   gpu_specs         GpuSpecs?
+  // Bu parca bir kartsa kendi varyant satiri; bir cipse o cipin kartlari (K86).
+  // Iki ayri iliski cunku ayni tablo iki farkli rolde baglaniyor.
+  gpu_variant_specs GpuVariantSpecs?  @relation("variant_part")
+  gpu_variants      GpuVariantSpecs[] @relation("variant_chip")
   cpu_specs         CpuSpecs?
   motherboard_specs MotherboardSpecs?
   ram_specs         RamSpecs?
@@ -205,6 +209,60 @@ model GpuSpecs {
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   @@map("gpu_specs")
+}
+
+// Ekran karti varyanti (AIB karti) — SCHEMA.md bolum 2, K86.
+//
+// gpu_specs cip seviyesidir (RTX 5080). Piyasada satilan karttir ve ayni cipten
+// cikan iki kart farklidir: ROG Strix ~358 mm, ProArt ~304 mm. Kart, kategorisi
+// gpu olan normal bir parts satiridir; bu tablo onu cipine baglar.
+//
+// Degismeyen alanlar (VRAM, shader, bellek hizi, PCIe) burada TEKRARLANMAZ,
+// chip_part_id uzerinden gpu_specs'ten okunur.
+model GpuVariantSpecs {
+  part_id String @id
+  part    Part   @relation("variant_part", fields: [part_id], references: [id])
+
+  // Tek zorunlu alan (K86): C4/C5 geri dusulu, perf_index cozumlemesi ve
+  // degismeyen speclerin okunmasi bu bagi kullanir. Cipi bilinmeyen kart olmaz.
+  chip_part_id String
+  chip         Part   @relation("variant_chip", fields: [chip_part_id], references: [id])
+
+  // Fizik olculer — asla zorunlu olmaz (K62). length_mm'i C5 kullanir.
+  // thickness_slots ondalikli: 2.5 slot gercek bir deger, asagi yuvarlamak
+  // karti oldugundan ince gosterir (K59'un yuvarlama maddesi kasa acikliklari icin).
+  length_mm       Int?
+  height_mm       Int?
+  thickness_slots Float?
+
+  // tbp_watt'i C4 kullanir ama opsiyonel: zorunlu olsaydi TBP yayinlamayan
+  // uretici kartini disarida birakirdi (K56, pcie_version dersi).
+  tbp_watt             Int?
+  recommended_psu_watt Int?
+  // Serbest metin (K88): "2x 8-pin + 1x 6-pin". Hicbir kural okumuyor, o yuzden
+  // yapilandirilmis hali ertelendi — SORULAR.md S38.
+  power_connectors     String?
+
+  // Fabrika saatleri. K37/K74: bu iki alandan indeks TURETILMEZ, yalnizca
+  // gosterim ve kaynak defteri icin. Binning alani yok — uretici yayinlamiyor.
+  boost_clock_mhz    Int?
+  boost_clock_oc_mhz Int?
+
+  fan_count         Int?
+  hdmi_count        Int?
+  displayport_count Int?
+  usb_c_count       Int?
+
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([chip_part_id])
+  @@map("gpu_variant_specs")
 }
 
 model CpuSpecs {

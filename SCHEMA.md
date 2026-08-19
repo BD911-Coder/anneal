@@ -1,4 +1,4 @@
-# Anneal — Alan Modeli (Domain Model) — v1.3
+# Anneal — Alan Modeli (Domain Model) — v1.4
 
 Bu dosya projenin veri yapısını tanımlar. Kod bundan türetilir, tersi değil.
 Bir alan burada yoksa koda da girmez; kodda bir alan gerekiyorsa önce buraya eklenir.
@@ -166,6 +166,62 @@ Son dört alan da **opsiyoneldir** ve K37'nin istisnası değildir: mutlak FPS y
 indeks türetmek için değil, **aynı mimari içinde göreli ölçekleme** için
 tutulurlar. Nesiller arası karşılaştırmada kullanılmazlar.
 Bkz. `docs/KARARLAR.md` K51.
+
+> **`gpu_specs` çip seviyesidir.** Satır bir çipin **referans tasarımını**
+> tanımlar (`nvidia-rtx-5080`); `length_mm`, `tdp_watt` ve `boost_clock_mhz`
+> çip üreticisinin referans kartı için yayınladığı değerlerdir. Piyasada satılan
+> kart (ASUS ProArt RTX 5080, ROG Strix RTX 5080) ayrı bir satırdır —
+> `gpu_variant_specs`.
+
+**`gpu_variant_specs`** — ekran kartı varyantı (AIB kartı)
+
+Piyasada satılan kart, çipin kendisi değildir: aynı RTX 5080 çipinden ROG Strix
+~358 mm, ProArt ~304 mm çıkar. Fark C5'i doğrudan etkiler. Kart, `category = 'gpu'`
+olan normal bir `parts` satırıdır ve bu tabloyla çipine bağlanır (K86).
+
+| Alan | Tip | Not |
+|---|---|---|
+| `part_id` | FK | Birincil anahtar. Kartın kendi `parts` satırı |
+| `chip_part_id` | FK | Kartın çipi — `gpu_specs` satırı olan bir parça |
+| `length_mm` | int? | C5 kullanır |
+| `height_mm` | int? | |
+| `thickness_slots` | float? | 2, 2.5, 3 — yarım slot değerleri yuvarlanmaz |
+| `tbp_watt` | int? | C4 kullanır |
+| `recommended_psu_watt` | int? | |
+| `power_connectors` | text? | Serbest metin: `2x 8-pin + 1x 6-pin` (K88) |
+| `boost_clock_mhz` | int? | Fabrika boost, **varsayılan** mod |
+| `boost_clock_oc_mhz` | int? | OC / performans BIOS modu, ayrıca yayınlanmışsa |
+| `fan_count` | int? | |
+| `hdmi_count` | int? | |
+| `displayport_count` | int? | |
+| `usb_c_count` | int? | |
+
+**Zorunlu tek alan `chip_part_id`'dir** (K86). K56'nın sorusuna — "hangi kural
+bunu kullanıyor?" — yalnızca o alan için cevap var: C4 ve C5'in geri düşüşü,
+`perf_index` çözümlemesi ve arayüzün değişmeyen specleri okuması bu bağı
+kullanır. Çipi bilinmeyen bir kart yoktur. `length_mm` ve `tbp_watt` bir kural
+tarafından kullanılır ama yine de opsiyoneldir: fiziksel ölçü zorunlu olmaz
+(K62) ve TBP'yi zorunlu yapmak, yayınlamayan üreticinin kartını dışarıda
+bırakırdı (K56, `pcie_version` dersi).
+
+**Değişmeyen alanlar bu tabloda tekrarlanmaz.** Çip, `shader_units`,
+`shader_unit_type`, VRAM kapasitesi ve tipi, bellek hızı, arayüz genişliği,
+`memory_bandwidth_gbs`, `pcie_version` — hepsi `chip_part_id` üzerinden
+`gpu_specs`'ten okunur. Tek kaynak orasıdır; kopyalanan gerçek zamanla ayrışır.
+
+> **Bu tablodaki hiçbir alandan performans sayısı türetilmez.** Yukarıdaki K37
+> notu burada da geçerlidir ve daha keskindir: `boost_clock_mhz` ile
+> `boost_clock_oc_mhz` farkından indeks üretmek, K74'ün reddettiği
+> interpolasyonun saat hızıyla yapılmış hâlidir. İki alan da yalnızca gösterim
+> ve kaynak defteri içindir.
+>
+> **Silikon kalitesi (binning) alanı yoktur.** Üreticiler yayınlamıyor.
+> Gözlemlenebilir karşılıkları (boost, TBP, konnektör) ham hâliyle saklanır,
+> yorumlanmaz.
+
+`power_connectors` **serbest metindir** (K88): hiçbir kural okumuyor, o yüzden
+yapılandırılmış hâli (tip + adet ya da alt tablo) ertelendi. Kural gerektiğinde
+yapılandırılır. Bkz. `SORULAR.md` S38.
 
 **`cpu_specs`**
 
@@ -362,6 +418,23 @@ hangi iş yükünün indeksi olduğunu söylemeden satır yazılamaz.
 Olgusal iddia taşımaz — dörtlü alan (bölüm 1.3) burada bulunmaz. Motorun kendi
 hesabıdır, kaynağı `model_version` sütunudur. `updated_at` de yoktur (bölüm 1.2).
 
+**İki seviye: çip ve kart.** `part_id` bir çipi de (`gpu_specs`) bir kartı da
+(`gpu_variant_specs`) gösterebilir — ikisi de `parts` satırıdır, tabloda
+değişiklik gerekmez. Okuma sırası:
+
+```
+indeks(kart) = perf_index[kart.part_id]  ??  perf_index[kart.chip_part_id]
+```
+
+Hangi seviyeden geldiği okuma anında türetilir ve arayüze verilir; şemada
+sütunu yoktur (`perf_index`'te `source` yok — K32). Arayüz, çipten gelen bir
+sayıyı kartın ölçümü gibi göstermez.
+
+> **Bugün kart satırına `perf_index` yazılmaz.** Yazılabilmesinin tek yolu
+> `benchmark_points`'ta kart bazlı ölçüm bulunmasıdır (K71); o alan da
+> `gpu_part_id` ile kartı gösterebilir. Fabrika boost farkından üretilen bir
+> kart indeksi K74 ihlalidir.
+
 ---
 
 ## 5. Sistemler
@@ -491,6 +564,31 @@ GPU seçilmemişse `gpu.tdp_watt` 0 sayılır — iGPU'lu sistem geçerli bir si
 
 W3'ün üst sınırı %15'tir: güç kaynakları tam kapasiteye yakın çalışırken verimi
 düşer ve sesi artar, %10 bu gerçeği yakalamak için dar kalıyordu.
+
+### Ekran kartında hangi sayı kullanılır — çip mi kart mı
+
+Kullanıcı çip seçer, kart seçimi opsiyoneldir (bölüm 2, `gpu_variant_specs`).
+C4 ve C5'in okuduğu değer buna göre değişir — ve **kart seçili ama değeri boşsa
+iki kural aynı davranmaz** (K87).
+
+| Durum | C4 (güç) | C5 (uzunluk) |
+|---|---|---|
+| Kart seçili, değeri var | kartın `tbp_watt`'ı | kartın `length_mm`'i |
+| Kart seçili, değeri boş | **çipin `tdp_watt`'ı** — arayüz "referans değerle" der | **kural atlanır** — arayüz söyler |
+| Kart seçili değil | çipin `tdp_watt`'ı | çipin referans `length_mm`'i |
+
+**Neden aynı değiller:** C4 yaklaşık bir hesaptır ve içinde ×1.3 payı vardır;
+referans değerle çalışması, en yüksek sonuçlu kuralı en sık durumda sessiz
+bırakmaktan iyidir. C5 tam sayı karşılaştırmasıdır, payı yoktur ve AIB kartları
+referanstan **uzun** olur — referansa geri düşmek 358 mm'lik karta "sığar"
+demek olurdu, yani satın alınıp takılamayan kart.
+
+> **Genel kural (K87):** Yaklaşık ve pay içeren kural, eksik veride referansa
+> geri düşer. Kesin ve paysız kural atlanır. Her iki durumda da arayüz
+> kullanıcıya durumu söyler; sessizce ne varsayılır ne atlanır.
+
+Çözümleme motorun içinde, `/engine/gpu-selection.ts`'te saf fonksiyon olarak
+yapılır; motora yine tek bir `EngineGpu` girer, katalog yapısını tanımaz.
 
 ### Uyarı (engellemez)
 
@@ -656,6 +754,7 @@ burada sayılmaz.
 | `price_snapshots` | (`part_id`, `collected_at`) | "Güncel fiyat = en son `collected_at`'li satır" tanımının kendisi. Tablo append-only olduğu için sürekli büyür; bu yol indekssiz çalışamaz. |
 | `benchmark_points` | (`gpu_part_id`, `game_id`, `resolution`) | Motorun kalibrasyon verisini okuma yolu — belirli GPU + oyun + çözünürlük için ölçümler. |
 | `perf_index` | (`part_id`, `workload`, `model_version`) **UNIQUE** | Hem tekillik kısıtı (bölüm 4) hem de motorun indeks okuma yolu. |
+| `gpu_variant_specs` | (`chip_part_id`) | "Bu çipin kartları" — kart seçim listesi ve parça detay sayfası. Kartlar her zaman çipleriyle birlikte okunur, tek başına değil. |
 
 **Silinen indeks:** `raw_imports(status)` kaldırıldı — `raw_imports` yalnızca hata
 ayıklarken elle okunur, belgelenmiş bir sorgu yolu değildir.

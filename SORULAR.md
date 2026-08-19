@@ -18,7 +18,34 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
+### S38 — Güç konnektörü serbest metin, yapılandırılmadı ⏸️ ERTELENDİ (2026-08-19)
+
+**Proje sahibinin kararı:** Şimdilik tek serbest metin alanı
+(`gpu_variant_specs.power_connectors`, örn. `2x 8-pin + 1x 6-pin`).
+Gerekçe: hiçbir kural bu alanı okumuyor (K56), kullanılmayan yapıya migration
+harcanmaz. Kural gerektiğinde yapılandırılır. → `docs/KARARLAR.md` K88
+
+---
+
+Serbest metnin bilinen bedeli: alan **sorgulanamaz** ve yazım birliği kod
+tarafından zorlanamaz. `2x 8-pin`, `2 x 8 pin`, `8-pin ×2` aynı veriyi üç
+farklı biçimde tutabilir.
+
+Yapılandırma gerektiğinde iki seçenek var:
+
+1. **İki sütun** — `power_connector_type` enum? + `power_connector_count` int?.
+   Ucuz ama karışık yapılandırmayı (`2x 8-pin + 1x 6-pin`) ifade edemez.
+2. **Alt tablo** — `gpu_variant_power_connectors (part_id, connector_type,
+   count)`, bileşik anahtar. Karışığı kaybetmeden tutar.
+
+Tetikleyici olay: **"PSU'nun kartın istediği konnektörü var mı" kuralı**. O
+kural `psu_specs`'te de konnektör sayıları gerektirir ve beta kapsamı dışıdır.
+Kural yazılmadan yapılandırmaya gerek yok.
+
 ### S37 — GPU kapsamı 14'te kilitli, K77 ikinci turu engelliyor
+
+> **2026-08-19: ertelendi.** Proje sahibi önceliği kart varyantı (AIB) desteğine
+> çevirdi. Soru cevaplanmadı, sadece sıradan çıktı; GPU kapsamı 14'te duruyor.
 
 Kapsam genişletme turunda işlemci tarafı 7 → 12 çıktı ama **ekran kartı 14'te
 kaldı**. Sebep ölçüldü:

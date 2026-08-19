@@ -152,6 +152,40 @@ kurallarını besler. Yanlış değer, kullanıcıya "sığar" deyip sığmamas�
   yaramıyor. Kural eksik alanda kendini atlar, arayüz kullanıcıya bildirir.
   Bu duvara üç kez çarpıldı: K52, K56, K62.
 
+### Eksik veride kural davranışı
+
+**Yaklaşık ve pay içeren kural, eksik veride referans değere geri düşer; kesin
+ve paysız kural atlanır.** Her iki durumda da arayüz kullanıcıya durumu söyler —
+sessizce ne varsayılır ne atlanır (K87).
+
+Ölçüt kuralın kendisidir, verinin ne kadar eksik olduğu değil:
+
+- **C4 (güç)** yaklaşıktır, formülünde ×1.3 payı vardır. Ekran kartının TBP'si
+  bilinmiyorsa çipin referans `tdp_watt`'ı kullanılır. Kuralı atlamak, güç
+  kaynağı yetiyor mu sorusunu en sık durumda sessiz bırakırdı.
+- **C5 (uzunluk)** tam sayı karşılaştırmasıdır, payı yoktur. Seçilen kartın
+  uzunluğu bilinmiyorsa çipin referans ölçüsüne **geri düşülmez**, kural atlanır:
+  özel tasarım kartlar referanstan uzun olur ve referansla yapılan kontrol
+  yanlış "sığar" der. Yanlış "sığar", satın alınıp takılamayan kart demektir.
+
+Yeni bir kural yazarken sorulacak soru: *bu kural bir tahmin mi, bir ölçü
+karşılaştırması mı?* Cevap davranışı belirler.
+
+### Ekran kartı: çip ve kart iki ayrı satırdır
+
+`gpu_specs` **çip** seviyesidir (`nvidia-rtx-5080` = üreticinin referans
+tasarımı). Piyasada satılan kart `gpu_variant_specs` satırıdır ve `chip_part_id`
+ile çipine bağlanır; kendisi de normal bir `parts` satırıdır (K86).
+
+- Kart seçimi **opsiyoneldir**. Seçilmezse çipin referans değerleri kullanılır
+  ve akış bugünkü gibi çalışır.
+- Değişmeyen alanlar (VRAM, shader, bellek hızı, PCIe) kart satırında
+  **tekrarlanmaz**, çipten okunur.
+- Kart satırının fabrika saatlerinden **indeks türetilmez** (K74). `perf_index`
+  iki seviyeli okunur: kartın kendi ölçülmüş indeksi yoksa çipinki kullanılır ve
+  arayüz bunun çipin ölçümü olduğunu söyler.
+- Çözümleme `engine/gpu-selection.ts` içindedir ve test edilir (K90).
+
 ### dev-seed koruması
 
 Dört katman, hepsi zorunlu:

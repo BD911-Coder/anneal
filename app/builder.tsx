@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { CurrentPrice } from "@/data/prices";
 import type { BuilderCatalog } from "@/data/parts";
 import { checkCompatibility } from "@/engine/compatibility";
+import { resolveGpuSelection, resolvePerfIndex } from "@/engine/gpu-selection";
 import { computePerformance } from "@/engine/performance";
 import { suggestUpgrades } from "@/engine/upgrade";
 import type {
@@ -50,6 +51,9 @@ type BuilderProps = {
 
 export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const [selection, setSelection] = useState<Selection>({});
+  // Kart (AIB) seçimi çipten ayrı bir durum: opsiyonel ikinci katman (K86).
+  // Çip değişince sıfırlanır — başka çipin kartı seçili kalamaz.
+  const [gpuVariantId, setGpuVariantId] = useState<string | undefined>(undefined);
   const [storageIds, setStorageIds] = useState<string[]>([]);
   const [resolution, setResolution] = useState<Resolution>("1440p");
   const [budgetText, setBudgetText] = useState("");
@@ -57,28 +61,50 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Seçilen id'lerden motorun beklediği girdiyi kur.
-  const buildInput = useMemo<BuildInput>(() => {
-    const input: BuildInput = {};
-    for (const category of ENGINE_CATEGORIES) {
-      const id = selection[category];
-      if (!id) continue;
-      const item = catalog[category].find((candidate) => candidate.id === id);
-      if (item) {
-        // Her kategorinin spec tipi farklı; atama kategori bazında güvenli.
-        (input as Record<string, unknown>)[category] = item.spec;
-      }
-    }
-    return input;
-  }, [selection, catalog]);
+  // --- Ekran kartı: çip + opsiyonel kart -------------------------------------
+  const gpuChipId = selection.gpu;
+  const gpuChip = catalog.gpu.find((item) => item.id === gpuChipId);
+  const variantsForChip = catalog.gpu_variant.filter(
+    (variant) => variant.chip_part_id === gpuChipId,
+  );
+  const gpuVariant = variantsForChip.find((variant) => variant.id === gpuVariantId);
+  // Hangi sayının kurala gireceğine motor karar veriyor (K87), arayüz değil.
+  const resolvedGpu = gpuChip ? resolveGpuSelection(gpuChip.spec, gpuVariant?.spec) : undefined;
+  // Satın alınan, fiyatı toplanan ve sisteme kaydedilen satır: kart seçiliyse kart.
+  const gpuPartId = gpuVariant?.id ?? gpuChipId;
 
-  const findings = useMemo(() => checkCompatibility(buildInput), [buildInput]);
+  // Seçilen id'lerden motorun beklediği girdiyi kur.
+  //
+  // useMemo yok: en fazla altı parça aranıyor ve uyumluluk kontrolü on bir
+  // kuraldan ibaret. Her çizimde yeniden hesaplamak, önbelleği doğru tutmaya
+  // çalışmaktan ucuz — dosyanın geri kalanı da (fiyat toplamı, yükseltme
+  // önerisi) aynı sebeple memo kullanmıyor.
+  const buildInput: BuildInput = {};
+  for (const category of ENGINE_CATEGORIES) {
+    // Ekran kartı yukarıda ayrıca kuruldu: çip ile kartın birleşimi.
+    if (category === "gpu") continue;
+    const id = selection[category];
+    if (!id) continue;
+    const item = catalog[category].find((candidate) => candidate.id === id);
+    if (item) {
+      // Her kategorinin spec tipi farklı; atama kategori bazında güvenli.
+      (buildInput as Record<string, unknown>)[category] = item.spec;
+    }
+  }
+  if (resolvedGpu) buildInput.gpu = resolvedGpu.gpu;
+
+  const findings = checkCompatibility(buildInput);
   const errors = findings.filter((finding) => finding.level === "error");
   const warnings = findings.filter((finding) => finding.level === "warning");
 
-  // Kart seçili ama uzunluğu bilinmiyorsa C5 çalışamaz (K52). Kasa seçilmemişse
-  // zaten çalışmazdı; uyarı yine de gösteriliyor çünkü kullanıcı kasayı sonra seçecek.
-  const gpuLengthUnknown = buildInput.gpu !== undefined && buildInput.gpu.length_mm === undefined;
+  // Uzunluk hiçbir seviyeden okunamadıysa C5 çalışamaz (K52, K87). Kasa
+  // seçilmemişse zaten çalışmazdı; uyarı yine de gösteriliyor çünkü kullanıcı
+  // kasayı sonra seçecek.
+  const gpuLengthUnknown = resolvedGpu?.length_origin === "unknown";
+  // Kart seçili ama TBP'si yayınlanmamış: güç hesabı çipin referans değeriyle
+  // yapıldı (K87). Sessiz kalmak, kartın kendi değeriyle hesaplanmış gibi olurdu.
+  const gpuTdpFromReference =
+    gpuVariant !== undefined && resolvedGpu?.tdp_origin === "chip_reference";
   // Aynı durum güç kaynağı için (K62): uzunluk bilinmiyorsa W5 çalışamaz.
   const psuLengthUnknown = buildInput.psu !== undefined && buildInput.psu.length_mm === undefined;
 
@@ -86,10 +112,12 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const secilenSayisi = Object.values(selection).filter(Boolean).length + selectedStorage.length;
 
   // Seçilen bütün parçaların id'si — fiyat toplamı bunun üzerinden yürüyor.
+  // Ekran kartında kart seçiliyse kartın id'si gider: fiyat kartın fiyatıdır,
+  // kaydedilen de odur (K86).
   const selectedPartIds = [
-    ...ENGINE_CATEGORIES.map((category) => selection[category]).filter(
-      (id): id is string => Boolean(id),
-    ),
+    ...ENGINE_CATEGORIES.map((category) =>
+      category === "gpu" ? gpuPartId : selection[category],
+    ).filter((id): id is string => Boolean(id)),
     ...storageIds,
   ];
 
@@ -98,8 +126,12 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   // önbelleği doğru tutmaya çalışmaktan ucuz.
   const priceSummary = summarizePrice(selectedPartIds, prices);
 
-  const gpuId = selection.gpu;
   const cpuId = selection.cpu;
+
+  // İndeks iki seviyeli okunur: kartın kendi ölçümü varsa o, yoksa çipinki (K86).
+  // Bugün kart indeksi hiç yok, o yüzden origin her zaman "chip" çıkıyor —
+  // ama arayüz bunu söylemek zorunda, çipin sayısı kartın ölçümü değildir.
+  const gpuIndex = resolvePerfIndex(perfIndexes, gpuChipId, gpuVariantId);
 
   // Darboğaz göstergesi "bu parçayı katalogdaki en iyisiyle değiştirsem ne
   // kazanırım?" diye soruyor (K83). Motor katalogu tanımıyor; en iyileri
@@ -113,7 +145,7 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
   const performance = computePerformance({
     resolution,
-    gpu_index: gpuId ? perfIndexes[gpuId] : undefined,
+    gpu_index: gpuIndex.value,
     cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
     best_gpu_index: bestGpuIndex,
     best_cpu_index: bestCpuIndex,
@@ -132,8 +164,8 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
   const upgrades = suggestUpgrades({
     resolution,
     current: {
-      gpu: toUpgradePart(gpuId, prices, perfIndexes),
-      cpu: toUpgradePart(cpuId, prices, perfIndexes),
+      gpu: toUpgradePart(gpuPartId, prices, gpuIndex.value),
+      cpu: toUpgradePart(cpuId, prices, cpuId ? perfIndexes[cpuId] : undefined),
     },
     budget_delta_minor: budgetMinor,
     candidates: {
@@ -173,7 +205,7 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
   /** Bir parçanın indeksi neden yok: seçilmedi mi, verisi mi yok? */
   function eksikSebebi(kind: "gpu" | "cpu"): string {
-    const id = kind === "gpu" ? gpuId : cpuId;
+    const id = kind === "gpu" ? gpuChipId : cpuId;
     const ad = kind === "gpu" ? "Ekran kartı" : "İşlemci";
     if (!id) return `${ad} seçilmedi.`;
     return `${ad} için performans verisi yok.`;
@@ -181,7 +213,10 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
   /** Öneride görünen parça adı — motor id döndürüyor, adı katalog biliyor. */
   function labelOf(category: UpgradeCategory, id: string): string {
-    return catalog[category].find((item) => item.id === id)?.label ?? id;
+    const fromCategory = catalog[category].find((item) => item.id === id)?.label;
+    if (fromCategory) return fromCategory;
+    // Mevcut ekran kartı bir AIB kartı olabilir; adı ayrı listede duruyor (K86).
+    return catalog.gpu_variant.find((variant) => variant.id === id)?.label ?? id;
   }
 
   return (
@@ -192,28 +227,67 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
         <div className="flex flex-col gap-3">
           {ENGINE_CATEGORIES.map((category) => (
-            <label key={category} className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">{CATEGORY_LABEL[category]}</span>
-              <select
-                className="rounded border px-2 py-1"
-                value={selection[category] ?? ""}
-                onChange={(event) => {
-                  forgetShareLink();
-                  setSelection((current) => ({
-                    ...current,
-                    [category]: event.target.value || undefined,
-                  }));
-                }}
-              >
-                <option value="">— seçilmedi —</option>
-                {catalog[category].map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                    {prices[item.id] ? ` — ${formatPriceMinor(prices[item.id].price_minor)}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div key={category} className="flex flex-col gap-2">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">{CATEGORY_LABEL[category]}</span>
+                <select
+                  className="rounded border px-2 py-1"
+                  value={selection[category] ?? ""}
+                  onChange={(event) => {
+                    forgetShareLink();
+                    // Çip değişince kart seçimi düşer: başka çipin kartı seçili kalamaz.
+                    if (category === "gpu") setGpuVariantId(undefined);
+                    setSelection((current) => ({
+                      ...current,
+                      [category]: event.target.value || undefined,
+                    }));
+                  }}
+                >
+                  <option value="">— seçilmedi —</option>
+                  {catalog[category].map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                      {prices[item.id] ? ` — ${formatPriceMinor(prices[item.id].price_minor)}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {/*
+                Kart (AIB) seçimi opsiyonel ikinci katman (K86). Yalnızca seçili
+                çipin kartı varsa görünür: kartı olmayan çipte boş bir kutu
+                göstermek, kullanıcıya doldurulacak bir alan varmış hissi verir.
+              */}
+              {category === "gpu" && variantsForChip.length > 0 && (
+                <label className="ml-1 flex flex-col gap-1 border-l-2 border-neutral-300 pl-3 text-sm">
+                  <span className="font-medium">
+                    Kart modeli <span className="font-normal opacity-60">(opsiyonel)</span>
+                  </span>
+                  <select
+                    className="rounded border px-2 py-1"
+                    value={gpuVariantId ?? ""}
+                    onChange={(event) => {
+                      forgetShareLink();
+                      setGpuVariantId(event.target.value || undefined);
+                    }}
+                  >
+                    <option value="">— belirtilmedi, referans değerler —</option>
+                    {variantsForChip.map((variant) => (
+                      <option key={variant.id} value={variant.id}>
+                        {variant.label}
+                        {prices[variant.id]
+                          ? ` — ${formatPriceMinor(prices[variant.id].price_minor)}`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-xs opacity-60">
+                    Aynı çipten çıkan kartlar uzunluk ve güç limitinde ayrışır. Kart
+                    seçmezseniz üreticinin referans değerleri kullanılır.
+                  </span>
+                </label>
+              )}
+            </div>
           ))}
 
           <fieldset className="flex flex-col gap-1 text-sm">
@@ -331,6 +405,14 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
                 {performance.weights.cpu}. Motor sürümü {performance.model_version}. Gerçek FPS
                 iddiası değildir.
               </p>
+              {/* Çipin indeksi kartın ölçümü değildir (K86). Bugün her kart için
+                  böyle; sessiz kalmak, kart bazlı ölçüm varmış gibi olurdu. */}
+              {gpuVariant && gpuIndex.origin === "chip" && (
+                <p className="text-xs opacity-50">
+                  Ekran kartı indeksi {gpuChip?.label} çipi için ölçüldü; seçtiğiniz kart
+                  için ayrı ölçüm yok. Fabrika hız aşırtması bu sayıya yansımaz.
+                </p>
+              )}
               {/* Hata payı ölçülür, tahmin edilmez (K79). Sayı ve ölçüm tarihi tek
                   yerde tanımlı; ölçüm tekrarlandığında lib/perf-margin.ts değişir. */}
               <p className="text-xs opacity-50">
@@ -440,12 +522,18 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
           ) : (
             <ul className="flex flex-col gap-1 text-sm">
               {ENGINE_CATEGORIES.filter((category) => selection[category]).map((category) => {
-                const item = catalog[category].find(
-                  (candidate) => candidate.id === selection[category],
-                );
+                // Ekran kartında kart seçiliyse listede kart görünür: satın
+                // alınan, fiyatı toplanan ve kaydedilen satır odur (K86).
+                const item =
+                  category === "gpu" && gpuVariant
+                    ? gpuVariant
+                    : catalog[category].find((candidate) => candidate.id === selection[category]);
                 return (
                   <li key={category}>
                     <span className="opacity-60">{CATEGORY_LABEL[category]}:</span> {item?.label}
+                    {category === "gpu" && gpuVariant && (
+                      <span className="text-xs opacity-50"> · çip: {gpuChip?.label}</span>
+                    )}
                     <PriceTag price={item ? prices[item.id] : undefined} />
                   </li>
                 );
@@ -510,8 +598,20 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
           */}
           {gpuLengthUnknown && (
             <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
-              Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
-              Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et.
+              {gpuVariant
+                ? // Kart seçiliyken çipin referans ölçüsüne DÜŞÜLMEZ (K87): AIB
+                  // kartları referanstan uzun olur, referansla "sığar" demek
+                  // satın alınıp takılamayan kart demektir.
+                  "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et."
+                : "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et."}
+            </p>
+          )}
+
+          {gpuTdpFromReference && (
+            <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
+              Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı çipin referans
+              değeriyle yapıldı — özel tasarım kartlar referanstan biraz daha fazla
+              çekebilir.
             </p>
           )}
 
@@ -562,16 +662,22 @@ function parseBudgetToMinor(text: string): number {
   return Number(digits) * 100;
 }
 
-/** Seçili parçayı motorun aday tipine çevirir. Fiyatı yoksa hesap yapılamaz. */
+/**
+ * Seçili parçayı motorun aday tipine çevirir. Fiyatı yoksa hesap yapılamaz.
+ *
+ * İndeks hazır sayı olarak geliyor, id ile aranmıyor: ekran kartında seçili
+ * satır bir kart olabilir ve kartın indeksi çipinden gelir (K86). Aramayı
+ * burada tekrarlamak, çözümlemenin ikinci bir kopyası olurdu.
+ */
 function toUpgradePart(
   id: string | undefined,
   prices: Record<string, CurrentPrice>,
-  perfIndexes: Record<string, number>,
+  perfIndex: number | undefined,
 ): UpgradePart | undefined {
   if (!id) return undefined;
   const price = prices[id];
   if (!price) return undefined;
-  return { id, price_minor: price.price_minor, perf_index: perfIndexes[id] };
+  return { id, price_minor: price.price_minor, perf_index: perfIndex };
 }
 
 /** Katalog listesini aday listesine çevirir; fiyatı olmayanlar elenir. */
