@@ -49,6 +49,16 @@ Yani çalışan bir özellik yarıda kalmış durumda.
 - [x] Kart seçili sistemin kaydedilebildiğini tarayıcıda doğrula — Claude
       doğruladı (i9-14900K + MSI RTX 5080 GAMING TRIO OC → 2.299,98 USD,
       `/sistem/4dkdcw` oluştu). Sen de bir kez bak.
+- [ ] **Kalan beş kategoriye fiyat** *(anakart, RAM, PSU, kasa, depolama —
+      hepsi hâlâ 0)*. Kullanıcı bugün yedi kategorili bir sistem toplayıp
+      toplam fiyat **göremiyor**.
+      - Newegg: bu beş kategoride denenen listelerin hepsi pazaryeri
+        satıcısıydı, K91 tavanı hesaplanamadığı için elendi.
+      - **Amazon denendi, kapalı:** konum engeli — ürün ve arama
+        sayfalarında sıfır fiyat gösteriliyor ("Deliver to Turkey / No
+        featured offers available"). `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
+      - **Kaynak kararı bekliyor** (dört seçenek raporda). eBay API maddesi
+        yukarıda ve bu turdan sonra daha öncelikli görünüyor.
 
 ### 1.2 — Kategori derinliği
 
