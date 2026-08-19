@@ -18,47 +18,43 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S33 — K72 tavanı ile toplama hedefi uyuşmuyor
+### S34 — Tek doğrulanmış kaynakla K75.4 karşılanamıyor
 
-Faz 0 fizibilitesi bir çelişki ölçtü.
+K75'in 4. maddesi: *"Her parçanın en az iki farklı alan adından ölçümü olur."*
 
-K72: alan adı başına toplam **25 satır**. Plan hedefi **~306 satır**.
+Faz 1'de yedi alan adı sınandı. Per-oyun FPS'i **HTML metin** olarak yayınlayan,
+koşulsuz kullanılabilir kaynak sayısı: **1** (ComputerBase).
 
-```
-306 / 25 = 13 farklı alan adı gerekiyor
-```
-
-Ve hepsinde makine tarafından okunabilir **per-oyun** veri olmalı. Faz 0'da
-bulunan:
-
-| | Adet |
+| Alan adı | Sonuç |
 |---|---|
-| İncelenen alan adı | 7 |
-| Kullanım şartları nedeniyle elenen | 1 (TechPowerUp) |
-| Per-oyun HTML metin verisi **doğrulanmış** | **1** (ComputerBase) |
-| Yalnızca paket ortalaması, `game_id` yok | 1 (Tom's Hardware) |
-| Okunabilirliği ölçülmemiş | 4 |
+| computerbase.de | Kullanılabilir (GPU + CPU) |
+| notebookcheck.net | Koşullu — dizüstü kartlar, ve tablo ölçümle **interpolasyonu karıştırıyor** |
+| tomshardware.com | Kaynak değil (paket ortalaması), ama **çapraz kontrol aracı** |
+| techspot.com | Grafikler JPG |
+| guru3d.com | HTML'de sayı yok, içerik JS |
+| pcgameshardware.de | HTML'de sayı yok, veri JS bileşeninde |
+| techpowerup.com | Kullanım şartlarıyla elendi (Faz 0) |
 
-Kalan dördü de doğrulansa 5 × 25 = **125 satır**, hedefin %40'ı. Köprü
-kartları da aynı bütçeden yendiği için gerçek kapsama daha düşük olur.
+Bu maddeyle bugün **hiçbir parça indekslenemez**. Madde keyfi değil: tek
+kaynağın sistematik sapması (Faz 0'da %20.3'e varıyordu) ancak ikinci bir
+kaynakla görülüyor.
 
-**Üç yol:**
+**Dört yol:**
 
-| Yol | Sonuç |
-|---|---|
-| **A.** Tavanı yükselt (25 → 60-80) | Hedef tutar. Telif riski artar, K72'nin gerekçesi zayıflar. |
-| **B.** Parça başına 2 ölçüm | ~204 satır, yine 8+ alan adı. Faz 0 zaten "2 ölçüm az" dedi (çapraz kontrolde %20'ye varan sapma). |
-| **C.** Kapsamı daralt: en çok tercih edilen ~30 GPU + ~20 CPU | ~150 satır, 6 alan adı yeter. Kalanlar indekssiz kalır. |
+| Yol | Ne gerekiyor | Risk |
+|---|---|---|
+| **A.** Derin kaynak araştırması — JS ile çizilen grafiklerin veri yükü sayfada gömülü olabilir, tarayıcı paneliyle bakılır | ~1 oturum, sonuç garantisiz | Emek boşa gidebilir |
+| **B.** K75.4'ü gevşet: tek kaynak yeterli, **ama** Tom's Hardware ile çapraz kontrol zorunlu, sapma her yayında ölçülüp `lib/perf-margin.ts`'e yazılır | Karar | Sistematik sapma indekse girer; ölçülür ama düzeltilmez |
+| **C.** İkinci kaynak `own_test` — proje sahibinin kendi makinesi | Donanım, zaman | Tek makine tek kart; kapsamayı çözmez |
+| **D.** Notebookcheck'i hücre ayıklamasıyla kullan | Ayıklama disiplini + masaüstü eşleme | Yanlış satır alma riski kazancından büyük |
 
-**Claude'un önerisi: C, gerekirse sonra A.** Kapsamı daraltmak tavanı
-gevşetmekten az risk taşıyor ve K74 ile tutarlı: indeksi olmayan parça
-kullanıcıya "veri yok" diyor, yalan söylemiyor. En çok tercih edilen kartlarda
-sağlam indeks olması, bütün kartlarda yarım yamalak indeks olmasından iyi.
+**Claude'un önerisi: A, başarısız olursa B.** Bir oturumluk derin arama ucuz;
+B dürüst bir geri çekilme çünkü sapmayı gizlemiyor, ölçüp yazıyor — K79 bu
+disiplini zaten kurdu.
 
-**Bu karar verilmeden faz 2 (toplama) başlamamalı** — hedef satır sayısı,
-seçilecek kaynak sayısını ve dolayısıyla işin büyüklüğünü belirliyor.
+**Bu karar verilmeden Faz 2 (toplama) başlamamalı.**
 
-→ `docs/log/2026-08-19-faz0-fizibilite.md` bölüm 4
+→ `docs/log/2026-08-19-faz1-kaynak-dogrulama.md` bölüm 4
 
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
@@ -183,6 +179,30 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S33 — K72 tavanı ile toplama hedefi uyuşmuyor ✅ 2026-08-19
+
+**Proje sahibinin kararı: ikisi birden.**
+
+1. **Tavan kuralı değişti** — mutlak sayı yerine oran: bir sayfanın yayınladığı
+   veri noktalarının en fazla %10'u; tek bir (oyun, çözünürlük, ayar) grubunun
+   tamamı asla alınmaz; kombinasyon başına 8 satır sınırı kalıyor.
+   Gerekçe: *"25 sayısı keyfiydi ve yanlış şeyi ölçüyordu. Önemli olan alınan
+   miktarın kaynağın bütününe oranı."* → K72 "değiştirildi" olarak işaretlendi,
+   yürürlükteki kural **K75**.
+2. **Kapsam daraldı**: ~30 GPU + ~20 CPU, güncel + bir önceki nesil,
+   kaynaklarda en sık ölçülenler. Eski nesiller (RDNA2, Ampere) kapsam dışı.
+   → **K76**
+
+Ayrıca aynı kararla: farklı sürücü döneminde ölçülmüş sonuçlar köprülenmez
+(**K77**), Faz 0'ın üç dersi kural oldu (**K78**), hata payı ölçülür ve
+`lib/perf-margin.ts`'te tek yerde durur (**K79**).
+
+**Faz 1 doğrulaması:** K75'in oran kuralı tıkanıklığı gerçekten çözdü —
+ComputerBase'in bir benchmark sayfasında ~336 veri noktası ölçüldü, %10 ≈ 33
+satır, K76 hedefi ~150 satır, yani ~5 sayfa yetiyor. Faz 0'daki "13 alan adı
+gerekiyor" sorunu ortadan kalktı. Kalan tıkanıklık kaynak **çeşitliliği** →
+**S34**.
 
 ### S32 — Ölçülmeyen kartlar indekssiz mi kalacak? ✅ 2026-08-19
 

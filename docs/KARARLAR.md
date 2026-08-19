@@ -1390,34 +1390,19 @@ Konsolda hata yok, boş sayı gösterilmiyor, sayfa çökmüyor.
 
 Karar veren: proje sahibi (K72, K73, K74).
 
-### K72 — Kaynak başına iki katmanlı satır tavanı
+### K72 — Kaynak başına satır tavanı ⚠️ DEĞİŞTİRİLDİ (2026-08-19, K75 ile)
 
-`benchmark_points` toplarken:
+**İlk hâli (yürürlükte değil):** bir (alan adı, oyun, çözünürlük, ayar)
+kombinasyonundan en fazla 8 satır **ve aynı alan adından toplam en fazla 25
+satır**.
 
-1. Bir (**kaynak alan adı**, oyun, çözünürlük, ayar) kombinasyonundan en fazla
-   **8 satır**.
-2. Aynı **alan adından toplam en fazla 25 satır** — bütün kombinasyonlar dahil.
-3. O sayfadaki listenin tamamı hiçbir zaman alınmaz.
-4. Her parçanın en az iki **farklı alan adından** ölçümü olur.
+25 sayısı aynı gün Faz 0 fizibilitesinde çöktü: 306 satırlık hedef, alan adı
+başına 25 satırla 13 farklı kaynak gerektiriyordu; per-oyun okunabilir veri
+doğrulanabilen kaynak sayısı ise 1'di (`docs/log/2026-08-19-faz0-fizibilite.md`
+bölüm 4).
 
-**Gerekçe:** İlk sınır tek başına yetmiyordu. 8 kombinasyon × 8 satır = 64 satır
-tek kaynaktan gelebilirdi; bu artık "dağınık kaynaklardan tek tek" değil, o
-kaynağın derlemesinin önemli bir kısmı. İkinci tavan bunu kapatıyor.
-
-Sınırın var olma sebebi `SCHEMA.md` bölüm 4'teki kural: FPS sayısının kendisi
-bir olgudur ve olgular telifle korunmaz, ama **derlemenin kendisi** korunur.
-Tek tek sayı almakla bir veri tabanının önemli kısmını çekmek hukuken farklı
-şeyler.
-
-**Yöntemsel gerilim ve neden sıfır olamıyor:** İki kartın gücünü karşılaştırmanın
-tek geçerli yolu aynı kaynakta aynı koşulda ölçülmüş sayılarının oranı — farklı
-sitelerin FPS'leri doğrudan karşılaştırılamıyor (test sahnesi, sürücü, bellek
-farklı). Yani yöntem aynı sayfadan en az iki satır almayı **zorunlu** kılıyor.
-Tavan bu zorunluluğu karşılıyor, ötesine izin vermiyor.
-
-25 sayısı: bir kartı iki çözünürlük basamağına birden bağlamaya ve örtüşme
-kartlarını dikmeye yetiyor; 60 kartlık kataloğun anlamlı bir kısmını tek
-kaynaktan almaya yetmiyor.
+**Yürürlükteki kural K75'tir.** Bu madde kaydın bütünlüğü için duruyor;
+uygulanmaz.
 
 ### K73 — İndeks ölçeği sabit referans parçaya bağlanır, 100 aşılabilir
 
@@ -1483,3 +1468,119 @@ RX 9070 GRE, Arc A770 8GB, Arc A380/A580). Bunlar indekssiz kalacak.
 **Bu, aynı duvara altıncı çarpış:** K52, K56, K60, K62, K71 ve şimdi K74.
 Hepsinde aynı tercih yapıldı — eksik veriyi göstermek, uydurulmuş veriyi
 göstermekten iyidir.
+
+### K75 — Kaynak tavanı orandır, mutlak sayı değil
+
+`benchmark_points` toplarken:
+
+1. Bir sayfanın yayınladığı veri noktalarının **en fazla %10'u** alınır.
+2. Tek bir (oyun, çözünürlük, ayar) grubunun **tamamı asla alınmaz** —
+   grup 8 satırdan kısa olsa bile.
+3. Kombinasyon başına **en fazla 8 satır** (K72'den devam ediyor).
+4. Her parçanın en az iki **farklı alan adından** ölçümü olur.
+
+**Gerekçe:** 25 sayısı keyfiydi ve yanlış şeyi ölçüyordu. Telif açısından önemli
+olan alınan mutlak miktar değil, **alınan miktarın kaynağın bütününe oranı**.
+Bir sayfanın 20 veri noktası varsa 25 satır zaten alınamaz; 800 veri noktası
+varsa 25 satır gereksiz yere kısıtlayıcıdır. Oran her iki durumda da doğru
+davranıyor.
+
+2. madde 1. maddenin kaçağını kapatıyor: küçük bir grubun tamamı, oranı
+aşmadan alınabilirdi. Bir grubun tamamı o grubun derlemesidir; oran ne derse
+desin alınmaz.
+
+Sınırın var olma sebebi değişmedi (`SCHEMA.md` bölüm 4): FPS sayısının kendisi
+bir olgudur ve olgular telifle korunmaz, ama **derlemenin kendisi** korunur.
+Tek tek sayı almakla bir veri tabanının önemli kısmını çekmek hukuken farklı
+şeyler.
+
+**Yöntemsel gerilim ve neden sıfır olamıyor:** İki kartın gücünü
+karşılaştırmanın tek geçerli yolu aynı kaynakta aynı koşulda ölçülmüş
+sayılarının oranı — farklı sitelerin FPS'leri doğrudan karşılaştırılamıyor
+(test sahnesi, sürücü, bellek farklı). Yöntem aynı sayfadan en az iki satır
+almayı **zorunlu** kılıyor. Tavan bu zorunluluğu karşılıyor, ötesine izin
+vermiyor.
+
+**Uygulama notu:** "Sayfanın yayınladığı veri noktası sayısı" toplanırken
+sayılmalı — ComputerBase'in bir benchmark sayfasında 24 grup × ~14 kart ≈ 336
+veri noktası ölçüldü, yani %10 ≈ 33 satır. Sayım yapılmadan oran uygulanamaz.
+
+### K76 — Kapsam daraltıldı: ~30 GPU + ~20 CPU
+
+Bütün katalog indekslenmeyecek. Ölçüm hedefi **güncel ve bir önceki nesil**,
+kaynaklarda en sık ölçülen kartlarla sınırlı: kabaca 30 ekran kartı ve 20
+işlemci.
+
+Kapsam dışı: RDNA2 (RX 6000 serisi), Ampere (RTX 3000 serisi) ve benzeri eski
+nesiller. Bu parçalar katalogda kalır, fiyatı ve uyumluluk kontrolü çalışır,
+**yalnızca indeksleri olmaz**.
+
+**Gerekçe:** Sağlam indeksli 30 kart, yarım yamalak indeksli 60 karttan iyi.
+K74 zaten indekssiz parçaya izin veriyor ve arayüz bunu düzgün karşılıyor.
+
+Faz 0 aritmetiği: 60 kart × 3 ölçüm = 306 satır hedefi, mevcut kaynak sayısıyla
+karşılanamıyordu. Daraltılmış kapsam ~150 satır demek ve bu ulaşılabilir.
+
+**Seçim ölçütü:** güncel + bir önceki nesil olmak **ve** kaynaklarda sık
+ölçülmek. İkinci ölçüt birincisini eziyor — yeni ama kimsenin ölçmediği bir
+kart kapsama girmez, çünkü zaten indekslenemez.
+
+### K77 — Farklı sürücü dönemi köprülenmez
+
+İki ölçüm grubu farklı sürücü döneminde alınmışsa aralarında köprü kurulmaz —
+ortak kart bulunsa bile.
+
+Eski nesil bir kart ancak **yeni kartlarla aynı incelemede** ölçülmüşse
+indekslenir. O incelemede yoksa indekssiz kalır; eski bir incelemeden çekilip
+bugünkü ölçeğe eklenmez.
+
+**Gerekçe:** Sürücü sürümü FPS'i değiştiriyor ve değişim markaya ve nesle göre
+farklı. 2022 incelemesindeki RX 6800 ile 2026 incelemesindeki RTX 5070'i ortak
+bir kart üzerinden bağlamak, aradaki sürücü kazancını kartın gücü sanmak
+demektir. Oyun paketi de aynı dönemde değişiyor ve aynı sorunu ikinci kez
+üretiyor.
+
+Bu, K76'nın kapsam kararını teknik olarak zorunlu kılan sebep: eski nesiller
+"istenmediği için" değil, **ölçeğe dürüstçe bağlanamadıkları için** dışarıda.
+
+### K78 — Yöntem kuralları Faz 0 ölçümünden çıktı
+
+Faz 0'da yöntem 16 gerçek satırla sınandı ve bağımsız bir kaynakla
+karşılaştırıldı. Üç kural o sınamanın sonucudur:
+
+1. **Köprü en az 6 kart.** Faz 0'da 3 kartlık köprü kullanıldı ve köprünün
+   arkasındaki grubun **tamamı** referansa göre aşağı kaydı (RX 7600 −%20.3,
+   RTX 5060 Ti 16GB −%13.1). Üç kartın ortak hatası bütün gruba taşınıyor.
+2. **Farklı upscaling rejimleri köprülenmez.** Faz 0'da A grubu Native, B grubu
+   DLSS/FSR Quality idi. DLSS ile FSR aynı ayarda aynı işi yapmıyor; köprü
+   kartları iki rejim arasında geçtiği için marka yönlü sapma girdi (NVIDIA
+   üstte yüksek, AMD altta düşük). Köprü grupları aynı rejimde olmalı, tercihen
+   Native.
+3. **Parça başına en az 3 oyun.** İki oyunda tek bir oyunun kendine has
+   davranışı doğrudan indekse yansıyor. Karşılaştırılan bağımsız kaynak 11 oyun
+   kullanıyor; 3 alt sınır, 5 daha güvenli.
+
+### K79 — Hata payı ölçülür, tahmin edilmez
+
+Motorun ürettiği indeksin hata payı hakkında yazılan her ifade **ölçüme**
+dayanır. Bugünkü ölçüm:
+
+| | |
+|---|---|
+| **Ortalama mutlak sapma** | **%7.8** |
+| **En büyük sapma** | **%20.3** (Radeon RX 7600) |
+| Ölçüm tarihi | 2026-08-19 |
+| Yöntem | ComputerBase'ten 16 satır (2 oyun, 1440p, 3 kartlık köprü) ile hesaplanan indeks, Tom's Hardware'in 11 oyunluk 1440p paketiyle karşılaştırıldı. İkisi de RTX 4070 = 100'e normalize edildi. 14 kart. |
+| Kayıt | `docs/log/2026-08-19-faz0-fizibilite.md` bölüm 3 |
+
+**Gerekçe:** "Yaklaşık", "tahmini", "±%10 civarı" gibi ifadeler ölçülmeden
+yazıldığında uydurmadır — projenin K52'den K74'e kadar reddettiği şeyin aynısı.
+Sayının yanında yöntemi ve tarihi durmalı ki sonradan doğrulanabilsin.
+
+**Bu sayı geçicidir ve yeniden ölçülmelidir.** Ölçüldüğü koşullar, K78'in artık
+**yasakladığı** koşullar: 2 oyun (asgari 3 olmalı), 3 kartlık köprü (asgari 6
+olmalı), karışık upscaling rejimi (yasak). Yani %7.8/%20.3 **kötü senaryonun**
+sayısıdır; gerçek toplama K78'e uyduğunda daha iyi çıkması beklenir.
+
+Arayüzde bugün bu sayı gösterilirken hangi ölçüme dayandığı da yazılır. Gerçek
+toplama bittikten sonra ölçüm tekrarlanır ve metin güncellenir.

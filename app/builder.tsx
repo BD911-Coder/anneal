@@ -15,6 +15,7 @@ import type {
   UpgradePart,
 } from "@/engine/types";
 import { formatIsoDate, formatPriceMinor } from "@/lib/format";
+import { PERF_MARGIN } from "@/lib/perf-margin";
 
 import { saveBuildAction } from "./actions";
 
@@ -301,6 +302,12 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
                 çözünürlükte ağırlıklar: ekran kartı {performance.weights.gpu}, işlemci{" "}
                 {performance.weights.cpu}. Motor sürümü {performance.model_version}. Gerçek FPS
                 iddiası değildir.
+              </p>
+              {/* Hata payı ölçülür, tahmin edilmez (K79). Sayı ve ölçüm tarihi tek
+                  yerde tanımlı; ölçüm tekrarlandığında lib/perf-margin.ts değişir. */}
+              <p className="text-xs opacity-50">
+                Ölçülen sapma: ortalama %{PERF_MARGIN.meanPercent}, en büyük %
+                {PERF_MARGIN.maxPercent}. {PERF_MARGIN.method} ({PERF_MARGIN.measuredAt})
               </p>
             </div>
           ) : (
