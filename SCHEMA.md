@@ -566,16 +566,37 @@ kalsın diye. İkisi de 100 olduğu için **referans sistem her çözünürlükt
 > toplamın orta segment işlemciyi 100 sayması, zayıf kartlı sistemleri
 > olduğundan yukarı çekebilir. Doğrulanmadan bantlar kesinleşmiş sayılmaz.
 
-### Darboğaz göstergesi (basit)
+### Darboğaz göstergesi — marjinal kazanç (K83)
+
+Soru şu: **"hangi parçayı değiştirirsem daha çok kazanırım?"**
 
 ```
-beklenen_cpu = gpu_idx * (w_cpu / w_gpu ile ölçeklenmiş eşik)
-fark = gpu_idx - cpu_idx
+kazanç_gpu = max(0, en_iyi_gpu_idx - gpu_idx) * w_gpu
+kazanç_cpu = max(0, en_iyi_cpu_idx - cpu_idx) * w_cpu
 
-|fark| < 15  → dengeli
-fark > 15    → CPU sınırlıyor
-fark < -15   → GPU sınırlıyor
+en_büyük = max(kazanç_gpu, kazanç_cpu)
+
+en_büyük == 0                             → dengeli (yükseltilecek bir şey yok)
+|kazanç_gpu - kazanç_cpu| / en_büyük < 0.20 → dengeli
+kazanç_gpu > kazanç_cpu                    → GPU sınırlıyor
+kazanç_cpu > kazanç_gpu                    → CPU sınırlıyor
 ```
+
+`en_iyi_gpu_idx` / `en_iyi_cpu_idx` kataloğun o andaki en yüksek indeksleridir
+ve motora **girdi olarak** verilir — motor katalogu tanımaz. Verilmezlerse
+`bottleneck` **null** döner ve arayüz satırı hiç göstermez; bilinmeyen şey
+uydurulmaz.
+
+Kazançlar ağırlıklarla çarpılır çünkü kazanç ancak sistem indeksine yansıdığı
+kadar gerçektir: 4K'da işlemciyi yükseltmenin katkısı zaten küçüktür. Bunun
+sonucu olarak **darboğaz kararı çözünürlüğe göre değişebilir** — v0.1'de
+değişmiyordu.
+
+**Neden fark değil kazanç:** İki indeks farklı referanslara göre normalize
+(`gpu_idx`'te RTX 4070 = 100, `cpu_idx`'te Ryzen 5 9600X = 100, bkz. K73) ve
+dinamik aralıkları farklı. Farklarını almak iki ayrı cetvelin sayılarını
+çıkarmaktı; RTX 5090 + Ryzen 7 9800X3D — piyasanın en hızlı oyun işlemcisi —
+"işlemci sınırlıyor" çıkıyordu. Marjinal kazanç ölçekten bağımsızdır.
 
 Çıktı her zaman "tahmini" ibaresiyle gösterilir. Gerçek FPS iddiası edilmez.
 

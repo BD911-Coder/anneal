@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   BANDS,
-  BOTTLENECK_THRESHOLD,
+  BOTTLENECK_BALANCE_RATIO,
   MODEL_VERSION,
   RESOLUTION_WEIGHTS,
   bandFor,
@@ -10,16 +10,12 @@ import {
   computePerformance,
   freezeSystemIndex,
 } from "../engine/performance";
-import type { PerformanceResult, Resolution } from "../engine/types";
+import type { PerformanceInput, PerformanceResult, Resolution } from "../engine/types";
 
 // computePerformance eksik girdide { ok: false } döndürüyor. Testlerin çoğu
 // hesabın kendisiyle ilgileniyor; bu yardımcı, hesap yapılmadığında testi
 // sessizce geçirmek yerine orada patlatıyor.
-function compute(input: {
-  resolution: Resolution;
-  gpu_index?: number;
-  cpu_index?: number;
-}): PerformanceResult {
+function compute(input: PerformanceInput): PerformanceResult {
   const outcome = computePerformance(input);
   if (!outcome.ok) {
     throw new Error(`Hesap beklenirken eksik girdi bildirildi: ${outcome.missing.join(", ")}`);
@@ -134,43 +130,104 @@ describe("bantlar", () => {
   });
 });
 
-describe("darboğaz göstergesi", () => {
-  it("fark 15'ten küçükse dengeli", () => {
-    expect(bottleneckFor(60, 50)).toBe("balanced");
-    expect(bottleneckFor(50, 60)).toBe("balanced");
-    expect(bottleneckFor(50, 50)).toBe("balanced");
-    expect(bottleneckFor(64.9, 50)).toBe("balanced");
+describe("darboğaz göstergesi — marjinal kazanç (K83)", () => {
+  // Katalogun bugunku uclari: en iyi gpu 216 (RTX 5090), en iyi cpu 144.4
+  // (Ryzen 7 9800X3D). Testler bu iki sayiyi acikca veriyor — motor katalogu
+  // tanimiyor, cagiran taraf soyluyor.
+  const EN_IYI_GPU = 216;
+  const EN_IYI_CPU = 144.4;
+  const w1440 = { gpu: 0.75, cpu: 0.25 };
+
+  function darbogaz(gpu: number, cpu: number, weights = w1440) {
+    return bottleneckFor(gpu, cpu, EN_IYI_GPU, EN_IYI_CPU, weights).bottleneck;
+  }
+
+  // S35'in acilis sebebi: eski yontem bu sistemi "islemci sinirliyor" diyordu.
+  it("kataloğun en iyi kartı + en iyi işlemcisi 'işlemci sınırlıyor' DEMEZ", () => {
+    expect(darbogaz(216, 144.4)).toBe("balanced");
+    const sonuc = compute({
+      resolution: "1440p",
+      gpu_index: 216,
+      cpu_index: 144.4,
+      best_gpu_index: EN_IYI_GPU,
+      best_cpu_index: EN_IYI_CPU,
+    });
+    expect(sonuc.ok).toBe(true);
+    if (sonuc.ok) {
+      expect(sonuc.bottleneck).toBe("balanced");
+      expect(sonuc.bottleneck_message).not.toContain("İşlemci sınırlıyor");
+    }
   });
 
-  it("ekran kartı işlemciden 15+ güçlüyse işlemci sınırlıyor", () => {
-    expect(bottleneckFor(65, 50)).toBe("cpu_limited");
-    expect(bottleneckFor(100, 40)).toBe("cpu_limited");
+  it("zayıf kart + en iyi işlemci: ekran kartı sınırlıyor", () => {
+    // kazanc_gpu = (216-61)*0.75 = 116.25 ; kazanc_cpu = 0
+    expect(darbogaz(61, 144.4)).toBe("gpu_limited");
   });
 
-  it("işlemci ekran kartından 15+ güçlüyse ekran kartı sınırlıyor", () => {
-    expect(bottleneckFor(50, 65)).toBe("gpu_limited");
-    expect(bottleneckFor(30, 90)).toBe("gpu_limited");
+  it("en iyi kart + zayıf işlemci: işlemci sınırlıyor", () => {
+    // kazanc_gpu = 0 ; kazanc_cpu = (144.4-103.2)*0.45 = 18.5
+    expect(darbogaz(216, 103.2, { gpu: 0.55, cpu: 0.45 })).toBe("cpu_limited");
   });
 
-  it("tam eşik değeri darboğaz sayılır, boşlukta kalmaz (K33)", () => {
-    expect(BOTTLENECK_THRESHOLD).toBe(15);
-    expect(bottleneckFor(65, 50)).toBe("cpu_limited"); // fark tam +15
-    expect(bottleneckFor(50, 65)).toBe("gpu_limited"); // fark tam -15
+  it("iki kazanç birbirine yakınsa dengeli", () => {
+    // kazanc farki gorelide %20'nin altinda kalacak bir cift secildi
+    const gpu = 216 - 40 / 0.75; // kazanc_gpu = 40
+    const cpu = 144.4 - 36 / 0.25; // kazanc_cpu = 36 -> gorel fark %10
+    expect(darbogaz(gpu, cpu)).toBe("balanced");
   });
 
-  it("darboğaz çözünürlükten etkilenmez — v0.1 ham farka bakar", () => {
-    for (const resolution of ["1080p", "1440p", "2160p"] as Resolution[]) {
-      expect(compute({ resolution, gpu_index: 90, cpu_index: 40 }).bottleneck).toBe("cpu_limited");
+  it("eşik oranı %20", () => {
+    expect(BOTTLENECK_BALANCE_RATIO).toBe(0.2);
+    // Tam esikte darbogaz sayilir (goreli fark 0.2 -> "< 0.2" degil)
+    const gpuKazanc = 100;
+    const cpuKazanc = 80; // gorel fark tam 0.2
+    const gpu = 216 - gpuKazanc / 0.75;
+    const cpu = 144.4 - cpuKazanc / 0.25;
+    expect(darbogaz(gpu, cpu)).toBe("gpu_limited");
+  });
+
+  // Eski yontem cozunurlukten etkilenmiyordu; yenisi etkileniyor ve bu DOGRU:
+  // 4K'da islemciyi yukseltmenin sistem indeksine katkisi zaten kucuk.
+  it("çözünürlük kararı değiştirebilir — ağırlıklar kazanca giriyor", () => {
+    const gpu = 150;
+    const cpu = 110;
+    expect(darbogaz(gpu, cpu, { gpu: 0.55, cpu: 0.45 })).toBe("gpu_limited");
+    expect(darbogaz(gpu, cpu, { gpu: 0.88, cpu: 0.12 })).toBe("gpu_limited");
+    // kazanc_cpu 4K'da 0.12 ile carpiliyor: islemci hicbir cozunurlukte one
+    // gecmiyor, ama fark aciliyor
+    const dar = bottleneckFor(gpu, cpu, EN_IYI_GPU, EN_IYI_CPU, { gpu: 0.88, cpu: 0.12 });
+    expect(dar.gain.gpu).toBeGreaterThan(dar.gain.cpu);
+  });
+
+  it("kataloğun en iyileri bilinmiyorsa darboğaz null döner, uydurulmaz", () => {
+    const sonuc = compute({ resolution: "1440p", gpu_index: 216, cpu_index: 100 });
+    expect(sonuc.ok).toBe(true);
+    if (sonuc.ok) {
+      expect(sonuc.bottleneck).toBeNull();
+      expect(sonuc.bottleneck_message).toBeNull();
+      expect(sonuc.bottleneck_gain).toBeNull();
     }
   });
 
   it("her darboğaz durumunun okunur bir açıklaması var", () => {
-    const dengeli = compute({ resolution: "1080p", gpu_index: 50, cpu_index: 50 });
-    const cpu = compute({ resolution: "1080p", gpu_index: 90, cpu_index: 40 });
-    const gpu = compute({ resolution: "1080p", gpu_index: 40, cpu_index: 90 });
-    expect(dengeli.bottleneck_message).toContain("Dengeli");
-    expect(cpu.bottleneck_message).toContain("İşlemci sınırlıyor");
-    expect(gpu.bottleneck_message).toContain("Ekran kartı sınırlıyor");
+    const ortak = { best_gpu_index: EN_IYI_GPU, best_cpu_index: EN_IYI_CPU } as const;
+    const dengeli = compute({ resolution: "1440p", gpu_index: 216, cpu_index: 144.4, ...ortak });
+    const cpu = compute({ resolution: "1080p", gpu_index: 216, cpu_index: 103.2, ...ortak });
+    const gpu = compute({ resolution: "1440p", gpu_index: 61, cpu_index: 144.4, ...ortak });
+    expect(dengeli.ok && dengeli.bottleneck_message).toContain("Dengeli");
+    expect(cpu.ok && cpu.bottleneck_message).toContain("İşlemci sınırlıyor");
+    expect(gpu.ok && gpu.bottleneck_message).toContain("Ekran kartı sınırlıyor");
+  });
+
+  it("kazançlar çıktıda görünüyor — karar izlenebilir", () => {
+    const sonuc = compute({
+      resolution: "1440p",
+      gpu_index: 61,
+      cpu_index: 144.4,
+      best_gpu_index: EN_IYI_GPU,
+      best_cpu_index: EN_IYI_CPU,
+    });
+    expect(sonuc.ok && sonuc.bottleneck_gain).toEqual({ gpu: 116.3, cpu: 0 });
   });
 });
 

@@ -1477,6 +1477,11 @@ göstermekten iyidir.
 `benchmark_points` toplarken:
 
 1. Bir sayfanın yayınladığı veri noktalarının **en fazla %10'u** alınır.
+   **Payda (K84):** o sayfanın makine tarafından okunabilir biçimde
+   yayınladığı **toplam FPS değeri sayısı** — yani kart/işlemci × oyun ×
+   çözünürlük × ayar hücrelerinin tamamı. Bizim kataloğumuzda karşılığı olup
+   olmaması, persentil mi ortalama mı olması fark etmez. Sayım yapılmadan oran
+   uygulanamaz.
 2. Tek bir (oyun, çözünürlük, ayar) grubunun **tamamı asla alınmaz** —
    grup 8 satırdan kısa olsa bile.
 3. Kombinasyon başına **en fazla 8 satır** (K72'den devam ediyor).
@@ -1505,9 +1510,9 @@ sayılarının oranı — farklı sitelerin FPS'leri doğrudan karşılaştırı
 almayı **zorunlu** kılıyor. Tavan bu zorunluluğu karşılıyor, ötesine izin
 vermiyor.
 
-**Uygulama notu:** "Sayfanın yayınladığı veri noktası sayısı" toplanırken
-sayılmalı — ComputerBase'in bir benchmark sayfasında 24 grup × ~14 kart ≈ 336
-veri noktası ölçüldü, yani %10 ≈ 33 satır. Sayım yapılmadan oran uygulanamaz.
+**Uygulama notu:** ComputerBase'in bir GPU benchmark sayfasında 24 grup ×
+~14 kart ≈ 336 FPS değeri sayıldı, yani %10 ≈ 33 satır. CPU sayfasında 20
+grafik × ~12 satır ≈ 240 değer, %10 ≈ 24 satır.
 
 ### K76 — Kapsam daraltıldı: ~30 GPU + ~20 CPU
 
@@ -1666,3 +1671,61 @@ bulamadı. Tarayıcıda görüldü, düzeltildi.
 
 Arayüzdeki sabit "/ 100" metni de kaldırıldı: 100 artık tavan değil, referans
 sistemin değeri.
+
+### K83 — Darboğaz göstergesi marjinal kazanca çevrildi
+
+Eski yöntem iki indeksin farkına bakıyordu (`|gpu_idx - cpu_idx| < 15` →
+dengeli). Kaldırıldı. Yenisi:
+
+```
+kazanç_gpu = max(0, en_iyi_gpu_idx - gpu_idx) * w_gpu
+kazanç_cpu = max(0, en_iyi_cpu_idx - cpu_idx) * w_cpu
+
+en_büyük == 0                              → dengeli
+|kazanç_gpu - kazanç_cpu| / en_büyük < 0.20 → dengeli
+aksi halde kazancı büyük olan taraf sınırlıyor
+```
+
+**Gerekçe (proje sahibi):** GPU ve CPU indeksleri **farklı referanslara**
+normalize (K73: GPU'da RTX 4070 = 100, CPU'da Ryzen 5 9600X = 100) ve dinamik
+aralıkları farklı — GPU tarafında 61–216, CPU tarafında 100–144. Farklarını
+almak iki ayrı cetvelin sayılarını çıkarmaktı. Marjinal kazanç ölçekten
+bağımsızdır.
+
+**Hatayı gösteren örnek:** RTX 5090 + Ryzen 7 9800X3D — piyasanın en hızlı oyun
+işlemcisi — eski yöntemde "İşlemci sınırlıyor" diyordu (216 − 144.4 = 71.6 >
+15). Yeni yöntemde her iki kazanç da 0, sonuç "Dengeli". Test bunu doğrudan
+şart koşuyor.
+
+**İki yan sonuç, ikisi de bilinçli:**
+
+1. **Darboğaz artık çözünürlüğe göre değişebilir.** Kazançlar ağırlıklarla
+   çarpılıyor; 4K'da işlemciyi yükseltmenin sistem indeksine katkısı zaten
+   küçük. v0.1'de gösterge çözünürlükten etkilenmiyordu ve bu yanlıştı.
+2. **Motor kataloğun en iyilerini girdi olarak alıyor** (`best_gpu_index`,
+   `best_cpu_index`). Motor katalogu tanımaz — `/engine` kuralı. Verilmezlerse
+   `bottleneck` **null** döner ve arayüz satırı hiç göstermez; "dengeli"
+   demek, bilinmeyeni uydurmak olurdu.
+
+Arayüz kararın gerekçesini de gösteriyor: "Kataloğun en iyisine geçseniz:
+ekran kartı +116.3, işlemci +0 indeks."
+
+### K84 — K75'in %10 oranında payda tanımlandı
+
+Payda: **sayfanın makine tarafından okunabilir biçimde yayınladığı toplam FPS
+değeri sayısı** — kart/işlemci × oyun × çözünürlük × ayar hücrelerinin tamamı.
+Bizim kataloğumuzda karşılığı olup olmaması, persentil mi ortalama mı olması
+fark etmez.
+
+**Gerekçe:** Tanım yazılmadan aynı toplama %17 ile %100 arasında görünüyordu:
+
+| Payda ne sayılırsa | CPU sayfasında alınan 42 satır |
+|---|---|
+| HTML satırı (187) | %22 |
+| Ortalama bloğu (~90) | %47 |
+| Kataloğumuzla eşleşen (~40) | ~%100 |
+| **Bütün FPS değerleri (~240)** | **%17** |
+
+Seçilen tanım kaynağın emeğinin bütününü ölçüyor ve dışarıdan doğrulanabilir —
+sayfayı açan herkes aynı sayıya varır. Diğerleri bizim kataloğumuza bağlı,
+yani kaynak açısından anlamsız.

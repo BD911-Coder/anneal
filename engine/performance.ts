@@ -47,8 +47,13 @@ export const BANDS: { max: number; label: string }[] = [
   { max: Infinity, label: "4K ultra" },
 ];
 
-/** İki indeks arasındaki bu farktan sonrası darboğaz sayılır. */
-export const BOTTLENECK_THRESHOLD = 15;
+/**
+ * İki kazanç arasındaki göreli fark bu oranın altındaysa sistem dengelidir.
+ *
+ * 0.20 = %20. Fark bunun altındaysa hangi parçayı yükseltirsen yükselt benzer
+ * kazanç geliyor demektir; birini "sınırlıyor" diye göstermek yanıltıcı olur.
+ */
+export const BOTTLENECK_BALANCE_RATIO = 0.2;
 
 const BOTTLENECK_MESSAGE: Record<Bottleneck, string> = {
   balanced: "Dengeli — işlemci ve ekran kartı birbirine yakın güçte.",
@@ -95,27 +100,49 @@ export function bandFor(systemIndex: number): string {
 }
 
 /**
- * Darboğaz göstergesi.
+ * Darboğaz göstergesi — marjinal kazanç yöntemi (K83).
  *
- * fark = gpu - cpu. Pozitif fark, ekran kartının işlemciden güçlü olması
- * demektir; sınırlayan taraf işlemcidir.
+ * Eski yöntem iki indeksin farkına bakıyordu (`|gpu - cpu| < 15`). Ölçek sabit
+ * referansa bağlanınca (K73) bu geçersiz kaldı: iki indeks **farklı**
+ * referanslara göre normalize (GPU'da RTX 4070 = 100, CPU'da Ryzen 5 9600X =
+ * 100) ve dinamik aralıkları farklı. Farklarını almak, iki ayrı cetvelin
+ * sayılarını çıkarmak gibiydi — RTX 5090 + Ryzen 7 9800X3D "işlemci
+ * sınırlıyor" çıkıyordu.
  *
- * SCHEMA.md eşiği "|fark| < 15 dengeli, fark > 15 CPU sınırlıyor" diye yazıyor
- * ve tam 15'i hiçbir dala sokmuyordu; eşik dahil edildi (K33).
+ * Yeni soru ölçekten bağımsız: **"hangisini değiştirirsem daha çok
+ * kazanırım?"**
+ *
+ *   kazanç_gpu = (katalogun en iyi gpu indeksi - mevcut gpu) * w_gpu
+ *   kazanç_cpu = (katalogun en iyi cpu indeksi - mevcut cpu) * w_cpu
+ *
+ * Ağırlıklarla çarpılıyor çünkü kazanç sistem indeksine yansıdığı kadar
+ * gerçek: 4K'da işlemciyi yükseltmenin sistem indeksine katkısı zaten küçük.
+ *
+ * İkisi de sıfırsa (her iki parça da kataloğun en iyisi) sistem dengelidir —
+ * yükseltilecek bir şey yok.
  */
-export function bottleneckFor(gpuIndex: number, cpuIndex: number): Bottleneck {
-  const difference = gpuIndex - cpuIndex;
-  if (difference >= BOTTLENECK_THRESHOLD) return "cpu_limited";
-  if (difference <= -BOTTLENECK_THRESHOLD) return "gpu_limited";
-  return "balanced";
+export function bottleneckFor(
+  gpuIndex: number,
+  cpuIndex: number,
+  bestGpuIndex: number,
+  bestCpuIndex: number,
+  weights: { gpu: number; cpu: number },
+): { bottleneck: Bottleneck; gain: { gpu: number; cpu: number } } {
+  // Mevcut parça katalogun en iyisinden güçlüyse kazanç negatif olmaz.
+  const gpuGain = Math.max(0, bestGpuIndex - gpuIndex) * weights.gpu;
+  const cpuGain = Math.max(0, bestCpuIndex - cpuIndex) * weights.cpu;
+  const gain = { gpu: round1(gpuGain), cpu: round1(cpuGain) };
+
+  const enBuyuk = Math.max(gpuGain, cpuGain);
+  if (enBuyuk === 0) return { bottleneck: "balanced", gain };
+
+  const goreliFark = Math.abs(gpuGain - cpuGain) / enBuyuk;
+  if (goreliFark < BOTTLENECK_BALANCE_RATIO) return { bottleneck: "balanced", gain };
+
+  // Ekran kartını değiştirmek daha çok kazandırıyorsa sınırlayan ekran kartıdır.
+  return { bottleneck: gpuGain > cpuGain ? "gpu_limited" : "cpu_limited", gain };
 }
 
-/**
- * Sistem indeksi, bant etiketi ve darboğaz göstergesi.
- *
- * İki indeksten biri yoksa hesap yapılmaz: eksik parçaya 0 demek, sistemi
- * olduğundan zayıf gösteren uydurma bir sayı üretirdi.
- */
 export function computePerformance(input: PerformanceInput): PerformanceOutcome {
   const missing: ("gpu" | "cpu")[] = [];
   if (input.gpu_index === undefined || input.gpu_index === null) missing.push("gpu");
@@ -127,14 +154,22 @@ export function computePerformance(input: PerformanceInput): PerformanceOutcome 
   const weights = RESOLUTION_WEIGHTS[input.resolution];
 
   const systemIndex = round1(gpuIndex * weights.gpu + cpuIndex * weights.cpu);
-  const bottleneck = bottleneckFor(gpuIndex, cpuIndex);
+
+  // Katalogun en iyileri bilinmiyorsa darboğaz sorusu cevaplanamaz. Uydurma
+  // yerine null: arayüz satırı hiç göstermez.
+  const bestKnown =
+    input.best_gpu_index !== undefined && input.best_cpu_index !== undefined;
+  const darbogaz = bestKnown
+    ? bottleneckFor(gpuIndex, cpuIndex, input.best_gpu_index!, input.best_cpu_index!, weights)
+    : null;
 
   return {
     ok: true,
     system_index: systemIndex,
     band: bandFor(systemIndex),
-    bottleneck,
-    bottleneck_message: BOTTLENECK_MESSAGE[bottleneck],
+    bottleneck: darbogaz?.bottleneck ?? null,
+    bottleneck_message: darbogaz ? BOTTLENECK_MESSAGE[darbogaz.bottleneck] : null,
+    bottleneck_gain: darbogaz?.gain ?? null,
     gpu_index: gpuIndex,
     cpu_index: cpuIndex,
     weights,

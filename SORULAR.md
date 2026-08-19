@@ -18,44 +18,6 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S35 — Darboğaz eşiği yeni ölçekle uyumsuz
-
-`BOTTLENECK_THRESHOLD = 15` (SCHEMA.md bölüm 8) 0–100 ölçeği için seçilmişti.
-K73 ile ölçek sabit referansa bağlandı ve yayılım değişti: GPU indeksleri
-61–216, CPU indeksleri 100–144.
-
-Dahası iki indeks **farklı referanslara** göre normalize: GPU'da RTX 4070 = 100,
-CPU'da Ryzen 5 9600X = 100. İkisinin farkını almak giderek anlamsızlaşıyor.
-
-Gözlenen sonuç: **RTX 5090 + Ryzen 7 9800X3D** — piyasanın en hızlı oyun
-işlemcisi — arayüzde "İşlemci sınırlıyor" diyor (216 − 144 = 72 > 15).
-
-**Seçenekler:** eşiği yeni ölçeğe göre kalibre etmek, ya da göstergeyi farktan
-**orana** çevirmek (`gpu_idx / cpu_idx` katı), ki referans farkından etkilenmez.
-İkincisi daha sağlam ama SCHEMA.md bölüm 8 formülünü değiştiriyor.
-
-→ `docs/log/2026-08-19-faz2-ilk-indeksler.md` bölüm 7
-
-### S36 — K75'in %10 oranı neye göre sayılıyor?
-
-K75: "Bir sayfanın yayınladığı veri noktalarının en fazla %10'u alınır."
-
-"Veri noktası" tanımı net değil. CPU sayfasında:
-
-- HTML satırı sayısı: 187 → alınan 42 = **%22**
-- Ortalama bloğu (persentil hariç): ~90 → **%47**
-- Kataloğumuzla eşleşen satır: ~40 → **%100'e yakın**
-- Sayfadaki bütün grafik değerleri (20 grafik × ~12): ~240 → **%17**
-
-Aynı toplama, tanıma göre %17 ile %100 arasında görünüyor. Kural uygulanabilir
-olması için sayım yöntemi yazılmalı.
-
-**Öneri:** "sayfada yayınlanan sayı adedi" — yani bütün grafiklerdeki bütün
-değerler, persentil ve bizim kataloğumuzda olmayan parçalar dahil. Bu, kaynağın
-emeğinin bütününü ölçüyor ve dışarıdan doğrulanabilir.
-
-→ `docs/log/2026-08-19-faz2-ilk-indeksler.md` bölüm 4
-
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
@@ -155,30 +117,58 @@ var. İş yükü genişletildiğinde ilk çözülecek şey bu.
 Acil değil, karar iş yükü genişletildiğinde verilir.
 → `docs/KARARLAR.md` K35, K36
 
-### S15 — Darboğaz göstergesi çözünürlüğü hesaba katmıyor
-
-Motor v0.1'de darboğaz, iki indeksin **ham farkına** bakıyor: fark 15'i geçerse
-zayıf olan taraf "sınırlıyor" sayılıyor. Bu, `SCHEMA.md` bölüm 8'deki somut
-kuralın birebir uygulanması.
-
-**Sorun:** Aynı sistem 1080p'de ve 4K'da aynı darboğaz uyarısını alıyor. Oysa
-4K'da işlemcinin payı yalnızca %12; orada 20 puan zayıf bir işlemci pratikte
-sorun çıkarmaz. Şu an kullanıcı 4K seçtiğinde de "İşlemci sınırlıyor" yazısını
-görüyor ve bu yazı o çözünürlükte yanıltıcı.
-
-`SCHEMA.md` bölüm 8'de bunu ima eden yarım bir satır var
-(`beklenen_cpu = gpu_idx * (w_cpu / w_gpu ile ölçeklenmiş eşik)`) ama tamamlanmamış
-ve altındaki somut kural onu kullanmıyor. Daha spesifik olan kural uygulandı.
-
-**Karar gereken:** Eşik çözünürlüğe göre değişsin mi? Örneğin 1080p'de 15,
-1440p'de 25, 4K'da 40 puan. Bu bir motor davranışı değişikliğidir; yapılırsa
-`model_version` `v0.2` olur ve eski hesaplar `v0.1` olarak durmaya devam eder.
-
-Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
-
 ---
 
 ## Kapanmış sorular
+
+### S15 — Darboğaz göstergesi çözünürlüğü hesaba katmıyor ✅ 2026-08-19
+
+**S35 ile birlikte kendiliğinden kapandı.** Sorulan şey "eşik çözünürlüğe göre
+değişsin mi" idi; K83'ün marjinal kazanç yöntemi eşiği tamamen kaldırdı ve
+çözünürlük ağırlıkları doğrudan kazanç hesabına girdi:
+
+```
+kazanç_gpu = max(0, en_iyi_gpu_idx - gpu_idx) * w_gpu
+kazanç_cpu = max(0, en_iyi_cpu_idx - cpu_idx) * w_cpu
+```
+
+4K'da `w_cpu = 0.12` olduğu için işlemciyi yükseltmenin kazancı orada zaten
+küçük çıkıyor — S15'in tarif ettiği "20 puan zayıf işlemci 4K'da sorun
+çıkarmaz" durumu artık hesabın içinde. Ayrı bir eşik tablosuna gerek kalmadı.
+
+`model_version` v0.2 oldu, v0.1 hesapları eski sürümle duruyor — S15'in
+öngördüğü gibi. → `docs/KARARLAR.md` K83
+
+### S35 — Darboğaz eşiği yeni ölçekle uyumsuz ✅ 2026-08-19
+
+**Proje sahibinin kararı:** Marjinal kazanç yöntemiyle yeniden yaz. Mevcut
+sistemin indeksini hesapla, sonra iki senaryo: GPU'yu katalogdaki en iyisiyle
+değiştir, CPU'yu katalogdaki en iyisiyle değiştir. Hangisi çok kazandırıyorsa o
+parça sınırlıyor. İki kazanç arasındaki fark %20'den azsa "dengeli".
+
+**Cevap:** Uygulandı. `SCHEMA.md` bölüm 8 yeniden yazıldı, motor değişti,
+`BOTTLENECK_THRESHOLD` yerini `BOTTLENECK_BALANCE_RATIO = 0.2` aldı.
+
+Motor kataloğun en iyilerini **girdi olarak** alıyor (`best_gpu_index`,
+`best_cpu_index`) — `/engine` katalogu tanımaz. Verilmezse `bottleneck` null
+döner, arayüz satırı göstermez.
+
+Doğrulandı: **9800X3D + RTX 5090 → "Dengeli"** (eskiden "İşlemci sınırlıyor").
+RTX 4060 + 9800X3D → "Ekran kartı sınırlıyor", kazanç +116.3 / +0.
+114 test geçiyor. → `docs/KARARLAR.md` K83
+
+### S36 — K75'in %10 oranı neye göre sayılıyor? ✅ 2026-08-19
+
+**Proje sahibinin kararı:** Payda = sayfanın makine-okunur yayınladığı toplam
+FPS değeri sayısı (kart × oyun × çözünürlük × ayar hücreleri). Ek olarak
+kombinasyon başına en fazla 8 satır ve tek bir (oyun, çözünürlük, ayar)
+grubunun tamamı asla alınmaz.
+
+**Cevap:** K75'in 1. maddesine tanım yazıldı. → `docs/KARARLAR.md` K84
+
+Geriye dönük kontrol: Faz 2'de alınan 42 CPU satırı, bu tanımla sayfanın ~240
+FPS değerinin **%17**'si — tavanın üstünde. Raporda %22 görünmesinin sebebi
+paydanın HTML satırı sayılmasıydı; tanım netleşince toplama zaten uyumlu çıktı.
 
 ### S34 — Tek doğrulanmış kaynakla K75.4 karşılanamıyor ✅ 2026-08-19
 

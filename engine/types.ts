@@ -96,8 +96,18 @@ export type Resolution = "1080p" | "1440p" | "2160p";
 // veritabanını tanımadan çalışır.
 export type PerformanceInput = {
   resolution: Resolution;
-  gpu_index?: number; // 0-100
-  cpu_index?: number; // 0-100
+  /** Referans parça = 100 (K73). Üst sınır yok. */
+  gpu_index?: number;
+  cpu_index?: number;
+  /**
+   * Kataloğun en yüksek indeksleri. Darboğaz göstergesi bunları kullanır:
+   * "bu parçayı katalogdaki en iyisiyle değiştirsem ne kazanırım?" (K83).
+   *
+   * Opsiyonel çünkü indeks dondurma (freezeSystemIndex) darboğaza bakmıyor.
+   * Verilmezse `bottleneck` null döner — bilinmeyen şey uydurulmaz.
+   */
+  best_gpu_index?: number;
+  best_cpu_index?: number;
 };
 
 export type Bottleneck = "balanced" | "cpu_limited" | "gpu_limited";
@@ -106,8 +116,11 @@ export type PerformanceResult = {
   ok: true;
   system_index: number; // 0-100, bir ondalık basamağa yuvarlanmış
   band: string; // bant etiketi, SCHEMA.md bölüm 8'deki tablo
-  bottleneck: Bottleneck;
-  bottleneck_message: string;
+  /** Katalogun en iyileri verilmediyse null: hangi parcanin sinirladigi bilinmiyor. */
+  bottleneck: Bottleneck | null;
+  bottleneck_message: string | null;
+  /** Darbogaz kararinin dayandigi iki kazanc — arayuz gerekcesini gosterebilsin. */
+  bottleneck_gain: { gpu: number; cpu: number } | null;
   gpu_index: number; // kullanılan (kırpılmış) değerler — hesap izlenebilir olsun
   cpu_index: number;
   weights: { gpu: number; cpu: number };

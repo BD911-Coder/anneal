@@ -100,10 +100,23 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
 
   const gpuId = selection.gpu;
   const cpuId = selection.cpu;
+
+  // Darboğaz göstergesi "bu parçayı katalogdaki en iyisiyle değiştirsem ne
+  // kazanırım?" diye soruyor (K83). Motor katalogu tanımıyor; en iyileri
+  // burada bulup girdi olarak veriyoruz.
+  const bestIndex = (items: { id: string }[]) => {
+    const values = items.map((item) => perfIndexes[item.id]).filter((v) => v !== undefined);
+    return values.length > 0 ? Math.max(...values) : undefined;
+  };
+  const bestGpuIndex = bestIndex(catalog.gpu);
+  const bestCpuIndex = bestIndex(catalog.cpu);
+
   const performance = computePerformance({
     resolution,
     gpu_index: gpuId ? perfIndexes[gpuId] : undefined,
     cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
+    best_gpu_index: bestGpuIndex,
+    best_cpu_index: bestCpuIndex,
   });
 
   // Eksik indeksin iki ayrı sebebi var ve kullanıcıya farklı şey söylerler:
@@ -290,6 +303,7 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
                     bagli ve 100 tavan degil, orta nokta. RTX 4070 + Ryzen 5 9600X
                     sistemi 100 verir; daha hizli sistemler 100'u asar. */}
                 <span className="text-xs opacity-60">
+                  {" "}
                   tahmini sistem indeksi — referans sistem 100
                 </span>
               </p>
@@ -297,10 +311,20 @@ export function Builder({ catalog, prices, perfIndexes }: BuilderProps) {
                 <span className="opacity-60">Bant:</span> {performance.band}{" "}
                 <span className="text-xs opacity-60">(tahmini)</span>
               </p>
-              <p>
-                <span className="opacity-60">Darboğaz:</span> {performance.bottleneck_message}{" "}
-                <span className="text-xs opacity-60">(tahmini)</span>
-              </p>
+              {/* Katalogun en iyileri bilinmiyorsa satir hic gosterilmez (K83). */}
+              {performance.bottleneck_message && (
+                <p>
+                  <span className="opacity-60">Darboğaz:</span> {performance.bottleneck_message}{" "}
+                  <span className="text-xs opacity-60">(tahmini)</span>
+                  {performance.bottleneck_gain && (
+                    <span className="block text-xs opacity-50">
+                      Kataloğun en iyisine geçseniz: ekran kartı +
+                      {performance.bottleneck_gain.gpu}, işlemci +
+                      {performance.bottleneck_gain.cpu} indeks.
+                    </span>
+                  )}
+                </p>
+              )}
               <p className="text-xs opacity-50">
                 Ekran kartı {performance.gpu_index}, işlemci {performance.cpu_index}. Bu
                 çözünürlükte ağırlıklar: ekran kartı {performance.weights.gpu}, işlemci{" "}
