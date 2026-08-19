@@ -1,2 +1,4 @@
 id,brand,model,release_year,collected_at,source_url,confidence,wattage,efficiency_rating,modularity,length_mm
+corsair-rm650e,Corsair,RM650e,,2026-08-19,https://www.corsair.com/us/en/p/psu/cp-9020302-na/rme-series-rm650e-fully-modular-low-noise-atx-power-supply-cp-9020302-na,medium,650,Cybenetics Gold,full,
 corsair-rm850e,Corsair,RM850e,,2026-08-19,https://www.corsair.com/us/en/p/psu/cp-9020296-na/rme-series-rm850e-fully-modular-low-noise-atx-power-supply-cp-9020296-na,medium,850,Cybenetics Gold,full,
+corsair-rm1000e,Corsair,RM1000e,,2026-08-19,https://www.corsair.com/us/en/p/psu/cp-9020297-na/rme-series-rm1000e-fully-modular-low-noise-atx-power-supply-cp-9020297-na,medium,1000,Cybenetics Gold,full,
