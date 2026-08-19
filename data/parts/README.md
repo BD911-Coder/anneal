@@ -77,7 +77,7 @@ aktarıldığı an değil (`SCHEMA.md` bölüm 1.3).
 | `motherboard*.csv` | motherboard | socket, chipset, form_factor, memory_type, memory_slots, max_memory_gb, max_memory_speed_mhz, m2_slots |
 | `ram*.csv` | ram | memory_type, capacity_gb, module_count, speed_mhz, cas_latency |
 | `storage*.csv` | storage | storage_type, capacity_gb, interface |
-| `case*.csv` | case | supported_form_factors, max_gpu_length_mm, max_cpu_cooler_height_mm, max_psu_length_mm |
+| `case*.csv` | case | supported_form_factors |
 | `psu*.csv` | psu | wattage, modularity |
 
 `gpu` için opsiyonel alanlar: `length_mm` (K52), `shader_units`,
@@ -88,7 +88,9 @@ Her dosyada ayrıca: `id`, `brand`, `model`, `release_year` (opsiyonel),
 `collected_at`, `source_url`.
 
 `storage` icin opsiyonel: `read_speed_mbs`. `psu` icin opsiyonel:
-`efficiency_rating` (K61), `length_mm` (K62).
+`efficiency_rating` (K61), `length_mm` (K62). `case` icin opsiyonel:
+`max_gpu_length_mm`, `max_cpu_cooler_height_mm`, `max_psu_length_mm` (K68) —
+ucu de fiziksel olcu, ucu de bos birakilabilir.
 
 `ram_specs.capacity_gb` **kit toplamidir**, tek modul degil.
 `module_count` kitteki modul sayisi — C3 kurali bunu anakartin yuva sayisiyla

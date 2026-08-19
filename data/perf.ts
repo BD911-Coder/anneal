@@ -5,8 +5,8 @@
 // filtresi bu tabloda parçanın kendisi üzerinden uygulanır: sahte bir parçanın
 // indeksi de sahtedir ve canlıda o parça zaten görünmez.
 
-import { prisma } from "./client";
-import { visibleParts } from "./visibility";
+import { prisma } from "./client.ts";
+import { visibleParts } from "./visibility.ts";
 
 /**
  * Parça id'si -> indeks değeri (0-100).

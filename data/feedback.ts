@@ -5,7 +5,7 @@
 
 import { MAX_FEEDBACK_LENGTH } from "@/lib/limits";
 
-import { prisma } from "./client";
+import { prisma } from "./client.ts";
 
 export type SaveFeedbackResult = { ok: true } | { ok: false; reason: "empty" | "too_long" };
 

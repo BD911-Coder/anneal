@@ -251,9 +251,14 @@ Cybenetics veriyor, 80 PLUS vermiyor. Değer sayfada yazdığı gibi girilir.
 |---|---|
 | `part_id` | FK |
 | `supported_form_factors` | **enum dizisi** — `FormFactor[]` (`{ATX, mATX, ITX}`) |
-| `max_gpu_length_mm` | int |
-| `max_cpu_cooler_height_mm` | int |
-| `max_psu_length_mm` | int |
+| `max_gpu_length_mm` | int, **opsiyonel** (K62) |
+| `max_cpu_cooler_height_mm` | int, **opsiyonel** (K62) |
+| `max_psu_length_mm` | int, **opsiyonel** (K62) |
+
+Üç ölçü alanı da opsiyoneldir: fiziksel ölçü alanı zorunlu yapılmaz (K62).
+Eksikse C5 ve W5 kuralları kendini atlar, arayüz kullanıcıya bildirir.
+`supported_form_factors` zorunlu kalır — o bir ölçü değil, üreticinin
+listelediği uyumluluk beyanıdır ve C6 onsuz hiç çalışamaz.
 
 ---
 

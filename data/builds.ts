@@ -12,11 +12,11 @@
 import { MODEL_VERSION, freezeSystemIndex } from "@/engine/performance";
 import type { Resolution } from "@/engine/types";
 
-import { prisma } from "./client";
-import { getPerfIndexes } from "./perf";
-import { getCurrentPrices } from "./prices";
-import { toEngineResolution, toPrismaResolution } from "./to-engine";
-import { IS_LIVE, visibleParts } from "./visibility";
+import { prisma } from "./client.ts";
+import { getPerfIndexes } from "./perf.ts";
+import { getCurrentPrices } from "./prices.ts";
+import { toEngineResolution, toPrismaResolution } from "./to-engine.ts";
+import { IS_LIVE, visibleParts } from "./visibility.ts";
 
 /** Paylaşılabilir kimlik: `k3n9x2` (SCHEMA.md bölüm 5). */
 const ID_LENGTH = 6;

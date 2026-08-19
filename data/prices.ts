@@ -4,8 +4,8 @@
 // `collected_at`'li price_snapshots satırı. Tablo append-only olduğu için
 // eski satırlar durur; burada okunan sadece en sonuncusudur.
 
-import { prisma } from "./client";
-import { visibleParts, visibleRows } from "./visibility";
+import { prisma } from "./client.ts";
+import { visibleParts, visibleRows } from "./visibility.ts";
 
 export type CurrentPrice = {
   price_minor: number; // kuruş — integer, float asla kullanılmaz

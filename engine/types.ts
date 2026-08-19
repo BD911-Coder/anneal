@@ -53,8 +53,10 @@ export type EnginePsu = {
 export type EngineCase = {
   id: string;
   supported_form_factors: FormFactor[];
-  max_gpu_length_mm: number;
-  max_psu_length_mm: number;
+  /** Bilinmiyor olabilir (K62). Boşsa C5 kuralı atlanır. */
+  max_gpu_length_mm?: number;
+  /** Bilinmiyor olabilir (K62). Boşsa W5 kuralı atlanır. */
+  max_psu_length_mm?: number;
 };
 
 // Parçaların hepsi opsiyonel: kullanıcı sistemi parça parça topluyor ve

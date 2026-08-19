@@ -99,10 +99,11 @@ export function checkCompatibility(input: BuildInput): Finding[] {
   }
 
   // --- C5: ekran kartı kasaya sığmalı --------------------------------------
-  // length_mm opsiyonel (K52): bilinmiyorsa kural atlanır. Kullanıcıya bunun
-  // atlandığını arayüz söyler; motor "veri eksik" diye bulgu üretmez, çünkü
-  // bulgular SCHEMA.md bölüm 7'deki kurallardır.
-  if (ready(gpu?.length_mm, pcCase?.max_gpu_length_mm) && gpu!.length_mm! > pcCase!.max_gpu_length_mm) {
+  // İki uç da opsiyonel: kartın uzunluğu (K52) ve kasanın açıklığı (K62).
+  // Biri bile bilinmiyorsa kural atlanır. Kullanıcıya bunun atlandığını arayüz
+  // söyler; motor "veri eksik" diye bulgu üretmez, çünkü bulgular
+  // SCHEMA.md bölüm 7'deki kurallardır.
+  if (ready(gpu?.length_mm, pcCase?.max_gpu_length_mm) && gpu!.length_mm! > pcCase!.max_gpu_length_mm!) {
     errors.push({
       code: "C5",
       level: "error",
@@ -161,8 +162,9 @@ export function checkCompatibility(input: BuildInput): Finding[] {
   }
 
   // --- W5: güç kaynağı kasaya sığmayabilir ---------------------------------
-  // length_mm opsiyonel (K62): bilinmiyorsa kural atlanır, arayüz söyler.
-  if (ready(psu?.length_mm, pcCase?.max_psu_length_mm) && psu!.length_mm! > pcCase!.max_psu_length_mm) {
+  // Burada da iki uç opsiyonel (K62): güç kaynağının uzunluğu ve kasanın
+  // açıklığı. Biri bilinmiyorsa kural atlanır, arayüz söyler.
+  if (ready(psu?.length_mm, pcCase?.max_psu_length_mm) && psu!.length_mm! > pcCase!.max_psu_length_mm!) {
     warnings.push({
       code: "W5",
       level: "warning",

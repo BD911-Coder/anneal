@@ -1,6 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { PrismaClient } from "@/lib/generated/prisma/client";
+// Göreli yol, `@/` takma adı değil: takma adı yalnızca Next'in derleyicisi
+// çözüyor, çıplak Node çözemiyor. Bu satır takma adla yazıldığında /data
+// katmanının tamamı script'lerden içe aktarılamaz hale geliyor ve dev-seed
+// filtresi ancak kopyalanarak sınanabiliyordu. `.ts` uzantısı Node ESM için
+// gerekli; tsconfig'te `allowImportingTsExtensions` zaten açık.
+import { PrismaClient } from "../lib/generated/prisma/client.ts";
 
 // Veritabanına erişen tek nokta. /engine burayı tanımaz, tanımamalıdır.
 //

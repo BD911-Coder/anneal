@@ -7,6 +7,12 @@
 // olu koda doner ve kimse fark etmez. Bu script her kod icin somut bir cift
 // bulur ve ekrana yazar; bulamazsa hata verir.
 //
+// Az sayida kombinasyonla ayakta duran kural da UYARI alir (hata degil).
+// Sebebi yasanmis: W4 kataloga tek bir islemci girene kadar hic tetiklenmiyordu.
+// Tek kombinasyona bagli bir kural, o parca katalogdan cikinca ayni sessizlige
+// geri doner. Uyari hata degil cunku veri kumesinin kucuk olmasi bir hata degil
+// bir risk — insanin bunu gormesi yeter.
+//
 // Motor burada da veritabanini tanimiyor: satirlar /data/to-engine ile motorun
 // tiplerine cevriliyor, sonra motor cagriliyor. Yani arayuzun kullandigi yolun
 // aynisi denenmis oluyor.
@@ -160,7 +166,17 @@ function describe(build: BuildInput): string {
   return ids.join(" + ");
 }
 
+/**
+ * Bu sayidan az kombinasyonla tetiklenen kural uyari alir.
+ *
+ * 3 secildi: iki kombinasyon cogu zaman tek bir parcanin iki farkli esine denk
+ * geliyor (C5 bugun tek kasaya bagli, yalnizca GPU tarafi degisiyor). Ucuncu
+ * kombinasyon genelde ikinci bir parcanin da isin icinde oldugunu gosteriyor.
+ */
+const AZ_KOMBINASYON_ESIGI = 3;
+
 let failed = 0;
+let warned = 0;
 
 for (const probe of probes) {
   let hits = 0;
@@ -184,10 +200,20 @@ for (const probe of probes) {
     continue;
   }
 
-  console.log(`${probe.code}  tamam  — ${probe.what}`);
+  const az = hits < AZ_KOMBINASYON_ESIGI;
+  if (az) warned++;
+
+  console.log(`${probe.code}  ${az ? "UYARI" : "tamam"}  — ${probe.what}`);
   console.log(`      ornek : ${describe(firstBuild)}`);
   console.log(`      mesaj : ${firstMessage}`);
-  console.log(`      tetikleyen kombinasyon sayisi: ${hits}\n`);
+  console.log(`      tetikleyen kombinasyon sayisi: ${hits}`);
+  if (az) {
+    console.log(
+      `      Bu kural ${hits} kombinasyona bagli. Ilgili parcalardan biri` +
+        ` katalogdan cikarsa kural sessizce olu koda doner.`,
+    );
+  }
+  console.log();
 }
 
 await prisma.$disconnect();
@@ -196,4 +222,12 @@ if (failed > 0) {
   console.error(`${failed} kural gercek veriyle tetiklenemiyor.`);
   process.exit(1);
 }
-console.log("11 kuralin hepsi gercek veriyle tetiklenebiliyor.");
+console.log(`${probes.length} kuralin hepsi gercek veriyle tetiklenebiliyor.`);
+
+if (warned > 0) {
+  // Cikis kodu 0 kalir: bu bir hata degil, izlenmesi gereken bir incelik.
+  console.log(
+    `\nUYARI: ${warned} kural ${AZ_KOMBINASYON_ESIGI} kombinasyondan az ile ayakta.` +
+      " Yukaridaki UYARI satirlarina bak.",
+  );
+}

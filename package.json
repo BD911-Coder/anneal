@@ -15,6 +15,7 @@
     "test:izle": "vitest",
     "db:seed": "node scripts/seed.mts",
     "seed:temizle": "node scripts/purge-dev-seed.mjs",
+    "seed:filtre-kontrol": "node scripts/check-dev-seed-filter.mts",
     "dagitim:kontrol": "node scripts/check-deploy.mjs",
     "dagitim:migration": "node scripts/migrate-deploy.mjs",
     "parca:aktar": "node scripts/import-parts.mts",

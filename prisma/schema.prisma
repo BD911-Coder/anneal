@@ -326,9 +326,12 @@ model CaseSpecs {
   // Enum dizisi (K5): C6 kuralı bunu motherboard_specs.form_factor ile
   // karşılaştırdığı için yazım hatası veritabanı seviyesinde engelleniyor.
   supported_form_factors   FormFactor[]
-  max_gpu_length_mm        Int
-  max_cpu_cooler_height_mm Int
-  max_psu_length_mm        Int
+  // Üçü de opsiyonel (K62): fiziksel ölçü alanı zorunlu yapılmaz. Fractal
+  // Design üçünü de yayınlıyor ama bu bir üreticinin alışkanlığı, kural değil.
+  // Eksikse C5 ve W5 kendini atlar, arayüz kullanıcıya bildirir.
+  max_gpu_length_mm        Int?
+  max_cpu_cooler_height_mm Int?
+  max_psu_length_mm        Int?
 
   source       Source
   source_url   String?

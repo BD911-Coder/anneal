@@ -50,8 +50,9 @@ const REQUIRED_SPEC: Record<string, string[]> = {
   psu: ["wattage", "modularity"],
   // read_speed_mbs semada opsiyonel.
   storage: ["storage_type", "capacity_gb", "interface"],
-  case: ["supported_form_factors", "max_gpu_length_mm", "max_cpu_cooler_height_mm",
-         "max_psu_length_mm"],
+  // Uc olcu alani burada YOK: K62 ile opsiyonel oldular. Kasa satiri yalnizca
+  // desteklenen form faktorleriyle iceri girebilir; olculer bos kalabilir.
+  case: ["supported_form_factors"],
 };
 
 /** Prisma enum uyeleri tire/egik cizgi alamiyor (K7). CSV gercek degeri tasir. */
@@ -415,9 +416,9 @@ async function importFile(fileName: string, sonuc: Sonuc): Promise<void> {
           : null;
         const specData = {
           supported_form_factors: formFactorList(row.supported_form_factors),
-          max_gpu_length_mm: intOrNull(row.max_gpu_length_mm, "max_gpu_length_mm")!,
-          max_cpu_cooler_height_mm: intOrNull(row.max_cpu_cooler_height_mm, "max_cpu_cooler_height_mm")!,
-          max_psu_length_mm: intOrNull(row.max_psu_length_mm, "max_psu_length_mm")!,
+          max_gpu_length_mm: intOrNull(row.max_gpu_length_mm, "max_gpu_length_mm"),
+          max_cpu_cooler_height_mm: intOrNull(row.max_cpu_cooler_height_mm, "max_cpu_cooler_height_mm"),
+          max_psu_length_mm: intOrNull(row.max_psu_length_mm, "max_psu_length_mm"),
           ...provenance,
         };
         await prisma.$transaction(async (tx) => {

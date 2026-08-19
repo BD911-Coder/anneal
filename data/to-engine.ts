@@ -119,14 +119,15 @@ export function toEnginePsu(row: {
 export function toEngineCase(row: {
   part_id: string;
   supported_form_factors: string[];
-  max_gpu_length_mm: number;
-  max_psu_length_mm: number;
+  max_gpu_length_mm: number | null;
+  max_psu_length_mm: number | null;
 }): EngineCase {
   return {
     id: row.part_id,
     supported_form_factors: row.supported_form_factors.map(toFormFactor),
-    max_gpu_length_mm: row.max_gpu_length_mm,
-    max_psu_length_mm: row.max_psu_length_mm,
+    // null -> undefined: motor "yok" ile "bilinmiyor"u ayirt etmiyor (K62).
+    max_gpu_length_mm: row.max_gpu_length_mm ?? undefined,
+    max_psu_length_mm: row.max_psu_length_mm ?? undefined,
   };
 }
 

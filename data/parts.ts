@@ -13,8 +13,8 @@ import type {
   EngineRam,
 } from "@/engine/types";
 
-import { prisma } from "./client";
-import { visibleParts } from "./visibility";
+import { prisma } from "./client.ts";
+import { visibleParts } from "./visibility.ts";
 import {
   toEngineCase,
   toEngineCpu,
@@ -22,7 +22,7 @@ import {
   toEngineMotherboard,
   toEnginePsu,
   toEngineRam,
-} from "./to-engine";
+} from "./to-engine.ts";
 
 export type CatalogItem<TSpec> = {
   id: string;

@@ -1197,3 +1197,124 @@ Veritabanında bir kuralı tetikleyecek parça çifti kalmadıysa o kural sessiz
 
 İlk çalıştırmada W4 tetiklenemedi: veritabanındaki 39 işlemcinin hepsinde
 tümleşik grafik vardı. Boşluk gerçekti, kural değil veri eksikti (bkz. K65).
+
+### K67 — dev-seed filtresi kodda yazılı olmakla kalmaz, ölçülür
+
+`npm run seed:filtre-kontrol` /data katmanını **iki ayrı süreçte**, iki farklı
+`NODE_ENV` ile çalıştırır ve ne döndüğüne bakar. İki süreç zorunlu:
+`visibility.ts`'teki `IS_LIVE` modül yüklenirken bir kez hesaplanıyor, tek
+süreç içinde değiştirilemiyor.
+
+İlk ölçüm (36 dev-seed fiyat satırı varken):
+
+```
+GELISTIRME (NODE_ENV=development, IS_LIVE=false)
+  katalog parcasi     : 148
+  gorunur fiyat       : 12
+  dev-seed fiyat sizan: 12
+CANLI      (NODE_ENV=production, IS_LIVE=true)
+  katalog parcasi     : 148
+  gorunur fiyat       : 0
+  dev-seed fiyat sizan: 0
+```
+
+**Gerekçe:** Filtrenin kodda durması çalıştığını göstermez. K64 sahte fiyatları
+bilerek bıraktı; o kararın güvenli olması tamamen bu filtreye bağlı. Bağlı
+olunan şey ölçülmeden bırakılmaz.
+
+Script sorguyu yeniden yazmaz, gerçek fonksiyonları (`getCurrentPrices`,
+`getPerfIndexes`, `getBuilderCatalog`) çağırır. Yeniden yazsaydı /data içindeki
+bir bağlantı hatası bu kontrolden kaçardı.
+
+Ayrıca yanlış pozitife karşı iki kontrol var: veritabanında hiç dev-seed fiyat
+satırı yoksa, ya da geliştirmede de hiç görünmüyorsa script hata verir —
+"filtre çalışıyor" ile "veri zaten yok" karışmasın diye.
+
+**Yan etki:** `/data` katmanının göreli içe aktarımları `.ts` uzantısı aldı ve
+`data/client.ts` `@/` takma adı yerine göreli yola geçti. Takma adı yalnızca
+Next'in derleyicisi çözüyor; çıplak Node çözemiyor. O satırlar takma adla
+kaldığında /data hiçbir script'ten içe aktarılamıyor ve filtre ancak
+**kopyalanarak** sınanabiliyordu — yani asıl sınanmak istenen şey sınanamıyordu.
+`allowImportingTsExtensions` tsconfig'te zaten açıktı.
+
+`perf_index` bu yolla kapatılamıyor: tabloda `source` sütunu yok, filtre
+parçanın damgasına bakıyor ve gerçek parçaya bağlı sahte indeks canlıya çıkıyor.
+Bkz. `SORULAR.md` S29.
+
+### K68 — K62 `case_specs`'e de uygulandı, istisna kalmadı
+
+`max_gpu_length_mm`, `max_cpu_cooler_height_mm` ve `max_psu_length_mm`
+opsiyonel oldu. Migration: `20260819085800_kasa_olculeri_opsiyonel`.
+
+`supported_form_factors` **zorunlu kaldı**: o bir fiziksel ölçü değil,
+üreticinin listelediği uyumluluk beyanı, ve C6 onsuz hiç çalışamaz.
+
+**Gerekçe:** K62 kalıcı kural olarak yazılmıştı ama yalnızca `psu_specs`'e
+uygulanmıştı. Fractal Design üç ölçüyü de yayınladığı için sorun görünmüyordu —
+bir üreticinin yayın alışkanlığına güvenmek, K52/K56/K62'de üç kez kırılan
+şeyin ta kendisi. Dördüncü kez beklenmedi.
+
+**Doğrulandı, sadece derlenmedi:** Node 304'ün üç ölçüsü geçici olarak CSV'de
+boşaltıldı ve içe aktarıldı. Zincirin tamamı çalıştı:
+
+```
+[GUNCEL] fractal-design-node-304 — degisen: max_gpu_length_mm,
+         max_cpu_cooler_height_mm, max_psu_length_mm
+case_specs: max_gpu_length_mm=null, max_cpu_cooler_height_mm=null,
+            max_psu_length_mm=null
+C5  TETIKLENMEDI  — ekran karti kasaya sigmiyor
+```
+
+Motor çökmedi, uydurma bulgu üretmedi, kuralı atladı. Gerçek değerler geri
+yazıldı.
+
+Motorda artık **iki uç da** opsiyonel: C5 için hem `gpu.length_mm` (K52) hem
+`case.max_gpu_length_mm`; W5 için hem `psu.length_mm` hem
+`case.max_psu_length_mm`. Testlere iki yeni durum eklendi (110 test).
+
+### K69 — Son ek anlamı üreticinin adlandırma sayfasından okunur
+
+Intel'in ARK spec sayfaları F serisi işlemcilerde grafik bölümünü hiç
+göstermiyor. K65 bu yüzden i5-14400F ve i7-14700F'i dışarıda bırakmıştı.
+
+Intel'in resmî adlandırma sayfası
+(`intel.com/content/www/us/en/processors/processor-numbers.html`) son ek
+tablosunda şunu yazıyor:
+
+| Form/Function | Suffix | Optimized/Designed for |
+|---|---|---|
+| Desktop | F | Requires discrete graphics |
+
+Bu bir çıkarım değil, üreticinin yazılı beyanı — yalnızca başka bir sayfada.
+İki işlemci de `has_igpu = false`, `confidence = high` ile eklendi.
+
+**`source_url` neden ARK sayfası, adlandırma sayfası değil:** Satırın 15
+alanından 14'ü ARK'ta yazılı, adlandırma sayfasında hiçbiri yok.
+`SCHEMA.md` bölüm 1.3'te `source_url` satır düzeyinde ve
+`data/parts/README.md` "satırdaki bütün değerler orada yazılı olmalıdır" diyor.
+Adres adlandırma sayfasını gösterseydi, "20 çekirdek nereden geldi?" sorusunun
+izi kopardı.
+
+Adlandırma sayfası bunun yerine burada, kalıcı bir kural olarak duruyor:
+**F son ekli her Intel masaüstü işlemcisinde `has_igpu = false`.** Tek satırın
+gerekçesi değil, bütün seri için geçerli bir tanım — kararın yeri de burası.
+
+K65 bu kararla değişti, silinmedi: ölçüt hâlâ "üretici açıkça söylemeli".
+Değişen, "açıkça söyleme"nin aynı sayfada olmak zorunda olmadığı.
+
+### K70 — Az kombinasyonlu kural uyarı alır
+
+`npm run kural:kontrol` bir kuralı **3'ten az** kombinasyon tetikliyorsa
+`UYARI` yazar. Çıkış kodu 0 kalır — bu bir hata değil.
+
+**Gerekçe:** Yaşandı. W4 kataloğa tek bir işlemci girene kadar hiç
+tetiklenmiyordu ve kimse fark etmemişti. Tek kombinasyona bağlı bir kural, o
+parça katalogdan çıktığında aynı sessizliğe geri döner. Hata değil çünkü veri
+kümesinin küçük olması bir hata değil, bir risk; insanın görmesi yeter.
+
+Eşik neden 3: iki kombinasyon çoğu zaman tek bir parçanın iki farklı eşine denk
+geliyor (C5 bugün tek kasaya bağlı, yalnızca GPU tarafı değişiyor). Üçüncü
+kombinasyon genelde ikinci bir parçanın da işin içinde olduğunu gösteriyor.
+
+Intel F serisi eklendikten sonra uyarı alan kural sayısı 4'ten 3'e indi:
+C5 (2), W2 (2), W5 (1).

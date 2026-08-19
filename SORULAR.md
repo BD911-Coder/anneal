@@ -18,64 +18,40 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
-### S25 — Üç kural tek bir parçaya bağlı
+### S29 — `perf_index` sahte veriyi canlıdan ayıramıyor
 
-`npm run kural:kontrol` 11 kuralın hepsinin tetiklenebildiğini gösteriyor, ama
-bazıları çok ince bir ipe bağlı:
+`npm run seed:filtre-kontrol` fiyat tarafının temiz olduğunu ölçtü: dev-seed
+fiyatlar geliştirmede görünüyor, canlıda görünmüyor. **`perf_index`'te durum
+farklı.** Tabloda `source` sütunu yok (SCHEMA.md bölüm 1.3 ve 4: "motorun kendi
+hesabı, dış dünya hakkında iddia taşımaz"), bu yüzden filtre parçanın kendi
+damgasına bakıyor. Parça gerçek olduğunda satır da gerçek sayılıyor.
 
-| Kural | Tek bağ | Tetikleyen kombinasyon |
-|---|---|---|
-| W4 | `amd-ryzen-5-7500f` | 1 |
-| W5 | `seasonic-focus-gx-750` | 1 |
-| C5 | `fractal-design-node-304` + RTX 3090/3090 Ti | 2 |
-| W2 | `crucial-pro-ddr5-128gb-5600` + `msi-pro-h610m-e` | 2 |
+Ölçüm çıktısı iki ortamda da aynı:
 
-O parça katalogdan çıkarsa kural sessizce ölü koda döner. Script bunu yakalar
-ama uyarı vermiyor, yalnızca sayıyı yazıyor.
+```
+GELISTIRME  gorunur perf indeksi: 7
+CANLI       gorunur perf indeksi: 7
+```
 
-**Karar gereken:** Eşik konsun mu? Örneğin "5'ten az kombinasyon = uyarı".
-Yoksa sayı bilgi olarak kalsın mı?
+Bu 7 satır seed script'inin ürettiği uydurma sayılar ve `nvidia-rtx-5090`,
+`amd-ryzen-7-7800x3d` gibi **gerçek** parçalara bağlı. Yani canlıya çıkarlar.
 
-### S26 — Intel F serisi işlemciler `has_igpu` yüzünden eklenemiyor
+Fiyatta uygulanan mantık — "gerçek parçanın yanında uydurma değer canlıya
+çıkamaz" — burada da geçerli ama filtre çalışamıyor.
 
-i5-14400F ve i7-14700F piyasada en çok satılan işlemciler arasında. Intel'in
-ARK spec sayfaları F serisinde grafik bölümünü **hiç göstermiyor** — "yok"
-demiyor, alan sayfada bulunmuyor. Alanın yokluğundan `has_igpu = false`
-çıkarmak K60'ın yasakladığı çıkarım, bu yüzden eklenmediler (K65).
+**Seçenekler:**
 
-AMD aynı durumu açıkça yazıyor: Ryzen 5 7500F sayfasında
-`Graphics Model = Discrete Graphics Card Required`.
+1. `perf_index`'e `source` sütunu eklenir, `visibleRows()` orada da kullanılır.
+   Şema değişikliği; SCHEMA.md bölüm 1.3'teki gerekçeyle çelişiyor.
+2. Bu 7 satır silinir. O zaman geliştirmede hiç performans verisi kalmaz —
+   fiyat için reddedilen çözümün aynısı, ama burada filtre olmadığı için
+   tercih sebebi olabilir.
+3. `perf_index` satırları yalnızca gerçek `benchmark_points`'tan üretilir ve
+   seed hiç perf satırı yazmaz. En doğrusu; ölçüm verisi girilene kadar
+   geliştirmede performans ekranı boş olur.
 
-**Karar gereken:** Intel'in başka bir sayfası (ürün karşılaştırma, ARK
-filtreleri) bunu açıkça söylüyor mu ve satır kaynağı sayılır mı? Yoksa
-`has_igpu` opsiyonel mi olmalı — ama o zaman W4 eksik alanda kendini atlar
-ve kullanıcı "görüntü alamazsın" uyarısını hiç görmez.
-
-### S27 — `case_specs`'in üç ölçü alanı K62'ye rağmen zorunlu
-
-K62 kalıcı kural: fiziksel ölçü alanları asla zorunlu olmaz. Ama
-`case_specs.max_gpu_length_mm`, `max_cpu_cooler_height_mm` ve
-`max_psu_length_mm` hâlâ zorunlu.
-
-Bu turda sorun çıkmadı: Fractal Design üçünü de yayınlıyor. Üçünü birden
-yayınlamayan bir üretici geldiğinde çıkacak — K52, K56 ve K62'de üç kez
-olduğu gibi.
-
-**Karar gereken:** Şimdi mi opsiyonel yapılsın, yoksa dördüncü kez duvara
-çarpılınca mı?
-
-### S28 — Gerçek parçalara bağlı sahte fiyatlar duruyor
-
-`npm run seed:temizle` dev-seed parçalarını sildi, ama gerçek parçalara bağlı
-**36 dev-seed fiyat** ve **7 `perf_index`** satırına dokunmadı (K64).
-Sebebi: fiyat kaynağı henüz kurulmadı; silinseydi geliştirme ortamında hiç
-fiyat ve performans verisi kalmazdı.
-
-Bunları canlıdan uzak tutan tek şey şu an veri erişim katmanının otomatik
-filtresi ve dağıtım öncesi kontrolü.
-
-**Karar gereken:** Gerçek fiyat kaynağı kurulunca bu satırlar silinecek —
-o ana kadar duracaklar. Ara bir adım gerekiyor mu?
+Karar şema değişikliği ya da veri silme gerektiriyor; ikisi de sorulmadan
+yapılmaz.
 
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
@@ -200,6 +176,62 @@ Acil değil — beta bunu bilerek kullanabilir. → `docs/KARARLAR.md` K33
 ---
 
 ## Kapanmış sorular
+
+### S28 — Gerçek parçalara bağlı sahte fiyatlar duruyor ✅ 2026-08-19
+
+**Proje sahibinin kararı:** Fiyat satırlarının `source` değeri kontrol edilecek;
+dev-seed ise veri katmanının bunları canlıda filtrelediği **ölçülecek**,
+filtrelemiyorsa açık kapatılacak.
+
+**Cevap:** 36 satırın hepsi zaten `source = 'dev-seed'` idi. Yeni script
+`npm run seed:filtre-kontrol` /data katmanını iki ayrı süreçte iki farklı
+`NODE_ENV` ile çalıştırıp ölçtü:
+
+```
+GELISTIRME (NODE_ENV=development, IS_LIVE=false)
+  gorunur fiyat       : 12
+  dev-seed fiyat sizan: 12
+CANLI      (NODE_ENV=production, IS_LIVE=true)
+  gorunur fiyat       : 0
+  dev-seed fiyat sizan: 0
+```
+
+Açık yok. Ölçüm gerçek fonksiyonları (`getCurrentPrices`) çağırıyor, sorguyu
+yeniden yazmıyor. → `docs/KARARLAR.md` K67
+
+`perf_index` tarafı aynı şekilde kapatılamadı; **S29** olarak açık kaldı.
+
+### S27 — `case_specs`'in üç ölçü alanı K62'ye rağmen zorunlu ✅ 2026-08-19
+
+**Proje sahibinin kararı:** K62 her yerde geçerli, istisna olmaz. Üçü de
+opsiyonel olacak.
+
+**Cevap:** `max_gpu_length_mm`, `max_cpu_cooler_height_mm` ve
+`max_psu_length_mm` opsiyonel oldu.
+Migration: `20260819085800_kasa_olculeri_opsiyonel`.
+`supported_form_factors` zorunlu kaldı — o bir ölçü değil, uyumluluk beyanı.
+→ `docs/KARARLAR.md` K68
+
+### S26 — Intel F serisi işlemciler `has_igpu` yüzünden eklenemiyor ✅ 2026-08-19
+
+**Proje sahibinin kararı:** Intel'in resmî işlemci adlandırma sayfasında F son
+eki "tümleşik grafik yok" olarak tanımlı. Bu çıkarım değil, farklı sayfadaki
+üretici beyanı. i5-14400F ve i7-14700F eklenecek.
+
+**Cevap:** İkisi de eklendi. Adlandırma sayfası son ek tablosunda
+`Desktop / F / Requires discrete graphics` yazıyor. W4'ün tetikleyen
+kombinasyon sayısı 1'den 3'e çıktı, uyarı eşiğinin üstüne geçti.
+→ `docs/KARARLAR.md` K69
+
+### S25 — Üç kural tek bir parçaya bağlı ✅ 2026-08-19
+
+**Proje sahibinin kararı:** 3'ten az kombinasyonla tetiklenen kural UYARI
+versin, hata değil.
+
+**Cevap:** Eşik eklendi. `npm run kural:kontrol` artık az kombinasyonlu
+kuralları `UYARI` olarak işaretliyor ve çıkış kodunu 0 bırakıyor. Intel F
+serisi eklenince uyarı alan kural sayısı 4'ten 3'e indi (C5, W2, W5).
+→ `docs/KARARLAR.md` K70
 
 ### S24 — `psu_specs.length_mm` zorunlu, K60 boş bırakılmasını gerektiriyor ✅ 2026-08-19
 

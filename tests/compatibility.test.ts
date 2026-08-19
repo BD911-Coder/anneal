@@ -241,6 +241,18 @@ describe("C5 — ekran kartı uzunluğu / kasa", () => {
     expect(kodListesi).toContain("C4");
   });
 
+  // K62: kasanın açıklığı da opsiyonel. Kartın uzunluğu biliniyor ama kasanın
+  // sınırı bilinmiyorsa kural yine atlanır — iki uçtan biri eksikse karar yok.
+  it("kasanın açıklığı bilinmiyorsa kural atlanır", () => {
+    const aciklikSiz: BuildInput = {
+      ...uyumluSistem,
+      gpu: { ...gpu, length_mm: 400 },
+      case: { id: pcCase.id, supported_form_factors: pcCase.supported_form_factors },
+    };
+    expect(() => checkCompatibility(aciklikSiz)).not.toThrow();
+    expect(kodlar(aciklikSiz)).not.toContain("C5");
+  });
+
   it("tam sınırda geçer", () => {
     const input = { ...uyumluSistem, gpu: { ...gpu, length_mm: pcCase.max_gpu_length_mm } };
     expect(kodlar(input)).not.toContain("C5");
@@ -335,6 +347,17 @@ describe("W5 — güç kaynağı uzunluğu / kasa", () => {
     };
     expect(() => checkCompatibility(uzunluksuz)).not.toThrow();
     expect(kodlar(uzunluksuz)).not.toContain("W5");
+  });
+
+  // K62'nin diğer ucu: kasanın PSU açıklığı da bilinmiyor olabilir.
+  it("kasanın PSU açıklığı bilinmiyorsa kural atlanır", () => {
+    const aciklikSiz: BuildInput = {
+      ...uyumluSistem,
+      psu: { ...psu, length_mm: 400 },
+      case: { id: pcCase.id, supported_form_factors: pcCase.supported_form_factors },
+    };
+    expect(() => checkCompatibility(aciklikSiz)).not.toThrow();
+    expect(kodlar(aciklikSiz)).not.toContain("W5");
   });
 
   it("sığan güç kaynağında uyarı vermez", () => {
