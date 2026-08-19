@@ -47,6 +47,30 @@ const REF_CPU = "amd-ryzen-5-9600x";
 /** K78: bir parca en az bu kadar farkli oyunda olculmemisse indekslenmez. */
 const MIN_OYUN = 3;
 
+/**
+ * K77: farkli surucu donemi koprulenmez.
+ *
+ * benchmark_points append-only (K1), yani eski turlarin satirlari tabloda
+ * kaliyor — tarih olarak dogru olan da bu. Ama INDEKS yalnizca tek bir turden
+ * hesaplanir; iki turu ortak parca uzerinden baglamak, aradaki surucu
+ * kazancini parcanin gucu sanmak olur.
+ *
+ * Bu liste "guncel tur"u tanimlar. Yeni bir tura gecilirken eskisi buradan
+ * cikarilir, satirlari silinmez.
+ */
+const GUNCEL_TUR = [
+  // GPU — ComputerBase RX 9070 GRE testi (2026 oyun paketi, 14 kart)
+  "amd-radeon-rx-9070-gre-test.97564",
+  // CPU — ComputerBase islemci ranglistesi, buyuk siralama grafigi (22 islemci).
+  // Ayni sayfadaki bellek-kanali karsilastirmasi (12 islemci) AYRI bir turdur
+  // ve capayla ayrilmistir; oradan gelen satirlar hesaba girmez.
+  "rangliste.89909/#rangliste-22",
+];
+
+function guncelTurdeMi(sourceUrl: string): boolean {
+  return GUNCEL_TUR.some((parca) => sourceUrl.includes(parca));
+}
+
 type Olcum = { part: string; grup: string; fps: number; game: string };
 
 function geo(vals: number[]): number {
@@ -108,15 +132,17 @@ async function hesapla(tur: "gpu" | "cpu", ref: string) {
     },
   });
 
-  const olcumler: Olcum[] = rows.map((r) => ({
-    part: tur === "cpu" ? r.cpu_part_id! : r.gpu_part_id,
-    grup: [r.source_url, r.game_id, r.resolution, r.preset, r.upscaling ?? "-"].join("|"),
-    fps: r.avg_fps,
-    game: r.game_id,
-  }));
+  const olcumler: Olcum[] = rows
+    .filter((r) => guncelTurdeMi(r.source_url))
+    .map((r) => ({
+      part: tur === "cpu" ? r.cpu_part_id! : r.gpu_part_id,
+      grup: [r.source_url, r.game_id, r.resolution, r.preset, r.upscaling ?? "-"].join("|"),
+      fps: r.avg_fps,
+      game: r.game_id,
+    }));
 
   if (olcumler.length === 0) {
-    console.log(`${tur}: olcum yok, indeks uretilmedi.`);
+    console.log(`${tur}: guncel turda olcum yok, indeks uretilmedi.`);
     return 0;
   }
 

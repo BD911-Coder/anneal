@@ -18,6 +18,41 @@ Son güncelleme: 2026-08-19
 
 ## Açık sorular
 
+### S37 — GPU kapsamı 14'te kilitli, K77 ikinci turu engelliyor
+
+Kapsam genişletme turunda işlemci tarafı 7 → 12 çıktı ama **ekran kartı 14'te
+kaldı**. Sebep ölçüldü:
+
+ComputerBase'in GPU incelemeleri iki test turuna ayrılıyor (oyun paketi belli
+ediyor). Güncel tur (RX 9070 GRE testi, 2026) **14 kart**; 2025 turu (büyük
+karşılaştırma) **19 kart**. Örtüşme **tam 6 kart** — K78'in köprü alt sınırı da
+6, yani teknik olarak köprü kurulup **27 karta** çıkılabilirdi.
+
+**K77 buna izin vermiyor:** *"İki ölçüm grubu farklı sürücü döneminde alınmışsa
+aralarında köprü kurulmaz — ortak kart bulunsa bile."* Köprü kurulmadı.
+
+Ayrıca doğrulandı: güncel turun grafiklerinde gerçekten 14 kart var, çıkarıcı
+hatası değil.
+
+**İki yol:**
+
+**(a) İkinci kaynak ara.** Faz 1'de yedi alan adı denendi, per-oyun makine
+okunur veri veren tek kaynak ComputerBase çıktı. Yeni aday aranabilir ama
+umut düşük.
+
+**(b) K77'yi bu özel çift için ölçerek sına.** Altı ortak kart bir test
+imkânı veriyor: sürücü değişimi bütün kartlarda **aynı oranda** olduysa model
+bunu grup zorluğuna soğurur ve köprü güvenlidir; değişim **markaya göre
+farklıysa** köprü bozuktur ve K77 haklıdır. Ölçüm ucuz — 2025 turundan ~18
+satır yeter — ve sonucu ya K77'yi doğrular ya da bu çift için gerekçeli
+istisna verir.
+
+**Claude'un önerisi: (b).** K77'yi varsayım olmaktan çıkarıp ölçülmüş bir
+gerçeğe dönüştürür; sonuç olumsuz çıkarsa da kural güçlenmiş olur. Ama K77
+açık bir kural ve ölçüme dayanarak gevşetmek proje sahibinin kararı.
+
+→ `docs/log/2026-08-19-kapsam-genisletme.md` bölüm 5
+
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:

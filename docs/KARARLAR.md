@@ -1729,3 +1729,24 @@ fark etmez.
 Seçilen tanım kaynağın emeğinin bütününü ölçüyor ve dışarıdan doğrulanabilir —
 sayfayı açan herkes aynı sayıya varır. Diğerleri bizim kataloğumuza bağlı,
 yani kaynak açısından anlamsız.
+
+### K85 — Turlar veride kalır, hesap tek tur seçer
+
+`benchmark_points` append-only (K1): eski test turlarının satırları silinmez,
+tabloda tarih olarak durur. Ama **`perf_index` yalnızca tek bir turdan
+hesaplanır** (K77).
+
+`scripts/compute-perf-index.mts` içinde `GUNCEL_TUR` listesi bunu tanımlar;
+hesap yalnızca o `source_url` desenlerinden gelen satırları kullanır. Yeni bir
+tura geçilirken eskisi listeden çıkarılır, satırları silinmez.
+
+**Gerekçe:** K77 "farklı sürücü dönemi köprülenmez" diyor ama veriyi silmeyi
+gerektirmiyor — append-only kuralıyla da çelişirdi. Ayrım veri katmanında değil
+hesap katmanında yapılır: veri ne ölçüldüyse odur, hesap hangisini kullandığını
+söyler.
+
+**Uygulamada ortaya çıkan incelik:** ComputerBase'in işlemci ranglistesi
+sayfasında **iki tur aynı adreste** duruyor (bellek-kanalı karşılaştırması ve
+büyük sıralama). `source_url` tek başına turları ayırmıyordu; CPU satırlarına
+çapa eklendi (`#rangliste-22`). Grup anahtarı `source_url` içerdiği için bu,
+iki turu ayrı grup yapıyor ve karışmalarını engelliyor.

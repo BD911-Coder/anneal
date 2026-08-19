@@ -116,7 +116,13 @@ const CPU_TEST_GPU = "nvidia-rtx-5090";
 
 const noktalar: Nokta[] = [];
 
-for (const [file, tip] of [["gpu-computerbase.csv", "gpu"], ["cpu-computerbase.csv", "cpu"]] as const) {
+const KAYNAKLAR = [
+  ["gpu-computerbase.csv", "gpu"],
+  ["cpu-computerbase.csv", "cpu"],
+  ["cpu-computerbase-rangliste.csv", "cpu"],
+] as const;
+
+for (const [file, tip] of KAYNAKLAR) {
   const path = `${DIR}/${file}`;
   if (!existsSync(path)) continue;
   for (const row of parseCsv(readFileSync(path, "utf8"))) {
