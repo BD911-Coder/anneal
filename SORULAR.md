@@ -42,44 +42,6 @@ Tetikleyici olay: **"PSU'nun kartın istediği konnektörü var mı" kuralı**. 
 kural `psu_specs`'te de konnektör sayıları gerektirir ve beta kapsamı dışıdır.
 Kural yazılmadan yapılandırmaya gerek yok.
 
-### S37 — GPU kapsamı 14'te kilitli, K77 ikinci turu engelliyor
-
-> **2026-08-19: ertelendi.** Proje sahibi önceliği kart varyantı (AIB) desteğine
-> çevirdi. Soru cevaplanmadı, sadece sıradan çıktı; GPU kapsamı 14'te duruyor.
-
-Kapsam genişletme turunda işlemci tarafı 7 → 12 çıktı ama **ekran kartı 14'te
-kaldı**. Sebep ölçüldü:
-
-ComputerBase'in GPU incelemeleri iki test turuna ayrılıyor (oyun paketi belli
-ediyor). Güncel tur (RX 9070 GRE testi, 2026) **14 kart**; 2025 turu (büyük
-karşılaştırma) **19 kart**. Örtüşme **tam 6 kart** — K78'in köprü alt sınırı da
-6, yani teknik olarak köprü kurulup **27 karta** çıkılabilirdi.
-
-**K77 buna izin vermiyor:** *"İki ölçüm grubu farklı sürücü döneminde alınmışsa
-aralarında köprü kurulmaz — ortak kart bulunsa bile."* Köprü kurulmadı.
-
-Ayrıca doğrulandı: güncel turun grafiklerinde gerçekten 14 kart var, çıkarıcı
-hatası değil.
-
-**İki yol:**
-
-**(a) İkinci kaynak ara.** Faz 1'de yedi alan adı denendi, per-oyun makine
-okunur veri veren tek kaynak ComputerBase çıktı. Yeni aday aranabilir ama
-umut düşük.
-
-**(b) K77'yi bu özel çift için ölçerek sına.** Altı ortak kart bir test
-imkânı veriyor: sürücü değişimi bütün kartlarda **aynı oranda** olduysa model
-bunu grup zorluğuna soğurur ve köprü güvenlidir; değişim **markaya göre
-farklıysa** köprü bozuktur ve K77 haklıdır. Ölçüm ucuz — 2025 turundan ~18
-satır yeter — ve sonucu ya K77'yi doğrular ya da bu çift için gerekçeli
-istisna verir.
-
-**Claude'un önerisi: (b).** K77'yi varsayım olmaktan çıkarıp ölçülmüş bir
-gerçeğe dönüştürür; sonuç olumsuz çıkarsa da kural güçlenmiş olur. Ama K77
-açık bir kural ve ölçüme dayanarak gevşetmek proje sahibinin kararı.
-
-→ `docs/log/2026-08-19-kapsam-genisletme.md` bölüm 5
-
 ### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
 
 K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
@@ -182,6 +144,31 @@ Acil değil, karar iş yükü genişletildiğinde verilir.
 ---
 
 ## Kapanmış sorular
+
+### S37 — GPU kapsamı 14'te kilitli, K77 ikinci turu engelliyor ✅ 2026-08-20
+
+**Proje sahibinin kararı:** K77'yi bu çift için ölçerek sına. Altı ortak kartın
+iki turdaki örtük oranları hesaplansın. Dağılım %5'in altındaysa güvenli;
+NVIDIA/AMD ortalamaları arasında sistematik fark varsa köprü kurulmaz.
+
+**Cevap: köprü kurulmaz, K77 doğrulandı.**
+
+| Ölçüt | Eşik | Ölçülen |
+|---|---|---|
+| Oranların dağılımı | < %5 | **%12.4** |
+| NVIDIA / AMD farkı | sistematik olmayacak | **+%14.8** |
+
+Ama ölçüm K77'nin *sebebini* düzeltti: fark markadan değil **VRAM**'den
+geliyor. 8 GB'lık iki kart (RTX 4060 ve RX 7600 — biri NVIDIA biri AMD)
+birlikte düşüyor, çünkü Tur A'nın paketindeki Dragon Age: The Veilguard'da
+1440p Quality'de çöküyorlar (RX 7600 8.9 FPS). O oyun çıkarılınca ≥12 GB
+kartlar %0.9 dağılımla aynı yerde duruyor.
+
+Köprü yine de kurulmadı: ölçüt tam veri üzerinde uygulanır, sonuç tek oyuna
+aşırı duyarlı, ve Dragon Age dahilken ≥12 GB grubu da %7.8 veriyor.
+
+GPU indeks kapsamı **14'te kalıyor**. Kalan yol yeni kaynak (Faz 1.3).
+→ `docs/KARARLAR.md` K93, `docs/log/2026-08-20-s37-kopru-olcumu.md`
 
 ### S15 — Darboğaz göstergesi çözünürlüğü hesaba katmıyor ✅ 2026-08-19
 

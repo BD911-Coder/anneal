@@ -75,9 +75,11 @@ Kurallar aynen geçerli: üretici sayfaları, K59/K60/K62, uydurma yok.
 
 46 GPU ve 33 CPU'da tahmin çıkmıyor. Dürüst ama zayıf.
 
-- [ ] **S37 ölçümü** — K77'yi altı ortak kart üzerinden sına.
-      Olumluysa köprü kurulur ve GPU kapsamı 14 → 27 olur.
-      Olumsuzsa K77 doğrulanmış olur, o da kazanç.
+- [x] **S37 ölçümü** — yapıldı, **sonuç olumsuz: köprü kurulmadı.**
+      Dağılım %12.4 (eşik %5), NVIDIA/AMD farkı +%14.8. K77 doğrulandı.
+      Ölçüm sebebi de düzeltti: fark markadan değil **VRAM**'den geliyor —
+      8 GB kartlar oyun paketi değişince yer değiştiriyor.
+      GPU kapsamı 14'te kalıyor. `docs/log/2026-08-20-s37-kopru-olcumu.md`
 - [ ] Yeni kaynak araması — bir tur, denenmemiş adaylar
 - [ ] Hedef: 30 GPU + 15 CPU indeksli
 
@@ -194,7 +196,6 @@ Son madde markanın kendisi: tahminlerini geçmişe dönük denetleyen site.
 | S16 | `benchmark_points.game_id` oyun dışı iş yüklerinde | 6 |
 | S18 | Önizleme dağıtımları | 3 |
 | S22 | 14 kullanılmayan zorunlu alan | 3 |
-| S37 | K77 köprü ölçümü | **1.3** |
 | S38 | Güç konnektörü alt tablosu | 3 |
 
 ---

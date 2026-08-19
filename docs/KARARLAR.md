@@ -1984,3 +1984,55 @@ son gördüğü birimin sembolünü basıyordu. 47900 (USD sent) + 389900 (TRY k
 tek sembolle gösterilirdi. Kur bilgisi yok; olsa bile hangi tarihin kuru
 olduğu ayrı bir soru. Sessizce yanlış bir sayı vermektense toplamı hiç
 vermemek doğru.
+
+### K93 — K77 ölçülerek doğrulandı, köprü kurulmadı
+
+S37 sorusu kapandı: ComputerBase'in 2025 ve 2026 test turları arasında köprü
+**kurulmaz**. K77 değişmedi, ölçümle desteklendi.
+
+**Ölçüm.** Altı ortak kart (RTX 4090, 4070, 4060, RX 7800 XT, 7600, Arc B580),
+her tur kendi içinde iki çarpanlı logaritmik uyumla çözüldü, altı kartın
+performans vektörü kendi geometrik ortalamasına normalize edildi, kart başına
+`A/B` oranı alındı. Sürücü ve oyun paketi değişimi düzgün olsaydı altı oran eşit
+çıkardı.
+
+| Ölçüt | Eşik | Ölçülen | Sonuç |
+|---|---|---|---|
+| Oranların dağılımı | < %5 | **%12.4** | kaldı |
+| NVIDIA / AMD farkı | sistematik olmayacak | **+%14.8** | kaldı |
+
+**Ama sebep marka değil, VRAM.** Kırılım:
+
+| Grup | Oran (geo) | Dağılım |
+|---|---|---|
+| 8 GB (RTX 4060, RX 7600) | 0.884 | %13.9 |
+| ≥12 GB (4090, 4070, 7800 XT, B580) | 1.064 | %7.8 |
+
+8 GB'lık iki kart birlikte düşüyor — biri NVIDIA biri AMD. Sebebi Tur A'nın
+paketindeki Dragon Age: The Veilguard: 1440p Quality'de RX 7600 **8.9 FPS**,
+RTX 4060 **15.0 FPS**, aynı testte RTX 4070 58.5 FPS. VRAM duvarı, sürücü farkı
+değil.
+
+O oyun çıkarılınca ≥12 GB kartlar **%0.9 dağılımla** aynı yerde duruyor ve
+marka farkı **+%0.6**'ya iniyor.
+
+**Yine de köprü kurulmadı, üç sebeple:**
+
+1. Ölçüt tam veri üzerinde uygulanır. Sonucu değiştirdiği için bir oyunu
+   çıkarmak, sonuca göre veri seçmektir.
+2. Sonuç kırılgan: tek oyun dağılımı %3.8'den %12.4'e taşıyor. Tur başına 4-5
+   oyunla bu ölçüm bir köprüye izin verecek kadar kararlı değil.
+3. Dragon Age dahilken ≥12 GB grubu da %7.8 veriyor (Arc B580 ayrışıyor) —
+   "≥12 GB kartlarla köprü kurulur" demek için de erken.
+
+**Gerekçe:** K77 bir varsayımdı, artık ölçülmüş bir bulgu. Ölçüm ayrıca
+K77'nin *sebebini* düzeltti: tehlike "markaya göre farklı sürücü kazancı"
+değil, **oyun paketinin VRAM talebi değiştiğinde bellek sınırındaki kartların
+yer değiştirmesi**. Köprü kartı seçilirken bakılacak şey marka değil, o
+kartların bellek sınırına takılıp takılmadığı.
+
+Bu bulgu bir köprü kuralı değil; kural yazmak için tur başına 8+ oyun ve 8+
+ortak kart gerekir. Bugünkü veriyle yalnızca "kurulmaz" denebilir.
+
+Ölçüm kaydı: `docs/log/2026-08-20-s37-kopru-olcumu.md`.
+Tur A'dan okunan 30 değer veritabanına **yazılmadı**.
