@@ -12,7 +12,7 @@ proje sahibinin kullandığı okuma yolu `docs/` klasör sayfasına erişemiyor.
 `docs/log/` altındaki raporlar o günün fotoğrafıdır ve değişmez;
 bu dosya güncel durumu gösterir.
 
-Son güncelleme: 2026-08-19
+Son güncelleme: 2026-08-20
 
 ---
 
@@ -140,6 +140,40 @@ var. İş yükü genişletildiğinde ilk çözülecek şey bu.
 
 Acil değil, karar iş yükü genişletildiğinde verilir.
 → `docs/KARARLAR.md` K35, K36
+
+---
+
+### S39 — Ölçülmüş ve türetilmiş FPS aynı listede yan yana mı dursun? 🆕 (2026-08-20)
+
+Faz A.1'de 8 oyunun 64 hücresi **ölçüm**, 48'i indeks oranıyla **türetme**.
+İkisi aynı listede yan yana durursa liste dolu görünür ama kullanıcı ölçümle
+tahmini karıştırabilir; ayrılırsa dürüst olur ama liste parçalanır.
+
+**Öneri:** yan yana, ama türetilmiş satırda hata payı satırın kendisinde
+yazılı (`±%10`). K90'ın çip fiyatında kurduğu desenin aynısı.
+→ `docs/faz-a1-plani.md` bölüm 5.5
+
+---
+
+### S40 — Oyun listesi hangi sırayla gösterilsin? 🆕 (2026-08-20)
+
+Ölçülmüş hücresi olanlar önce mi, alfabetik mi, yoksa kullanıcının kartına en
+yakın ölçüm hangi oyundaysa o mu? Sıralama, hangi sayının daha güvenilir
+olduğuna dair sessiz bir mesaj veriyor.
+→ `docs/faz-a1-plani.md` bölüm 5.5
+
+---
+
+### S41 — Tek skor ile oyun listesi çelişirse ne yazılır? 🆕 (2026-08-20)
+
+Zayıf CPU + güçlü GPU sisteminde tek skor "işlemci sınırlıyor" derken, oyun
+listesi yüksek FPS gösterecek — çünkü A.1'in FPS sayısı **GPU-sınırlıdır** ve
+CPU'yu hesaba katmaz (CPU ve GPU ölçümlerinin oyunları sıfır kesişiyor).
+
+İkisi farklı sorulara cevap veriyor ama kullanıcı bunu çelişki olarak
+okuyabilir. Çözüm A.2'de CPU/GPU'nun aynı oyunda ölçülmesi; o zamana kadar
+arayüzün ne diyeceği karar bekliyor.
+→ `docs/faz-a1-plani.md` bölüm 3.2
 
 ---
 

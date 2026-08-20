@@ -3,7 +3,15 @@
 Bu belge projenin tamamını faz faz gösterir. Her fazın bir **bitiş ölçütü** vardır;
 o karşılanmadan sonraki faza geçilmez.
 
-Güncelleme: 20 Ağustos 2026
+Güncelleme: 20 Ağustos 2026 — **fazlar ürüne göre yeniden sıralandı.**
+
+> **Sıralama ilkesi:** Fazlar ürünün kendisidir. Fiyat, katalog derinliği ve
+> indeks kapsamı gibi altyapı işleri kendi başına faz değildir — hangi ürün
+> özelliğini açtıkları belliyse o fazın alt maddesidir. Bir altyapı işi hiçbir
+> özelliği açmıyorsa yapılmaz.
+>
+> Önceki sürümde altyapı öne, ürün arkaya düşmüştü: "fiyat" ve "katalog
+> derinliği" birer fazdı, oyun bazlı FPS ise Faz 6'daki bir madde işaretiydi.
 
 ---
 
@@ -16,151 +24,188 @@ Güncelleme: 20 Ağustos 2026
 | Site | Vercel'de canlı, arama motorlarına kapalı |
 | Katalog | 237 gerçek parça |
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
-| Performans indeksi | 14 GPU + 7 CPU (60 ve 40 üzerinden) |
-| Benchmark ölçümü | 106 nokta, tek kaynak (ComputerBase) |
+| Performans indeksi | 14 GPU + 12 CPU |
+| Benchmark ölçümü | 178 nokta, tek kaynak (ComputerBase) |
+| Oyun bazlı FPS | **veri var, özellik yok** — Faz A bunu açıyor |
 | Fiyat | 22 parçada gerçek fiyat (USD, Newegg) |
 | Kullanıcı | 0 |
 
-**Katalog dağılımı:** GPU çipi 60 · GPU kartı 58 · CPU 40 · anakart 19 · RAM 14 ·
-depolama 6 · kasa 5 · PSU 4
+**Katalog dağılımı:** GPU çipi 60 · GPU kartı 58 · CPU 42 · anakart 19 ·
+RAM 20 · depolama 14 · kasa 12 · PSU 12
 
 ---
 
-## FAZ 1 — Beta'yı test edilebilir hale getirmek
+# FAZ A — Oyun bazlı FPS tahmini
 
-**Neden:** Site şu an bir yabancıya gösterilemez. Fiyat yok, bazı kategorilerde
-4-5 seçenek var, kartların yarısında performans tahmini çıkmıyor.
+**Ürünün kendisi burası.** Kullanıcı sistemini seçince tek bir soyut skor değil,
+tanıdığı bir cümle görecek:
 
-**Bitiş ölçütü:** Rastgele bir kullanıcı siteye girip baştan sona bir sistem
-toplayabiliyor ve toplam fiyatını görüyor.
+> **Cyberpunk 2077 — 1440p ultra: ~109 FPS**
 
-### 1.1 — Fiyat 🔴 ENGELLEYICI
+`benchmark_points` zaten tam bu yapıda ve **178 ölçüm** duruyor. Bugün hiçbiri
+kullanıcıya gösterilmiyor; motor bu tablodan yalnızca tek bir soyut indeks
+üretiyor. Yani en değerli veri, ürüne dönüşmeden bekliyor.
 
-Şu an kart seçili bir sistem **kaydedilemiyor**, çünkü kartlarda fiyat yok.
-Yani çalışan bir özellik yarıda kalmış durumda.
+**Bitiş ölçütü:** Kullanıcı bir sistem seçtiğinde, kartının kapsandığı her oyun
+için FPS tahmini görüyor; sayının ölçüm mü türetme mi olduğunu ve hata payını
+da görüyor.
 
-- [ ] **eBay geliştirici + EPN başvurusu** *(sen — 20 dk, onay birkaç gün sürebilir)*
-      Fiyat verisi ve affiliate linkini birden çözüyor. Onayı beklerken 1.2'ye geç.
-- [x] **Elle fiyat girişi** *(Claude Code + senin doğrulaman)* — **22 parça**
-      (17 GPU + 5 CPU), Newegg, USD, `source='manual'`. Hedef 60-80'di;
-      pazaryeri satıcıları ve URL bulma maliyeti yüzünden orada kalındı.
-      Anakart/RAM/PSU/kasa/depolama **fiyatsız** — bkz.
-      `docs/log/2026-08-20-elle-fiyat-girisi.md`.
-- [x] Kart seçili sistemin kaydedilebildiğini tarayıcıda doğrula — Claude
-      doğruladı (i9-14900K + MSI RTX 5080 GAMING TRIO OC → 2.299,98 USD,
-      `/sistem/4dkdcw` oluştu). Sen de bir kez bak.
-- [ ] **Kalan beş kategoriye fiyat** *(anakart, RAM, PSU, kasa, depolama —
+## A.1 — Mevcut 178 ölçümden tahmin üret ve göster
+
+Yeni veri toplamadan, **bugünkü veriyle** ne gösterilebiliyorsa o gösterilir.
+Ayrıntılı plan ve ölçümler: **`docs/faz-a1-plani.md`**
+
+- [ ] `engine/fps-estimate.ts` — saf motor, oyun içi indeks oranıyla tahmin
+- [ ] `/engine` testleri *(kural gereği: sessizce yanlış sonuç verebilen yer)*
+- [ ] Veri okuma yolu — `benchmark_points` + `perf_index` birlikte
+- [ ] Arayüz: oyun listesi, FPS, **ölçüm mü türetme mi**, hata payı
+- [ ] Kapsam dışı kartta dürüst boşluk *(58/118 GPU'da veri yok)*
+
+**Bugünkü kapsam ölçüldü:** 8 oyun × 14 çip = 112 hücre; **64'ü ölçülmüş**,
+48'i türetilebilir. Kart tarafında 46 kart çipinden miras alıyor —
+**118 seçilebilir GPU'nun 60'ında** FPS gösterilebiliyor.
+
+**Tek ayar var:** 1440p / ultra / DLSS-FSR Quality. Başka çözünürlük, başka
+preset ve yerel (upscaling kapalı) çıktı **yok** — uydurulmayacak.
+
+**CPU sayıya girmiyor.** Ölçüldü: CPU ölçümlerinin oyunları ile GPU
+ölçümlerinin oyunları **sıfır kesişiyor**. A.1'in verdiği sayı GPU-sınırlı
+FPS'tir ve arayüz bunu söyler.
+
+## A.2 — Kapsamı büyüt
+
+A.1 dürüst ama dar. Buradaki her madde doğrudan A.1'in kapsadığı hücre
+sayısını artırıyor — altyapı işleri bu yüzden burada.
+
+- [ ] **İkinci çözünürlük/ayar ekseni** — 1080p veya yerel 1440p ölçümü.
+      Bugün tek ayar var; ikincisi olmadan "ayar seç" diye bir şey yok.
+- [ ] **CPU ile GPU'yu aynı oyunda ölç** — kesişim sıfır olduğu sürece CPU
+      hiçbir FPS sayısına giremez. En az 3 ortak oyun gerekiyor.
+- [ ] **İndeks kapsamı: 14 GPU → 30, 12 CPU → 20**
+      - [x] **S37 ölçümü — sonuç olumsuz, köprü kurulmadı.** Dağılım %12.4
+            (eşik %5), fark markadan değil **VRAM**'den geliyor. K77
+            doğrulandı. `docs/log/2026-08-20-s37-kopru-olcumu.md`
+      - [ ] Yeni kaynak araması — bir tur, denenmemiş adaylar
+- [ ] **Kart varyantı 58 → 150** *(kalan çipler; her kart çipinden miras
+      aldığı için kapsamı doğrudan büyütüyor)*
+- [ ] **Oyun sayısı 8 → 15**
+
+## A.3 — Doğruluk ölçümü ve yayınlanan hata payı
+
+**Markanın kendisi bu madde.** Tahminini denetleyen ve hata payını yayınlayan
+site, tahmin veren siteden farklı bir şeydir.
+
+- [ ] Birini-dışarıda-bırak doğrulaması script'e dönsün, her veri turunda çalışsın
+- [ ] Hata payı arayüzde yayınlansın
+- [ ] Kapsam dışı ve düşük güvenli hücreler işaretlensin
+- [ ] `docs/KARARLAR.md`'ye ölçülen hata payı ve ölçüm yöntemi yazılsın
+
+**A.1 için ilk ölçüm yapıldı** (birini-dışarıda-bırak, 64 nokta):
+ortalama mutlak hata **%6.1**, medyan %4.9, %90 dilim %12.8, en kötü %27.8.
+Noktaların %83'ü ±%10 içinde.
+
+---
+
+## Beta ölçütü — faz değil, kapı
+
+**10 kişi siteye girip yardım almadan bir sistem toplayabildi.** *(CLAUDE.md)*
+
+Bu bir faz değil; A bittikten sonra geçilmesi gereken bir kapıdır. Projenin tek
+gerçek bilinmeyeni "insanlar burada sistem toplamak istiyor mu" ve bunu kod
+değil kullanıcı cevaplıyor.
+
+- [ ] **Fiyat — kalan beş kategori** *(anakart, RAM, PSU, kasa, depolama:
       hepsi hâlâ 0)*. Kullanıcı bugün yedi kategorili bir sistem toplayıp
-      toplam fiyat **göremiyor**.
-      - Newegg: bu beş kategoride denenen listelerin hepsi pazaryeri
-        satıcısıydı, K96 tavanı hesaplanamadığı için elendi.
-      - **Amazon denendi, kapalı:** konum engeli — ürün ve arama
-        sayfalarında sıfır fiyat gösteriliyor ("Deliver to Turkey / No
-        featured offers available"). `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
-      - **Kaynak kararı bekliyor** (dört seçenek raporda). eBay API maddesi
-        yukarıda ve bu turdan sonra daha öncelikli görünüyor.
-
-### 1.2 — Kategori derinliği
-
-Dört kategori beta için fazla dar. Kullanıcının seçenek hissi olmalı.
-
-- [x] PSU: 4 → **12** *(550W–1200W, Bronze→Platinum, biri SFX)*
-- [x] Kasa: 5 → **12** *(ITX/mATX/ATX/E-ATX, GPU açıklığı 290–423 mm)*
-- [x] Depolama: 6 → **14** *(Gen5/Gen4 NVMe, SATA SSD, HDD; 1–4 TB)*
-- [x] RAM: 14 → **20** *(DDR5 16–128 GB / 5200–8000, DDR4 32–128 GB)*
-- [x] **K95 — PSU uzunluğu** *(20 Ağustos)*. ATX12V genişliği (150) ve
-      yüksekliğini (86) sabitliyor; etiketsiz üçlüde bu ikisi tanınıyorsa kalan
-      değer uzunluktur. `length_mm` dolu PSU **1 → 8**.
-      `docs/log/2026-08-20-psu-uzunlugu-k95.md`
-
-Sonuç: eşik uyarısı 3 → **1**. C5 uyarıdan çıktı (2 → 125 kombinasyon),
-**W5 de çıktı (1 → 14 kombinasyon)** — K95 ile kuralın iki ucu da tek satır
-olmaktan kurtuldu, tetiklenen kasa 1'den 3'e çıktı.
-Kalan tek uyarı: W2 (2 kombinasyon).
-
-Marka çeşitliliği hâlâ dar — kasaların 11'i Fractal, PSU'ların 11'i Corsair.
-`docs/log/2026-08-20-kategori-derinligi.md`
-
-Kurallar aynen geçerli: üretici sayfaları, K59/K60/K62/K95, uydurma yok.
-
-### 1.3 — Performans indeksi kapsamı
-
-46 GPU ve 33 CPU'da tahmin çıkmıyor. Dürüst ama zayıf.
-
-- [x] **S37 ölçümü** — yapıldı, **sonuç olumsuz: köprü kurulmadı.**
-      Dağılım %12.4 (eşik %5), NVIDIA/AMD farkı +%14.8. K77 doğrulandı.
-      Ölçüm sebebi de düzeltti: fark markadan değil **VRAM**'den geliyor —
-      8 GB kartlar oyun paketi değişince yer değiştiriyor.
-      GPU kapsamı 14'te kalıyor. `docs/log/2026-08-20-s37-kopru-olcumu.md`
-- [ ] Yeni kaynak araması — bir tur, denenmemiş adaylar
-- [ ] Hedef: 30 GPU + 15 CPU indeksli
-
----
-
-## FAZ 2 — Beta ölçütü
-
-**Neden:** Bu projenin tek gerçek bilinmeyeni "insanlar burada sistem toplamak
-istiyor mu". Kod ve veri bu soruyu cevaplamıyor; kullanıcı cevaplıyor.
-
-**Bitiş ölçütü:** **10 kişi siteye girip sana hiçbir şey sormadan bir sistem
-toplayabildi.**
-
+      toplam fiyat **göremiyor**. B fazının da ön koşulu.
+      - [x] Elle fiyat girişi — **22 parça** (17 GPU + 5 CPU), Newegg, USD.
+            `docs/log/2026-08-20-elle-fiyat-girisi.md`
+      - [ ] **eBay geliştirici + EPN başvurusu** *(sen — 20 dk)*. Fiyat verisi
+            ve affiliate linkini birden çözüyor.
+      - [ ] Kaynak kararı: Newegg pazaryeri elendi (K96 tavanı), Amazon konum
+            engelli. `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
 - [ ] **Gerçek veriyi canlıya aktar** *(sen çalıştıracaksın)* — plan hazır ve
-      onaylı: `docs/canliya-aktarim-plani.md`. Altı komut, adres kabuk
-      değişkeninde kalır, `.env.local` değişmez. Faz 2'nin ilk adımı: site
-      gerçek veriyle dolmadan kimseye gösterilemez.
+      onaylı: `docs/canliya-aktarim-plani.md`
 - [ ] Kendin baştan sona kullan, 20 dakika *(sen — bunu hâlâ yapmadın)*
 - [ ] 3 arkadaşına göster, izle, not al
 - [ ] Çıkan sorunları düzelt
 - [ ] Donanım forumlarında / Reddit'te paylaş
-- [ ] Geri bildirim formundan geleni oku
 - [ ] 10 kişi ölçütüne ulaş
 
-Bu faz bitmeden Faz 3'e geçme. Kullanıcısı olmayan bir sistemi büyütmek,
+Bu kapı geçilmeden B'ye geçme. Kullanıcısı olmayan bir sistemi büyütmek,
 projeyi öldüren en yaygın hatadır.
 
 ---
 
-## FAZ 3 — Kapsam ve kalite
+# FAZ B — Donanım önerisi
 
-**Neden:** Kullanıcı olduğu doğrulandıktan sonra derinleşmek anlamlı.
+**Soruyu ters çevirmek.** A'da kullanıcı sistemi seçiyor, site FPS söylüyor.
+B'de kullanıcı istediği sonucu söylüyor, site sistemi kuruyor:
 
-**Bitiş ölçütü:** Kullanıcılar "eksik" demeyi bıraktı; katalog ve tahmin
-güvenilir hale geldi.
+> "40.000 TL bütçeyle Cyberpunk'ı 1440p ultra'da 60 FPS üstünde oynamak
+> istiyorum" — **şu sistem**
 
-### 3.1 — CPU soğutucusu *(yeni kategori)*
+Mevcut yükseltme önerisi motoru (`engine/upgrade.ts`) bunun temeli — bugün
+"bütçe farkıyla ne yükseltilir" sorusunu zaten cevaplıyor. B, aynı motoru
+sıfırdan sistem kurmaya genişletiyor.
 
-Şemada `case_specs.max_cpu_cooler_height_mm` var ama karşılığı yok — ölü alan.
-9800X3D veya 14900K alan kullanıcı soğutucu almak zorunda.
+**Bitiş ölçütü:** Kullanıcı bütçe + oyun + hedef FPS girip uyumlu, alınabilir
+bir sistem alıyor.
 
-- [ ] Şema: `cooler` kategorisi + `cooler_specs`
-- [ ] Yeni kural: soğutucu yüksekliği ≤ kasa açıklığı
-- [ ] Yeni kural: soğutucu soket uyumluluğu
-- [ ] 12-15 soğutucu verisi
-
-### 3.2 — Katalog genişletmesi
-
-Meşru tavan ~1450 satır. Kademeli git, hepsini bir seferde alma.
-
-- [ ] Anakart 19 → 60
-- [ ] GPU kart varyantı 58 → 150 *(kalan çipler)*
-- [ ] RAM / SSD / PSU / kasa derinleştirme
-
-### 3.3 — Kullanıcı FPS gönderimi
-
-**Projenin en değerli varlığı burada başlıyor.** Satın alınamayan, kopyalanamayan
-veri seti.
-
-- [ ] Gönderim formu *(hesap gerektirmeden)*
-- [ ] Doğrulama akışı — ekran görüntüsü, aykırı değer kontrolü
-- [ ] Ödül sistemi *(aylık bütçe ile hediye çeki)*
+- [ ] **Ön koşul: fiyat.** Bütçe sorusu fiyatsız sorulamaz — Beta kapısındaki
+      fiyat maddesi bitmeden B başlamaz.
+- [ ] Hedeften geriye çözüm — "60 FPS için hangi indeks gerekiyor"
+- [ ] Bütçe dağıtımı — parçalar arası denge
+- [ ] Uyumluluk motoruyla doğrulama *(11 kural zaten hazır)*
+- [ ] **CPU soğutucusu** *(yeni kategori)* — şemada
+      `case_specs.max_cpu_cooler_height_mm` var ama karşılığı yok, ölü alan.
+      Sistem kuran bir motor soğutucusuz sistem öneremez.
+      - [ ] Şema: `cooler` kategorisi + `cooler_specs`
+      - [ ] Yeni kural: soğutucu yüksekliği ≤ kasa açıklığı
+      - [ ] Yeni kural: soğutucu soket uyumluluğu
+      - [ ] 12-15 soğutucu verisi
+- [ ] **Katalog derinliği** — öneri motoru dar kataloğa mahkûmdur
+      - [x] PSU 4 → **12**, Kasa 5 → **12**, Depolama 6 → **14**,
+            RAM 14 → **20** *(20 Ağustos)*
+      - [x] **K95 — PSU uzunluğu.** ATX12V genişlik (150) ve yüksekliği (86)
+            sabitliyor; etiketsiz üçlüde ikisi tanınıyorsa kalan uzunluktur.
+            `length_mm` dolu PSU **1 → 8**, W5 kombinasyonu **1 → 14**.
+            `docs/log/2026-08-20-psu-uzunlugu-k95.md`
+      - [ ] Anakart 19 → 60
+      - [ ] Marka çeşitliliği — kasaların 11'i Fractal, PSU'ların 11'i Corsair
 
 ---
 
-## FAZ 4 — Gelir altyapısı
+# FAZ C — Ek platformlar
 
-**Neden:** Ancak trafik varsa anlamlı. Affiliate programları zaten mevcut trafik
-şartı arıyor.
+**Bitiş ölçütü:** Kullanıcı masaüstü dışında en az bir platformda da FPS
+tahmini alıyor.
+
+- [ ] Laptop *(aynı çip adı farklı TGP'de farklı kart demek — bu ayrım şart)*
+- [ ] Konsol *(sabit donanım, tahmin değil ölçüm; kıyas noktası olarak değerli)*
+- [ ] El konsolu *(Steam Deck, ROG Ally)*
+
+Her platform yeni bir şema sorusu getiriyor. Şu an açmıyoruz; A ve B
+bitmeden buradaki hiçbir madde başlamaz.
+
+---
+
+# FAZ D — Nesiller arası tahmin
+
+**Projenin senin için anlamı bu.** Yeni nesil çıktığında, kimse test etmeden
+tahmin verebilmek. A.3'ün ölçüm disiplini olmadan bu faz anlamsız — tahminin
+tuttuğunu söylemenin yolu ölçmektir.
+
+**Bitiş ölçütü:** Yeni bir GPU duyurulduğunda site ilk 48 saatte tahmin
+yayınlayabiliyor ve tahmin tutuyor.
+
+- [ ] Nesiller arası eşleşen kalibrasyon seti *(aynı oyunlar, 3 nesil)*
+- [ ] Ölçekleme modeli — mimari katsayısı, tek ölçümden seri tahmini
+- [ ] Tahmin arşivi — yayınlanan tahminler kaydedilir
+- [ ] **Geriye dönük denetim** — tahmin ne kadar tuttu, yayınla
+
+---
+
+# FAZ E — Gelir altyapısı
 
 **Bitiş ölçütü:** Gelir en azından aylık gideri karşılıyor.
 
@@ -174,27 +219,14 @@ veri seti.
 
 ---
 
-## FAZ 5 — Asıl hedef: nesiller arası tahmin
-
-**Neden:** Projenin sen için anlamı bu. Yeni nesil çıktığında, kimse test etmeden
-tahmin verebilmek.
-
-**Bitiş ölçütü:** Yeni bir GPU duyurulduğunda site ilk 48 saatte tahmin
-yayınlayabiliyor ve tahmin tutuyor.
-
-- [ ] Nesiller arası eşleşen kalibrasyon seti *(aynı oyunlar, 3 nesil)*
-- [ ] Ölçekleme modeli — mimari katsayısı, tek ölçümden seri tahmini
-- [ ] Tahmin arşivi — yayınlanan tahminler kaydedilir
-- [ ] **Geriye dönük denetim** — tahmin ne kadar tuttu, yayınla
-
-Son madde markanın kendisi: tahminlerini geçmişe dönük denetleyen site.
-
----
-
-## FAZ 6 — Büyüme
+# FAZ F — Büyüme
 
 **Bitiş ölçütü yok** — buradan sonrası sürekli.
 
+- [ ] **Kullanıcı FPS gönderimi** — satın alınamayan, kopyalanamayan veri seti
+      - [ ] Gönderim formu *(hesap gerektirmeden)*
+      - [ ] Doğrulama akışı — ekran görüntüsü, aykırı değer kontrolü
+      - [ ] Ödül sistemi *(aylık bütçe ile hediye çeki)*
 - [ ] Çoklu iş yükü skorları *(AI, video, üretkenlik — şema hazır, ölçüm yok)*
 - [ ] Fiyat geçmişi grafikleri *(veri birikiyor, özellik yok)*
 - [ ] Kullanıcı hesabı *(builds zaten kalıcı, sadece user_id eklenecek)*
@@ -209,32 +241,38 @@ Son madde markanın kendisi: tahminlerini geçmişe dönük denetleyen site.
 
 | # | Konu | Faz |
 |---|---|---|
-| S16 | `benchmark_points.game_id` oyun dışı iş yüklerinde | 6 |
-| S18 | Önizleme dağıtımları | 3 |
-| S22 | 14 kullanılmayan zorunlu alan | 3 |
-| S38 | Güç konnektörü alt tablosu | 3 |
+| **S39** | **Ölçülmüş ve türetilmiş FPS yan yana mı?** | **A.1** |
+| **S40** | **Oyun listesi sıralaması** | **A.1** |
+| **S41** | **Tek skor ile oyun listesi çelişirse** | **A.1** |
+| S16 | `benchmark_points.game_id` oyun dışı iş yüklerinde | F |
+| S18 | Önizleme dağıtımları | B |
+| S22 | 14 kullanılmayan zorunlu alan | B |
+| S38 | Güç konnektörü alt tablosu | B |
 
 ---
 
 ## Kalıcı kurallar — asla esnetilmez
 
-Bunlar 90+ kararın özeti. Yeni bir iş başlarken kontrol et:
+Bunlar 95+ kararın özeti. Yeni bir iş başlarken kontrol et:
 
 1. **Uydurma yok.** Bulunamayan alan boş bırakılır, çıkarım yapılmaz *(K60)*
-2. **Kaynak defteri.** Her satırda `source`, `source_url`, `confidence`, `collected_at`
-3. **Tek kaynaktan toplu alım yok.** Sayfa başına %10 tavanı *(K75/K84)*
-4. **`robots.txt` yasaklıyorsa o kaynak kapalı.** Araç değiştirmek durumu değiştirmez
-5. **`perf_index` yalnızca `benchmark_points`'ten hesaplanır** *(K71)*
-6. **Fiziksel ölçü alanları zorunlu olmaz** *(K62)*
-7. **Hata hep güvenli yöne.** Yanlış "sığar" demek, gereksiz uyarıdan pahalı
-8. **`/engine` saf kalır.** Veritabanı, ağ, arayüz erişimi yok
-9. **dev-seed canlıya çıkmaz.** Dört katman
-10. **Sapma ölçülür ve kaydedilir** *(K80)*
+2. **Kural taşınırken harfi değil gerekçesi taşınır** *(K95b)*
+3. **Kaynak defteri.** Her satırda `source`, `source_url`, `confidence`, `collected_at`
+4. **Tek kaynaktan toplu alım yok.** Sayfa başına %10 tavanı *(K75/K84)*
+5. **`robots.txt` yasaklıyorsa o kaynak kapalı.** Araç değiştirmek durumu değiştirmez
+6. **`perf_index` yalnızca `benchmark_points`'ten hesaplanır** *(K71)*
+7. **Fiziksel ölçü alanları zorunlu olmaz** *(K62)*
+8. **Hata hep güvenli yöne.** Yanlış "sığar" demek, gereksiz uyarıdan pahalı
+9. **`/engine` saf kalır.** Veritabanı, ağ, arayüz erişimi yok
+10. **dev-seed canlıya çıkmaz.** Dört katman
+11. **Sapma ölçülür ve kaydedilir** *(K80)*
 
 ---
 
 ## Şu an sıradaki tek iş
 
-**1.1 — Fiyat.** Diğer her şey bekleyebilir; bu bir özelliği bloke ediyor.
+**A.1 — Mevcut 178 ölçümden oyun bazlı FPS üret ve göster.**
 
-Başlangıç: eBay başvurusu *(sen)* + elle fiyat girişi *(Claude Code)*.
+Plan hazır ve ölçümlere dayanıyor: **`docs/faz-a1-plani.md`**
+Yeni veri toplamayı gerektirmiyor; bugünkü veriyle 60 GPU'da FPS
+gösterilebiliyor.
