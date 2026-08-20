@@ -93,14 +93,30 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
       Bugün tek ayar var; ikincisi olmadan "ayar seç" diye bir şey yok.
 - [ ] **CPU ile GPU'yu aynı oyunda ölç** — kesişim sıfır olduğu sürece CPU
       hiçbir FPS sayısına giremez. En az 3 ortak oyun gerekiyor.
+      **Mevcut kaynakta çözülmüyor (ölçüldü):** ComputerBase'in oyun başına
+      benchmark makaleleri yalnızca GPU; CPU paketinin 9 oyunu GPU paketinin
+      23 oyunuyla hâlâ sıfır kesişiyor. Başka kaynak gerekiyor.
 - [ ] **İndeks kapsamı: 14 GPU → 30, 12 CPU → 20**
       - [x] **S37 ölçümü — sonuç olumsuz, köprü kurulmadı.** Dağılım %12.4
             (eşik %5), fark markadan değil **VRAM**'den geliyor. K77
             doğrulandı. `docs/log/2026-08-20-s37-kopru-olcumu.md`
-      - [ ] Yeni kaynak araması — bir tur, denenmemiş adaylar
+      - [x] **Yeni kaynak araması yapıldı, sonuç olumsuz.** TechPowerUp,
+            PCGamesHardware, Igor's Lab, TechSpot, Guru3D, GamersNexus:
+            hepsinde FPS **grafik görselinde**, metinde sıfır. İzin sorun
+            değil, biçim sorun. `docs/faz-a2-oyun-hedefi.md` bölüm 4
+      - [ ] **CPU 12 → 34?** 16 Temmuz 2026 CPU testinde 34 işlemci var.
+            Önce kontrol: oyun başına değer mi, yoksa yalnızca toplu rating mi?
 - [ ] **Kart varyantı 58 → 150** *(kalan çipler; her kart çipinden miras
       aldığı için kapsamı doğrudan büyütüyor)*
-- [ ] **Oyun sayısı 8 → 15**
+- [ ] **Oyun sayısı 8 → 23** — plan hazır: `docs/faz-a2-oyun-hedefi.md`
+      Ölçüldü: 15 oyun **mevcut incelemede zaten var**, alınmamış. Yeni kaynak
+      da köprü de gerekmiyor. Kaynağın %2,6'sı alınmış, 23 oyunda %7,5 olur
+      (K75 tavanı %10).
+- [ ] **Grup 2 (rekabetçi oyunlar) — KAYNAK YOK, açık.** CS2, Valorant,
+      Fortnite, Apex, LoL, Dota 2: doğrulanmış kaynakta **0/6** kapsam.
+      Metin olarak FPS yayınlayan aday kaynakların hepsi elendi (grafikler
+      görsel). Tek bulunan Tom's Hardware ve o bizim K80 aynamız — kaynak
+      yapılırsa hata payı ölçümü çöker. Takas ayrıca sorulacak.
 
 ## A.3 — Doğruluk ölçümü ve yayınlanan hata payı
 
