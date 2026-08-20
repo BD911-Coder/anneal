@@ -18,15 +18,19 @@ export type FpsBand = {
   /** Bu değerin ALTI bu banda girer; `Infinity` en üst bant. */
   max: number;
   label: string;
-  /** Tailwind renk sınıfı — bantlar tek renkte olmasın diye. */
+  /**
+   * Tailwind renk sınıfı. Renk TEK BAŞINA anlam taşımıyor — etiket metni
+   * (`zor`/`oynanır`/…) her zaman yanında (WCAG 1.4.1). Koyu tema için
+   * `dark:` varyantı var; `-600`/-`400` çiftleri her iki zeminde de AA.
+   */
   tone: string;
 };
 
 export const FPS_BANDS: FpsBand[] = [
-  { max: 30, label: "zor", tone: "text-red-600" },
-  { max: 60, label: "oynanır", tone: "text-amber-600" },
-  { max: 120, label: "akıcı", tone: "text-emerald-600" },
-  { max: Infinity, label: "yüksek tazeleme", tone: "text-sky-600" },
+  { max: 30, label: "zor", tone: "text-red-700 dark:text-red-400" },
+  { max: 60, label: "oynanır", tone: "text-amber-700 dark:text-amber-400" },
+  { max: 120, label: "akıcı", tone: "text-emerald-700 dark:text-emerald-400" },
+  { max: Infinity, label: "yüksek tazeleme", tone: "text-sky-700 dark:text-sky-400" },
 ];
 
 export function bandFor(fps: number): FpsBand {

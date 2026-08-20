@@ -27,46 +27,59 @@ export default async function HomePage() {
 
   // Kapsam sayıları veriden okunuyor, metne gömülmüyor: ölçüm eklendikçe
   // başlıktaki sayı kendiliğinden güncellenir. Elle yazılsaydı ilk veri
-  // turunda eskirdi — bu metnin bu tura kadar eskimiş olmasının sebebi buydu.
+  // turunda eskirdi — bu metnin bu tura kadar eskimesinin sebebi buydu.
   //
-  // Sayılan küme "ölçümü olan çip" değil, **FPS gösterilebilen seçenek**:
-  // türetme indeks gerektiriyor, kartlar da indeksi çiplerinden miras alıyor
-  // (K86). Yalnızca ölçülmüş çipler sayılsaydı 46 kart görünmez ve rakam
-  // gerçekte gösterilenin çok altında kalırdı.
   // DİKKAT: `fpsGroups.length` GRUP sayısıdır, oyun sayısı değil. Aynı oyun
-  // birden fazla çözünürlükte ölçülmüşse birden fazla grup üretir; 4K ekseni
-  // açılınca (K114) 23 oyun 31 grup oldu ve başlık "31 oyunda" demeye başladı.
+  // birden fazla çözünürlükte ölçülmüşse birden fazla grup üretir.
   const fpsGames = new Set(fpsGroups.map((group) => group.game_id)).size;
+  // Sayılan küme "ölçümü olan çip" değil, **FPS gösterilebilen seçenek**:
+  // türetme indeks gerektiriyor ve kartlar indeksi çiplerinden miras alıyor.
   const fpsCoveredGpus =
     catalog.gpu.filter((chip) => perfIndexes[chip.id] !== undefined).length +
     catalog.gpu_variant.filter((card) => perfIndexes[card.chip_part_id] !== undefined).length;
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Anneal</h1>
-        {/* Üç ayrı durum var ve tek cümlede toplanamazlar: parça bilgisi tam,
-            fiyat kısmen var, ölçüm verisi kartların yarısında var. Eski metin
-            "ölçüm verisi henüz toplanmadı" diyordu ve bu artık doğru değil —
-            60 GPU'da oyun bazlı FPS gösteriliyor. */}
-        <p className="text-sm opacity-70">
-          Sistem oluşturucu — {toplamParca} parça. Parça bilgileri üretici sayfalarından.
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
+      <header className="border-b border-border pb-6">
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Anneal</h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
+          Donanım seç, ne performans alacağını gör. Her sayının nereden geldiği yanında
+          yazılı — ölçüm mü, hesap mı.
         </p>
-        <ul className="mt-1 flex flex-col gap-0.5 text-xs opacity-60">
-          <li>
-            <span className="font-medium">Oyun bazlı FPS:</span> {fpsGames} oyunda,{" "}
-            {fpsCoveredGpus} ekran kartında gösteriliyor. Her sayının ölçüm mü tahmin mi
-            olduğu yanında yazılı.
-          </li>
-          <li>
-            <span className="font-medium">Sistem indeksi:</span> ekran kartı ve işlemcinin
-            ikisinde de ölçüm gerektiriyor; kataloğun bir bölümünde henüz yok.
-          </li>
-          <li>
-            <span className="font-medium">Fiyat:</span> yalnızca bir bölüm parçada var, tek
-            kaynaktan ve tek para biriminde.
-          </li>
-        </ul>
+
+        {/*
+          Üç ayrı durum var ve tek cümlede toplanamazlar: oyun bazlı FPS
+          çalışıyor, sistem indeksi kısmen, fiyat çok az parçada. Tek cümleye
+          sıkıştırıldığında en kötümser olan hepsini temsil ediyordu.
+        */}
+        <dl className="mt-5 grid gap-x-6 gap-y-3 text-xs sm:grid-cols-3">
+          <div>
+            <dt className="font-semibold">Oyun bazlı FPS</dt>
+            <dd className="mt-0.5 leading-relaxed text-muted">
+              <span className="num font-medium text-foreground">{fpsGames}</span> oyun,{" "}
+              <span className="num font-medium text-foreground">{fpsCoveredGpus}</span> ekran
+              kartı
+            </dd>
+          </div>
+          <div>
+            <dt className="font-semibold">Sistem indeksi</dt>
+            <dd className="mt-0.5 leading-relaxed text-muted">
+              İşlemci ve ekran kartının ikisinde de ölçüm gerekiyor; kataloğun bir bölümünde
+              henüz yok
+            </dd>
+          </div>
+          <div>
+            <dt className="font-semibold">Fiyat</dt>
+            <dd className="mt-0.5 leading-relaxed text-muted">
+              Yalnızca bir bölüm parçada, tek kaynaktan ve tek para biriminde
+            </dd>
+          </div>
+        </dl>
+
+        <p className="mt-4 text-xs text-muted">
+          Katalog: <span className="num">{toplamParca}</span> parça, bilgiler üretici
+          sayfalarından.
+        </p>
       </header>
 
       <Builder
@@ -76,7 +89,7 @@ export default async function HomePage() {
         fpsGroups={fpsGroups}
       />
 
-      <section className="rounded border p-4">
+      <section className="mt-12 border-t border-border pt-6">
         <FeedbackForm />
       </section>
     </main>

@@ -66,7 +66,7 @@ export function GameFpsList({
 
   if (!hasDataForResolution) {
     return (
-      <p className="text-sm opacity-70">
+      <p className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-muted">
         {resolution ? <>Bu çözünürlükte ({RESOLUTION_LABEL[resolution]}) </> : "Bu çözünürlükte "}
         henüz ölçüm yok. Ölçüm verisi olan çözünürlüğü seçerseniz liste görünür.
       </p>
@@ -75,7 +75,7 @@ export function GameFpsList({
 
   if (rows.length === 0) {
     return (
-      <p className="text-sm opacity-70">
+      <p className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-muted">
         Bu kart için ölçüm yok. Oyun bazlı FPS yalnızca ölçüm verisi toplanmış kartlarda
         gösterilebiliyor; uydurma bir sayı göstermektense hiç göstermiyoruz.
       </p>
@@ -95,25 +95,22 @@ export function GameFpsList({
   const singleSetting = settings.size === 1 ? [...settings][0] : null;
 
   return (
-    <div className="flex flex-col gap-3 text-sm">
+    <div className="flex flex-col gap-4">
       {/* K99: tek skor ile bu liste farklı şeyler ölçüyor. Çelişki gerçek ve
           gizlenmiyor. Test sisteminin işlemcisi ölçüm satırlarımızda kayıtlı
-          DEĞİL (cpu_part_id boş), o yüzden hangi işlemci olduğu yazılmıyor —
-          yazılsaydı kaynağı olmayan bir iddia olurdu. */}
-      <div className="rounded border border-amber-500/40 bg-amber-500/5 p-3 text-xs">
+          DEĞİL (cpu_part_id boş), o yüzden hangi işlemci olduğu yazılmıyor. */}
+      <div className="rounded-md border border-amber-600/35 bg-amber-500/[0.07] p-3 text-xs leading-relaxed">
         <p>
-          <span className="font-medium">Bu sayılar yalnızca ekran kartına göredir.</span>{" "}
+          <strong className="font-semibold">Bu sayılar yalnızca ekran kartına göredir.</strong>{" "}
           İşlemcinin sınırlamadığı bir test sisteminde ölçülmüştür; seçtiğiniz işlemci bu
-          sayılara <span className="font-medium">girmiyor</span>. İşlemciye yüklenen
-          oyunlarda gerçek sonuç bunun altında kalabilir.
+          sayılara girmiyor. İşlemciye yüklenen oyunlarda gerçek sonuç bunun altında
+          kalabilir.
         </p>
-        {/* Sayıyı değiştirmiyoruz (veri yok) ama kullanıcının işlemcisinin
-            nerede durduğunu SÖYLÜYORUZ — çerçeve düzeltmesi. */}
         {cpuIndex !== undefined && (
-          <p className="mt-1.5">
+          <p className="mt-2">
             Seçtiğiniz işlemci{cpuLabel ? ` (${cpuLabel})` : ""}: indeks{" "}
-            <span className="font-medium">{cpuIndex}</span> — referans işlemci{" "}
-            {REFERANS_CPU_INDEKS}.{" "}
+            <span className="num font-semibold">{cpuIndex}</span>, referans{" "}
+            <span className="num">{REFERANS_CPU_INDEKS}</span>.{" "}
             {cpuIndex < REFERANS_CPU_INDEKS
               ? "Referansın altında; işlemciye yüklenen oyunlarda fark daha belirgin olur."
               : cpuIndex > REFERANS_CPU_INDEKS
@@ -122,13 +119,13 @@ export function GameFpsList({
           </p>
         )}
         {bottleneck === "cpu_limited" && (
-          <p className="mt-1.5 font-medium">
+          <p className="mt-2 font-semibold">
             Sistem indeksi bu kurulumda işlemciyi sınırlayıcı buluyor — aşağıdaki sayılar
             bu yüzden iyimser olabilir.
           </p>
         )}
         {cpuIndex === undefined && (
-          <p className="mt-1.5">
+          <p className="mt-2">
             Henüz ölçümü olan bir işlemci seçmediniz. Liste yalnızca ekran kartına baktığı
             için yine de görünüyor.
           </p>
@@ -136,51 +133,75 @@ export function GameFpsList({
       </div>
 
       {singleSetting && (
-        <p className="text-xs opacity-60">
-          Ayar: <span className="font-medium">{singleSetting}</span>. Şu an tek ayarda ölçüm
-          var; başka çözünürlük ve preset için veri toplanmadı.
+        <p className="text-xs text-muted">
+          Ayar: <span className="font-medium text-foreground">{singleSetting}</span>
         </p>
       )}
 
-      <ul className="flex flex-col divide-y rounded border">
-        {sorted.map((row) => (
-          <li key={row.game_id} className="flex items-baseline gap-3 p-2">
-            <span className="flex-1">{row.game_name}</span>
-            <span className="text-lg font-semibold tabular-nums">{row.fps}</span>
-            <span className="text-xs opacity-60">FPS</span>
-            {/* Ham sayı tek başına bir şey söylemiyor: 47 FPS iyi mi? */}
-            <span className={`w-28 shrink-0 text-xs ${bandFor(row.fps).tone}`}>
-              {bandFor(row.fps).label}
-            </span>
-            {/* K97: ölçülmüş ve türetilmiş AYRILIR. Kullanıcı sayının nereden
-                geldiğini görmeli — bu sitenin tüm duruşu. */}
-            {row.origin === "measured" ? (
-              <span
-                className="w-24 shrink-0 text-right text-xs text-emerald-600"
-                title="Bu sayı ölçüldü, hesaplanmadı."
-              >
-                ● ölçüldü
+      {/*
+        Ölçülmüş / tahmin ayrımı RENGE BAĞLI DEĞİL: ölçülmüş satır dolu bir
+        kare ve düz kenarlık taşıyor, tahmin satırı boş kare ve KESİKLİ
+        kenarlık. Renk yalnızca üçüncü bir ipucu (WCAG 1.4.1).
+      */}
+      <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
+        {sorted.map((row) => {
+          const band = bandFor(row.fps);
+          const olculdu = row.origin === "measured";
+          return (
+            <li
+              key={row.game_id}
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5 sm:flex-nowrap"
+            >
+              <span className="min-w-0 flex-1 truncate text-sm">{row.game_name}</span>
+
+              {/* Sayı ile birimi arasında belirgin hiyerarşi. */}
+              <span className="flex shrink-0 items-baseline gap-1">
+                <output className="num text-xl font-semibold tracking-tight">{row.fps}</output>
+                <span className="text-[11px] text-muted">FPS</span>
               </span>
-            ) : (
+
+              <span className={`w-32 shrink-0 text-xs ${band.tone}`}>{band.label}</span>
+
               <span
-                className="w-24 shrink-0 text-right text-xs opacity-60"
-                title={`Ölçüm yok; bu kartın indeksinden hesaplandı. Ortalama hata %${FPS_MARGIN.meanPercent}.`}
+                className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${
+                  olculdu
+                    ? "border border-border bg-surface text-foreground"
+                    : "border border-dashed border-border text-muted"
+                }`}
+                title={
+                  olculdu
+                    ? "Bu sayı ölçüldü, hesaplanmadı."
+                    : `Ölçüm yok; bu kartın indeksinden hesaplandı. Ortalama hata %${FPS_MARGIN.meanPercent}.`
+                }
               >
-                ○ tahmin ±%{FPS_MARGIN.p90Percent}
+                <span aria-hidden="true">{olculdu ? "■" : "□"}</span>{" "}
+                {olculdu ? "ölçüldü" : <>tahmin ±%<span className="num">{FPS_MARGIN.p90Percent}</span></>}
               </span>
-            )}
-            {!singleSetting && <span className="text-xs opacity-50">{row.setting_label}</span>}
-          </li>
-        ))}
+
+              {!singleSetting && (
+                <span className="shrink-0 text-[11px] text-muted">{row.setting_label}</span>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
-      <p className="text-xs opacity-50">
-        {counts.measured} oyunda sayı doğrudan ölçüm; {counts.derived} oyunda bu kartın
-        ölçümü yok ve indeksinden hesaplandı. Hesaplananın ölçülen hata payı: ortalama %
-        {FPS_MARGIN.meanPercent}, tahminlerin %90&apos;ı %{FPS_MARGIN.p90Percent} altında, en
-        kötü %{FPS_MARGIN.maxPercent}. {FPS_MARGIN.method} ({FPS_MARGIN.measuredAt})
-      </p>
-      <p className="text-xs opacity-50">{FPS_BAND_NOTE}</p>
+      <div className="space-y-1 text-xs leading-relaxed text-muted">
+        <p>
+          <span className="num font-medium text-foreground">{counts.measured}</span> oyunda
+          sayı doğrudan ölçüm,{" "}
+          <span className="num font-medium text-foreground">{counts.derived}</span> oyunda bu
+          kartın ölçümü yok ve indeksinden hesaplandı.
+        </p>
+        <p>
+          Hesaplananın ölçülen hata payı: ortalama %
+          <span className="num">{FPS_MARGIN.meanPercent}</span>, tahminlerin %90&apos;ı %
+          <span className="num">{FPS_MARGIN.p90Percent}</span> altında, en kötü %
+          <span className="num">{FPS_MARGIN.maxPercent}</span>. {FPS_MARGIN.method} (
+          {FPS_MARGIN.measuredAt})
+        </p>
+        <p>{FPS_BAND_NOTE}</p>
+      </div>
     </div>
   );
 }

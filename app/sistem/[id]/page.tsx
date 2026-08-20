@@ -91,21 +91,21 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
     build.total_price_minor === null ? null : currentTotalMinor - build.total_price_minor;
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
+    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
       <header>
-        <h1 className="text-2xl font-semibold">{build.title ?? "Kaydedilmiş sistem"}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{build.title ?? "Kaydedilmiş sistem"}</h1>
         {/* Sayfada artık üç kutu var ve hepsi aynı ana ait değil: dondurulmuş
             değerler o günün, bugünkü fiyat ve oyun bazlı FPS bugünün. Tek
             cümlede "aşağıdaki değerler o günün" demek ikisini karıştırırdı. */}
-        <p className="text-sm opacity-70">
+        <p className="mt-1.5 text-sm leading-relaxed text-muted">
           {formatIsoDate(build.created_at)} tarihinde kaydedildi. Dondurulan değerler o
           güne aittir; kesikli çerçeveli kutular bugünün verisiyle hesaplanır.
         </p>
       </header>
 
       {/* Dondurulmuş değerler */}
-      <section className="rounded border p-4">
-        <h2 className="mb-3 text-lg font-semibold">Kayıt anındaki değerler</h2>
+      <section className="mt-8 rounded-lg border border-border p-4 sm:p-5">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Kayıt anındaki değerler</h2>
 
         <div className="flex flex-col gap-3 text-sm">
           <div>
@@ -113,17 +113,17 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                 olur ve KISMI toplam yazilmaz. */}
             {build.total_price_minor !== null ? (
               <>
-                <p className="text-2xl font-semibold">
+                <output className="num block text-3xl font-semibold tracking-tight">
                   {formatPriceMinor(build.total_price_minor, build.currency ?? "USD")}
-                </p>
-                <p className="opacity-70">
+                </output>
+                <p className="text-sm text-muted">
                   Toplam fiyat — {formatIsoDate(build.created_at)} tarihinde donduruldu
                 </p>
               </>
             ) : (
               <>
-                <p className="opacity-70">Toplam fiyat dondurulmadı.</p>
-                <p className="text-xs opacity-50">
+                <p className="text-sm text-muted">Toplam fiyat dondurulmadı.</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted">
                   Sistemdeki parçalardan en az birinin kayıt anında fiyatı yoktu. Eksik
                   fiyatla üretilen toplam olduğundan ucuz görünürdü ve donduğu için
                   sonradan düzeltilemezdi; bu yüzden hiç yazılmadı.
@@ -134,18 +134,20 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
 
           {build.perf_index_snapshot !== null ? (
             <div>
-              <p className="text-xl font-semibold">
-                {build.perf_index_snapshot}
+              <p>
+                <output className="num text-3xl font-semibold tracking-tight">
+                  {build.perf_index_snapshot}
+                </output>
                 {/* K73: 100 tavan degil, sabit referans sistemin degeri. */}
-                <span className="text-xs font-normal opacity-60">
-                  tahmini sistem indeksi — referans sistem 100
+                <span className="ml-2 text-sm font-normal text-muted">
+                  tahmini sistem indeksi — referans sistem <span className="num">100</span>
                 </span>
               </p>
-              <p className="opacity-70">
+              <p className="text-sm text-muted">
                 {bandFor(build.perf_index_snapshot)}{" "}
-                <span className="text-xs opacity-60">(tahmini)</span>
+                <span className="text-xs text-muted">(tahmini)</span>
               </p>
-              <p className="text-xs opacity-50">
+              <p className="mt-1 text-xs leading-relaxed text-muted">
                 {RESOLUTION_LABEL[build.resolution]} için, motor sürümü {build.model_version} ile
                 hesaplandı. Gerçek FPS iddiası değildir.
               </p>
@@ -159,8 +161,8 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             // verisi henüz toplanmamıştı (K71). İkisini de kapsayan bir cümle
             // yazılıyor — kayda bakıp hangisi olduğunu uydurmaktansa.
             <div>
-              <p className="opacity-70">Performans tahmini için yeterli veri yok.</p>
-              <p className="text-xs opacity-50">
+              <p className="text-sm text-muted">Performans tahmini için yeterli veri yok.</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">
                 Bu sistem {RESOLUTION_LABEL[build.resolution]} seçiliyken kaydedildi. İndeks
                 ekran kartı ve işlemcinin ikisini birden gerektiriyor ve her ikisinin de
                 ölçüm verisinin bulunmasını şart koşuyor; kaydedildiği anda bu koşul
@@ -173,7 +175,7 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
 
       {/* Parçalar */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Parçalar ({build.items.length})</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Parçalar ({build.items.length})</h2>
         <ul className="flex flex-col gap-2 text-sm">
           {currentItems.map((item) => {
             // Fark ancak IKI fiyat da varsa hesaplanir (K124).
@@ -182,14 +184,14 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                 ? null
                 : item.current_price_minor - item.unit_price_minor_at_save;
             return (
-              <li key={item.part_id} className="border-l-4 border-neutral-300 pl-3">
+              <li key={item.part_id} className="border-l-2 border-border pl-3">
                 <div>
-                  <span className="opacity-60">
+                  <span className="text-muted">
                     {CATEGORY_LABEL[item.category] ?? item.category}:
                   </span>{" "}
                   {item.label}
                 </div>
-                <div className="text-xs opacity-70">
+                <div className="num mt-0.5 text-xs text-muted">
                   {item.unit_price_minor_at_save !== null
                     ? `Kayıt anında: ${formatPriceMinor(item.unit_price_minor_at_save, build.currency ?? "USD")}`
                     : "Kayıt anında fiyatı yoktu"}
@@ -197,7 +199,7 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                     <>
                       {" · "}bugün: {formatPriceMinor(item.current_price_minor, build.currency ?? "USD")}
                       {delta !== null && delta !== 0 && (
-                        <span className={delta > 0 ? "text-red-600" : "text-green-700"}>
+                        <span className={delta > 0 ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}>
                           {" "}
                           ({delta > 0 ? "+" : ""}
                           {formatPriceMinor(delta, build.currency ?? "USD")})
@@ -218,9 +220,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
           Kesikli çerçeve "bu sayı bugünün" demenin görsel karşılığı; bugünkü
           fiyat kutusuyla aynı dil. */}
       {build.gpu_chip_part_id !== undefined && (
-        <section className="rounded border border-dashed p-4">
-          <h2 className="mb-2 text-lg font-semibold">Bugünkü oyun bazlı FPS</h2>
-          <p className="mb-3 text-xs opacity-60">
+        <section className="mt-8 rounded-lg border border-dashed border-border p-4 sm:p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Bugünkü oyun bazlı FPS</h2>
+          <p className="mb-4 mt-2 text-xs leading-relaxed text-muted">
             Bu liste <span className="font-medium">dondurulmamıştır</span>: bugünkü ölçüm
             verisiyle ve motor sürümü {MODEL_VERSION} ile hesaplandı. Yukarıdaki sistem
             indeksi ise {formatIsoDate(build.created_at)} tarihinde dondu. Ölçüm verisi
@@ -237,16 +239,16 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Güncel fiyat — ayrı kutu, dondurulmuş değerin üzerine yazılmıyor */}
-      <section className="rounded border border-dashed p-4">
-        <h2 className="mb-2 text-lg font-semibold">Bugünkü fiyat</h2>
+      <section className="mt-8 rounded-lg border border-dashed border-border p-4 sm:p-5">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Bugünkü fiyat</h2>
         {allPricedNow ? (
           <p className="text-sm">
-            <span className="text-xl font-semibold">
+            <span className="num text-2xl font-semibold tracking-tight">
               {formatPriceMinor(currentTotalMinor, build.currency ?? "USD")}
             </span>{" "}
-            <span className="text-xs opacity-60">tahmini</span>
+            <span className="text-xs text-muted">tahmini</span>
             {totalDelta !== null && totalDelta !== 0 && (
-              <span className="opacity-70">
+              <span className="text-sm text-muted">
                 {" — kayıt anına göre "}
                 {totalDelta > 0 ? "+" : ""}
                 {formatPriceMinor(totalDelta, build.currency ?? "USD")}
@@ -254,21 +256,21 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             )}
           </p>
         ) : (
-          <p className="text-sm opacity-70">
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
             Parçaların bir kısmının güncel fiyatı yok, bugünkü toplam hesaplanamıyor.
           </p>
         )}
-        <p className="mt-1 text-xs opacity-60">
+        <p className="mt-1 text-xs text-muted">
           Bu sayı bilgi içindir; yukarıdaki dondurulmuş toplamın yerine geçmez.
         </p>
       </section>
 
-      <section className="rounded border p-4">
+      <section className="mt-8 rounded-lg border border-border p-4 sm:p-5">
         <FeedbackForm buildId={build.id} />
       </section>
 
       <p className="text-sm">
-        <Link className="underline" href="/">
+        <Link className="text-accent underline" href="/">
           ← Yeni sistem oluştur
         </Link>
       </p>

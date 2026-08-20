@@ -42,13 +42,13 @@ export function FeedbackForm({ buildId }: { buildId?: string }) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-2 text-sm">
-      <label className="font-medium" htmlFor="feedback-message">
+      <label className="text-xs font-semibold uppercase tracking-wider text-muted" htmlFor="feedback-message">
         Geri bildirim
       </label>
       <div className="flex gap-2">
         <input
           id="feedback-message"
-          className="min-w-0 flex-1 rounded border px-2 py-1"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 py-1.5"
           value={message}
           maxLength={MAX_FEEDBACK_LENGTH}
           placeholder="Ne eksik, ne yanlış?"
@@ -59,14 +59,14 @@ export function FeedbackForm({ buildId }: { buildId?: string }) {
         />
         <button
           type="submit"
-          className="rounded border px-3 py-1 disabled:opacity-40"
+          className="rounded-md border border-border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={state === "sending" || message.trim().length === 0}
         >
           {state === "sending" ? "Gönderiliyor…" : "Gönder"}
         </button>
       </div>
 
-      <p className="text-xs opacity-60">
+      <p className="text-xs text-muted">
         E-posta veya kişisel bilgi yazmayın — sadece mesajınız kaydedilir.
       </p>
 

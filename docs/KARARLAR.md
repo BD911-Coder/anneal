@@ -2834,3 +2834,108 @@ olduğundan ucuz görünür ve donduğu için sonradan düzeltilemez. Eksik vars
 `total_price_minor = null` ve arayüz *"Toplam fiyat dondurulmadı"* diyip
 sebebini yazıyor. K92'nin karışık para birimi için verdiği kararla aynı
 mantık: sessizce yanlış bir sayı vermektense hiç vermemek.
+
+## 2026-08-20 — Sunum turu (UI/UX)
+
+### K130 — Renk teması CSS değişkeniyle, sınıf ikiye katlanmadan
+
+`app/globals.css` dört değişken daha tanımlıyor: `--muted`, `--border`,
+`--surface`, `--accent`. Dosyada zaten bu desen vardı (`--background`,
+`--foreground`) ve Tailwind'in kendi `@theme` mekanizması kullanıldı.
+
+**Bu bir tasarım sistemi değil** (CLAUDE.md kısıtı). Alternatif, koyu tema
+için her sınıfı ikiye katlamaktı (`text-neutral-600 dark:text-neutral-400`)
+ve o hem daha uzun hem tutarsızlığa açıktı. Token katmanı, yardımcı sınıf
+üreteci ya da bileşen kütüphanesi kurulmadı.
+
+**Palet bilinçli olarak sakin:** nötr griler + **tek** vurgu rengi. Semantik
+renk yalnızca hata (kırmızı) ve uyarı (kehribar). Neon, gradyan, RGB vurgu
+ve gölge yığını yok — bu bir ölçüm aleti ve o görünüm güvenilirlik taşımıyor.
+
+### K131 — `opacity-*` ile soluklaştırma bırakıldı
+
+Gövde metninde `opacity-40/50/60` kullanılıyordu. `opacity-40` siyah metinde
+beyaz üzerinde ~2.6:1 veriyor — WCAG AA'nın (4.5:1) belirgin altında.
+
+Yerine `--muted` (#5c626e, **6.4:1**; koyu temada #9aa1ad, **7.1:1**).
+
+**Ölçüldü:** açık temada 347, koyu temada 317 metin öğesi tarandı, **sıfır**
+AA ihlali. Kaydedilmiş sistem sayfasında 224 öğe, sıfır ihlal.
+
+### K132 — Ölçüldü/tahmin ayrımı renge bağlı değil
+
+WCAG 1.4.1: renk tek başına bilgi taşımamalı. Eski hâlde ayrım yeşil nokta
+(`●`) ile soluk halkaydı (`○`) — daralmış görme ya da tek renkli ekranda
+kaybolurdu.
+
+Yeni ayrım **üç ipucu** taşıyor:
+
+| | Ölçüldü | Tahmin |
+|---|---|---|
+| Simge | `■` dolu | `□` boş |
+| Kenarlık | düz | **kesikli** |
+| Metin | "ölçüldü" | "tahmin ±%15,6" |
+
+Hata payı artık rozetin içinde okunuyor, dipnotta değil. Renk hiç
+kullanılmıyor; ayrım biçimden geliyor.
+
+### K133 — Başlıklar sessiz, sayılar yüksek sesli
+
+Tipografi ölçeği dört kademe: sayfa başlığı (`text-3xl`), bölüm başlığı
+(**`text-xs` büyük harf, gri**), gövde (`text-sm`), yardımcı (`text-xs`
+muted). Ana sayılar `text-4xl`/`text-2xl`.
+
+Eskiden her bölüm başlığı `text-lg font-semibold` idi ve sayılarla aynı
+ağırlıktaydı; göz nereye gideceğini bilmiyordu. Bu bir ölçüm aleti — gözün
+gitmesi gereken yer **sayı**, başlık değil.
+
+**Bütün sayılarda tabular figür** (`font-variant-numeric: tabular-nums`).
+FPS listesi, fiyat ve indeks alt alta okunuyor; orantılı rakamlarla sütun
+kayıyordu.
+
+### K134 — Sonuç bölümleri önceliğe göre sıralandı
+
+Eski sıra: fiyat → performans → FPS → yükseltme → seçilen sistem → kaydet →
+**uyumluluk**. Uyumluluk en alttaydı.
+
+Yeni sıra: **uyumluluk** → performans → FPS → fiyat → yükseltme → seçilen
+sistem + kaydet.
+
+**Gerekçe:** sistem kurulamıyorsa performans sayısı ikincildir. C1-C6
+hataları "bu parçalar bir araya gelmez" diyor; onu en alta koymak, kullanıcıya
+önce çalışmayacak bir sistemin FPS'ini göstermek demekti.
+
+Uyumluluk bölümü **yalnızca söyleyecek bir şey varsa** çiziliyor; sorun yoksa
+tek satırlık sessiz bir bilgi kalıyor.
+
+### K135 — Boş durum: sonuç bölümleri hiç çizilmiyor
+
+Hiçbir parça seçilmemişken yedi kategori **ve** yedi boş sonuç bölümü aynı
+anda geliyordu. Artık sonuç sütununda tek bir panel var: sitenin ne
+söyleyeceği, ne söylemeyeceği ve **ölçümü olan oyunların listesi** (K129).
+
+"Ne görmeyeceksiniz" maddesi bilinçli: *"Ölçümü olmayan parçalarda uydurma
+sayı. Veri yoksa yerinde neden olmadığı yazar."* Bu sitenin duruşu ilk
+ekranda söyleniyor.
+
+### K136 — Eksik veri hata gibi değil bilgi gibi görünür
+
+"Ölçüm yok", "indeks hesaplanamıyor", "kontrol edilemedi" kutuları artık
+nötr yüzey (`bg-surface`) ve nötr kenarlık taşıyor. Kırmızı/kehribar yalnızca
+gerçek bulgular (C/W kuralları) ve kayıt hatası için.
+
+**Gerekçe:** eksik veri bir hata değil, projenin bilinçli tercihi (K60, K71).
+Kullanıcıya hata rengiyle göstermek, dürüstlüğü kusur gibi sunardı.
+
+### K137 — Yükleme durumu denendi, ÇALIŞMADI, kaldırıldı
+
+`app/loading.tsx` eklendi ve sayfa **hiç render olmadı**: iki `<main>` DOM'da
+kalıyor, Suspense sınırı çözülmüyor, akan içerik gizli kalıyordu. Sunucu tam
+HTML'i gönderiyordu (`curl` doğruladı) ama istemcideki takas tamamlanmıyordu.
+
+Basitleştirilmiş sürüm de aynı davrandı. **Kaldırıldı.**
+
+Doğrulanamayan bir iyileştirme yerine çalışan sayfa: yükleme iskeleti
+kozmetik, kırık sayfa değil. Sebep bu kurulumda (Next 16 + `force-dynamic` +
+önizleme vekili) tam olarak tespit edilemedi; tekrar denenecekse önce bu
+ayrıştırılmalı. → `SORULAR.md` S45

@@ -198,6 +198,20 @@ Bugün hiçbir şeyi bozmuyor; kontrolün kör noktası olarak yazıldı.
 
 ---
 
+### S45 — `loading.tsx` neden sayfayı render ettirmiyor? 🆕 (2026-08-20)
+
+Sunum turunda yükleme iskeleti eklendi ve sayfa **hiç görünmedi**: DOM'da iki
+`<main>` kalıyor, Suspense sınırı çözülmüyor, akan içerik gizli duruyor.
+Sunucu tam HTML gönderiyor (`curl` ile doğrulandı) — sorun istemcideki takas.
+
+Basit bir sürüm de (tek `div`, `aria-busy` yok) aynı davrandı. Kaldırıldı
+(K137).
+
+Ayrıştırılmadı: Next 16 + `force-dynamic` + önizleme vekilinden hangisi?
+Üretim derlemesinde de olur mu? Yükleme durumu istenirse önce bu cevaplanmalı.
+
+---
+
 ## Kapanmış sorular
 
 ### S39 — Ölçülmüş ve türetilmiş FPS aynı listede yan yana mı dursun? ✅ CEVAPLANDI (2026-08-20)

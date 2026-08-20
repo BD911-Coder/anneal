@@ -239,22 +239,30 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
     return catalog.gpu_variant.find((variant) => variant.id === id)?.label ?? id;
   }
 
-  // [&>*]:min-w-0 — grid çocukları varsayılan olarak içeriklerinden küçülemez.
-  // Uzun bellek adları <select>in içsel genişliğini şişiriyordu ve 375 px
-  // ekranda sayfa 660 px çiziliyordu (beta kapısı envanteri, madde 3).
-  return (
-    <div className="grid gap-8 md:grid-cols-2 [&>*]:min-w-0">
-      {/* --- Seçim --- */}
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">Parça seç</h2>
+  const hicSecimYok = secilenSayisi === 0;
 
-        <div className="flex flex-col gap-3">
+  return (
+    // Mobil önce: tek sütun. Geniş ekranda seçim solda YAPIŞIK kalıyor —
+    // kullanıcı sonuçları okurken seçimini değiştirmek için yukarı kaymak
+    // zorunda kalmasın. `min-w-0`: grid çocukları içeriklerinden küçülemez
+    // ve uzun bellek adları <select>i şişirip 375 px'te taşma yapıyordu.
+    <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-12 [&>*]:min-w-0">
+      {/* ---------------- Seçim ---------------- */}
+      <section aria-labelledby="secim-basligi" className="lg:sticky lg:top-6 lg:self-start">
+        <SectionTitle id="secim-basligi">Parça seç</SectionTitle>
+
+        <div className="mt-4 flex flex-col gap-4">
           {ENGINE_CATEGORIES.map((category) => (
             <div key={category} className="flex flex-col gap-2">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">{CATEGORY_LABEL[category]}</span>
+              {/* Etiket açıkça bağlanıyor (label/for) — sarmalamak da çalışır
+                  ama ekran okuyucu için açık bağ daha güvenilir. */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor={`sec-${category}`} className="text-sm font-medium">
+                  {CATEGORY_LABEL[category]}
+                </label>
                 <select
-                  className="w-full min-w-0 rounded border px-2 py-1"
+                  id={`sec-${category}`}
+                  className="w-full min-w-0 rounded-md border border-border bg-background px-2.5 py-2 text-sm"
                   value={selection[category] ?? ""}
                   onChange={(event) => {
                     forgetShareLink();
@@ -270,11 +278,13 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                   {catalog[category].map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.label}
-                      {prices[item.id] ? ` — ${formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}` : ""}
+                      {prices[item.id]
+                        ? ` — ${formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}`
+                        : ""}
                     </option>
                   ))}
                 </select>
-              </label>
+              </div>
 
               {/*
                 Kart (AIB) seçimi opsiyonel ikinci katman (K86). Yalnızca seçili
@@ -282,12 +292,13 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                 göstermek, kullanıcıya doldurulacak bir alan varmış hissi verir.
               */}
               {category === "gpu" && variantsForChip.length > 0 && (
-                <label className="ml-1 flex flex-col gap-1 border-l-2 border-neutral-300 pl-3 text-sm">
-                  <span className="font-medium">
-                    Kart modeli <span className="font-normal opacity-60">(opsiyonel)</span>
-                  </span>
+                <div className="flex flex-col gap-1.5 border-l-2 border-border pl-3">
+                  <label htmlFor="sec-gpu-variant" className="text-sm font-medium">
+                    Kart modeli <span className="font-normal text-muted">(opsiyonel)</span>
+                  </label>
                   <select
-                    className="w-full min-w-0 rounded border px-2 py-1"
+                    id="sec-gpu-variant"
+                    className="w-full min-w-0 rounded-md border border-border bg-background px-2.5 py-2 text-sm"
                     value={gpuVariantId ?? ""}
                     onChange={(event) => {
                       forgetShareLink();
@@ -304,31 +315,34 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                       </option>
                     ))}
                   </select>
-                  <span className="text-xs opacity-60">
+                  <p className="text-xs leading-relaxed text-muted">
                     Aynı çipten çıkan kartlar uzunluk ve güç limitinde ayrışır. Kart
                     seçmezseniz üreticinin referans değerleri kullanılır.
-                  </span>
-                </label>
+                  </p>
+                </div>
               )}
             </div>
           ))}
 
-          <fieldset className="flex flex-col gap-1 text-sm">
-            <legend className="font-medium">Depolama (birden fazla seçilebilir)</legend>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1 text-sm font-medium">
+              Depolama <span className="font-normal text-muted">(birden fazla)</span>
+            </legend>
             {catalog.storage.map((item) => (
-              <label key={item.id} className="flex items-center gap-2">
+              <label key={item.id} className="flex items-start gap-2 text-sm">
                 <input
                   type="checkbox"
+                  className="mt-0.5 shrink-0"
                   checked={storageIds.includes(item.id)}
                   onChange={() => toggleStorage(item.id)}
                 />
-                <span>
+                <span className="min-w-0">
                   {item.label}{" "}
-                  <span className="opacity-60">
-                    ({item.storage_type}, {item.capacity_gb} GB)
+                  <span className="text-muted">
+                    ({item.storage_type}, <span className="num">{item.capacity_gb}</span> GB)
                   </span>
                   {prices[item.id] && (
-                    <span className="opacity-60">
+                    <span className="num text-muted">
                       {" "}
                       — {formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}
                     </span>
@@ -340,399 +354,526 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
         </div>
       </section>
 
-      {/* --- Sonuç --- */}
-      <section className="flex flex-col gap-6">
-        {/* Toplam fiyat */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Toplam fiyat</h2>
-          {secilenSayisi === 0 ? (
-            <p className="text-sm opacity-70">Parça seçince toplanacak.</p>
-          ) : (
-            <div className="text-sm">
-              {priceSummary.mixedCurrency ? (
-                <p className="text-sm opacity-70">
-                  Seçilen parçaların fiyatları farklı para birimlerinde (
-                  {priceSummary.currencies.join(", ")}). Toplam hesaplanmıyor — kur
-                  bilgisi olmadan bu sayı yanlış olurdu.
+      {/* ---------------- Sonuçlar ---------------- */}
+      <div className="flex flex-col gap-10">
+        {hicSecimYok ? (
+          /*
+            Boş durum: yedi kategori + yedi sonuç bölümü aynı anda gelince
+            kullanıcı nereye bakacağını bilmiyordu. Hiçbir şey seçilmemişken
+            sonuç bölümleri hiç çizilmiyor; yerine sitenin ne söyleyeceği
+            yazıyor ve kapsanan oyunlar baştan görünüyor (K129).
+          */
+          <section
+            aria-labelledby="bos-durum"
+            className="rounded-lg border border-border bg-surface p-6"
+          >
+            <h2 id="bos-durum" className="text-lg font-semibold tracking-tight">
+              Soldan parça seçin
+            </h2>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+              Ekran kartı seçtiğinizde oyun bazlı FPS listesi gelir. İşlemciyi de
+              seçerseniz sistem indeksi ve darboğaz analizi eklenir. Uyumluluk kontrolü
+              ilk parçadan itibaren çalışır.
+            </p>
+
+            <dl className="mt-5 space-y-3 text-sm">
+              <div>
+                <dt className="font-medium">Ne göreceksiniz</dt>
+                <dd className="mt-0.5 leading-relaxed text-muted">
+                  Oyun başına tahmini FPS, sistem indeksi, uyumluluk hataları ve
+                  yükseltme önerisi.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-medium">Ne görmeyeceksiniz</dt>
+                <dd className="mt-0.5 leading-relaxed text-muted">
+                  Ölçümü olmayan parçalarda uydurma sayı. Veri yoksa yerinde neden
+                  olmadığı yazar.
+                </dd>
+              </div>
+            </dl>
+
+            <div className="mt-5 border-t border-border pt-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
+                Ölçümü olan oyunlar
+              </h3>
+              {kapsananOyunlar.length > 0 ? (
+                <p className="mt-2 text-sm leading-relaxed">
+                  <span className="num font-medium">{kapsananOyunlar.length}</span> oyun,{" "}
+                  {RESOLUTIONS.find((r) => r.value === resolution)?.label} için:{" "}
+                  <span className="text-muted">{kapsananOyunlar.join(", ")}</span>
                 </p>
               ) : (
-                <p className="text-2xl font-semibold">
-                  {formatPriceMinor(priceSummary.totalMinor, priceSummary.currency ?? "USD")}{" "}
-                  <span className="align-middle text-xs font-normal opacity-60">tahmini</span>
-                </p>
-              )}
-              <p className="mt-1 opacity-70">
-                {priceSummary.latestIso
-                  ? `Son güncelleme: ${formatIsoDate(priceSummary.latestIso)}`
-                  : "Seçilen parçaların hiçbirinde fiyat kaydı yok."}
-              </p>
-              {priceSummary.missing > 0 && (
-                <p className="mt-1 opacity-70">
-                  {priceSummary.missing} parçanın fiyatı yok, toplama katılmadı.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Performans */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Performans</h2>
-
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
-            <span className="opacity-70">Çözünürlük:</span>
-            {RESOLUTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  // Çözünürlük dondurulan indeksi belirliyor; değişince eldeki
-                  // paylaşım linki artık bu ekrandakini göstermiyor.
-                  forgetShareLink();
-                  setResolution(option.value);
-                }}
-                className={`rounded border px-3 py-1 ${
-                  resolution === option.value ? "border-blue-500 font-semibold" : "opacity-70"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-
-          {performance.ok ? (
-            <div className="flex flex-col gap-2 text-sm">
-              <p>
-                <span className="text-2xl font-semibold">{performance.system_index}</span>
-                {/* "/ 100" kaldirildi (K73): olcek artik sabit referans parcaya
-                    bagli ve 100 tavan degil, orta nokta. RTX 4070 + Ryzen 5 9600X
-                    sistemi 100 verir; daha hizli sistemler 100'u asar. */}
-                <span className="text-xs opacity-60">
-                  {" "}
-                  tahmini sistem indeksi — referans sistem 100
-                </span>
-              </p>
-              <p>
-                <span className="opacity-60">Bant:</span> {performance.band}{" "}
-                <span className="text-xs opacity-60">(tahmini)</span>
-              </p>
-              {/* Katalogun en iyileri bilinmiyorsa satir hic gosterilmez (K83). */}
-              {performance.bottleneck_message && (
-                <p>
-                  <span className="opacity-60">Darboğaz:</span> {performance.bottleneck_message}{" "}
-                  <span className="text-xs opacity-60">(tahmini)</span>
-                  {performance.bottleneck_gain && (
-                    <span className="block text-xs opacity-50">
-                      Kataloğun en iyisine geçseniz: ekran kartı +
-                      {performance.bottleneck_gain.gpu}, işlemci +
-                      {performance.bottleneck_gain.cpu} indeks.
-                    </span>
-                  )}
-                </p>
-              )}
-              <p className="text-xs opacity-50">
-                Ekran kartı {performance.gpu_index}, işlemci {performance.cpu_index}. Bu
-                çözünürlükte ağırlıklar: ekran kartı {performance.weights.gpu}, işlemci{" "}
-                {performance.weights.cpu}. Motor sürümü {performance.model_version}. Gerçek FPS
-                iddiası değildir.
-              </p>
-              {/* Çipin indeksi kartın ölçümü değildir (K86). Bugün her kart için
-                  böyle; sessiz kalmak, kart bazlı ölçüm varmış gibi olurdu. */}
-              {gpuVariant && gpuIndex.origin === "chip" && (
-                <p className="text-xs opacity-50">
-                  Ekran kartı indeksi {gpuChip?.label} çipi için ölçüldü; seçtiğiniz kart
-                  için ayrı ölçüm yok. Fabrika hız aşırtması bu sayıya yansımaz.
-                </p>
-              )}
-              {/* Hata payı ölçülür, tahmin edilmez (K79). Sayı ve ölçüm tarihi tek
-                  yerde tanımlı; ölçüm tekrarlandığında lib/perf-margin.ts değişir. */}
-              <p className="text-xs opacity-50">
-                Ölçülen sapma: ortalama %{PERF_MARGIN.meanPercent}, en büyük %
-                {PERF_MARGIN.maxPercent}. {PERF_MARGIN.method} ({PERF_MARGIN.measuredAt})
-              </p>
-            </div>
-          ) : (
-            <div className="text-sm opacity-70">
-              {olcumEksik ? (
-                <>
-                  {/* Bu metin EKSIK OLANIN ADINI koyuyor. Eskiden "performans
-                      tahmini için yeterli veri yok" diyordu ve hemen altında
-                      dolu bir oyun FPS listesi duruyordu — kullanıcı için
-                      çelişki. İki şey ayrı: sistem indeksi İKİ parçayı birden
-                      gerektiriyor, oyun listesi yalnızca ekran kartını. */}
-                  <p>
-                    <span className="font-medium">Sistem indeksi</span> hesaplanamıyor —
-                    bu sayı işlemci ve ekran kartının ikisinin de ölçümünü gerektiriyor.
-                  </p>
-                  <ul className="mt-1 list-inside list-disc text-xs opacity-80">
-                    {performance.missing.map((kind) => (
-                      <li key={kind}>{eksikSebebi(kind)}</li>
-                    ))}
-                  </ul>
-                  <p className="mt-1 text-xs opacity-80">
-                    Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor.
-                    {fpsRows.length > 0 && (
-                      <>
-                        {" "}
-                        <span className="font-medium">
-                          Aşağıdaki oyun bazlı FPS listesi yine de görünüyor:
-                        </span>{" "}
-                        o liste yalnızca ekran kartına bakıyor, işlemciyi hesaba katmıyor.
-                        İki sayı farklı sorulara cevap veriyor.
-                      </>
-                    )}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p>Tahmin için hem işlemci hem ekran kartı gerekiyor.</p>
-                  <ul className="mt-1 list-inside list-disc">
-                    {performance.missing.map((kind) => (
-                      <li key={kind}>{eksikSebebi(kind)}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Oyun bazlı FPS — Faz A.1. docs/faz-a1-plani.md
-            Liste ve dürüstlük kuralları app/game-fps.tsx içinde; kaydedilmiş
-            sistem sayfası da aynı bileşeni kullanıyor. */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Oyun bazlı FPS</h2>
-
-          {gpuChipId === undefined ? (
-            // Kullanici hangi oyunlarin kapsandigini SECIM YAPMADAN gormeli;
-            // yoksa kart secip tanimadigi bir listeyle karsilasiyor.
-            <div className="text-sm opacity-70">
-              <p>Oyun bazlı tahmin için ekran kartı seçin.</p>
-              {fpsGroupsForRes.length > 0 ? (
-                <p className="mt-1 text-xs">
-                  Bu çözünürlükte ölçümü olan {kapsananOyunlar.length} oyun:{" "}
-                  {kapsananOyunlar.join(", ")}.
-                </p>
-              ) : (
-                <p className="mt-1 text-xs">
+                <p className="mt-2 text-sm text-muted">
                   Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin.
                 </p>
               )}
             </div>
-          ) : (
-            <GameFpsList
-              rows={fpsRows}
-              gpuSelected
-              resolution={resolution}
-              hasDataForResolution={fpsGroupsForRes.length > 0}
-              cpuIndex={cpuId ? perfIndexes[cpuId] : undefined}
-              cpuLabel={cpuId ? catalog.cpu.find((c) => c.id === cpuId)?.label : undefined}
-              bottleneck={performance.ok ? performance.bottleneck : null}
-            />
-          )}
-        </div>
+          </section>
+        ) : (
+          <>
+            {/*
+              SIRALAMA ÖNCELİĞE GÖRE. Uyumluluk hataları en üstte çünkü sistem
+              kurulamıyorsa performans sayısı ikincil. Eskiden en alttaydı.
+            */}
+            {(errors.length > 0 || warnings.length > 0 || gpuLengthUnknown ||
+              gpuTdpFromReference || psuLengthUnknown) && (
+              <section aria-labelledby="uyumluluk-basligi">
+                <SectionTitle id="uyumluluk-basligi">Uyumluluk</SectionTitle>
 
-        {/* Yükseltme önerisi */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Yükseltme önerisi</h2>
+                <div className="mt-4 flex flex-col gap-4">
+                  {errors.length > 0 && (
+                    <FindingList
+                      title={`Hata (${errors.length}) — sistem bu haliyle kurulamaz`}
+                      findings={errors}
+                      className="border-red-600 dark:border-red-500"
+                    />
+                  )}
+                  {warnings.length > 0 && (
+                    <FindingList
+                      title={`Uyarı (${warnings.length}) — kurulur ama dikkat`}
+                      findings={warnings}
+                      className="border-amber-600 dark:border-amber-500"
+                    />
+                  )}
 
-          <label className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="opacity-70">Bütçe farkı:</span>
-            <span>+</span>
-            <input
-              className="w-28 rounded border px-2 py-1"
-              inputMode="numeric"
-              placeholder="2000"
-              value={budgetText}
-              onChange={(event) => setBudgetText(event.target.value)}
-            />
-            <span className="opacity-70">TL</span>
-          </label>
-
-          <div className="mt-3 text-sm">
-            {olcumEksik ? (
-              <p className="opacity-70">
-                Yükseltme önerisi de performans verisine dayanıyor. Ölçüm toplanana kadar
-                &ldquo;bu para neyi ne kadar artırır&rdquo; sorusuna dürüst bir cevap
-                veremiyoruz.
-              </p>
-            ) : !performance.ok ? (
-              <p className="opacity-70">
-                Öneri için önce işlemci ve ekran kartı seçilmeli — artışın neye göre
-                ölçüleceği belli olmuyor.
-              </p>
-            ) : upgrades.length === 0 ? (
-              <p className="opacity-70">
-                {budgetMinor === 0
-                  ? "Bütçe farkı girin, bu parayla ne alınabileceğini arayalım."
-                  : "Bu bütçeyle indeksi artıran bir değişiklik bulunamadı."}
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {upgrades.map((upgrade, index) => (
-                  <li
-                    key={upgrade.category}
-                    className={`border-l-4 pl-3 ${
-                      index === 0 ? "border-green-600" : "border-neutral-300"
-                    }`}
-                  >
-                    <div>
-                      <span className="opacity-60">
-                        {CATEGORY_LABEL[upgrade.category as EngineCategory]}:
-                      </span>{" "}
-                      {labelOf(upgrade.category, upgrade.current_part_id)}{" "}
-                      <span className="opacity-60">→</span>{" "}
-                      <span className="font-medium">
-                        {labelOf(upgrade.category, upgrade.suggested_part_id)}
-                      </span>
+                  {/*
+                    Uzunluğu bilinmeyen kart, C5'i sessizce atlatır (K52). Motor
+                    bunu bulgu olarak üretmiyor — "veri eksik" bir kural ihlali
+                    değil. Ama kullanıcı, kontrolün yapılmadığını "sorun
+                    bulunamadı" sanmamalı; bu yüzden burada söyleniyor.
+                    Görsel olarak HATA gibi değil BİLGİ gibi duruyor.
+                  */}
+                  {(gpuLengthUnknown || gpuTdpFromReference || psuLengthUnknown) && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
+                        Kontrol edilemeyenler
+                      </h3>
+                      {gpuLengthUnknown && (
+                        <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-muted">
+                          {gpuVariant
+                            ? "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et."
+                            : "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et."}
+                        </p>
+                      )}
+                      {gpuTdpFromReference && (
+                        <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-muted">
+                          Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı
+                          çipin referans değeriyle yapıldı — özel tasarım kartlar
+                          referanstan biraz daha fazla çekebilir.
+                        </p>
+                      )}
+                      {psuLengthUnknown && (
+                        <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-muted">
+                          Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol
+                          edilemedi. Üreticinin sayfasından teyit et.
+                        </p>
+                      )}
                     </div>
-                    <div className="text-xs opacity-70">
-                      Fark: {upgrade.price_delta_minor >= 0 ? "+" : ""}
-                      {formatPriceMinor(upgrade.price_delta_minor, priceSummary.currency ?? "USD")} · İndeks{" "}
-                      {upgrade.index_before} → {upgrade.index_after} (+{upgrade.index_delta}){" "}
-                      <span className="opacity-80">tahmini</span>
-                      {index === 0 && upgrades.length > 1 && " · en çok kazandıran"}
+                  )}
+                </div>
+              </section>
+            )}
+
+            {findings.length === 0 && !gpuLengthUnknown && !gpuTdpFromReference &&
+              !psuLengthUnknown && (
+              <p className="text-sm text-muted">
+                Uyumluluk: sorun bulunamadı.
+              </p>
+            )}
+
+            {/* ---- Performans ---- */}
+            <section aria-labelledby="performans-basligi">
+              <SectionTitle id="performans-basligi">Performans</SectionTitle>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted">Çözünürlük</span>
+                <div className="flex gap-1.5" role="group" aria-label="Çözünürlük">
+                  {RESOLUTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={resolution === option.value}
+                      onClick={() => {
+                        // Çözünürlük dondurulan indeksi belirliyor; değişince
+                        // eldeki paylaşım linki artık bu ekrandakini göstermiyor.
+                        forgetShareLink();
+                        setResolution(option.value);
+                      }}
+                      className={`rounded-md border px-3 py-1 text-sm ${
+                        resolution === option.value
+                          ? "border-accent bg-accent/10 font-medium text-accent"
+                          : "border-border text-muted"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {performance.ok ? (
+                <div className="mt-4">
+                  {/* Sayı ile etiketi arasında belirgin hiyerarşi. */}
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <output className="num text-4xl font-semibold tracking-tight">
+                      {performance.system_index}
+                    </output>
+                    {/* K73: 100 tavan değil, sabit referans sistemin değeri. */}
+                    <span className="text-sm text-muted">
+                      tahmini sistem indeksi — referans sistem{" "}
+                      <span className="num">100</span>
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm">
+                    {performance.band} <span className="text-xs text-muted">(tahmini)</span>
+                  </p>
+
+                  {/* Kataloğun en iyileri bilinmiyorsa satır hiç gösterilmez (K83). */}
+                  {performance.bottleneck_message && (
+                    <div className="mt-3 rounded-md border border-border bg-surface px-3 py-2.5">
+                      <p className="text-sm">
+                        <span className="font-medium">Darboğaz:</span>{" "}
+                        {performance.bottleneck_message}
+                      </p>
+                      {performance.bottleneck_gain && (
+                        <p className="mt-1 text-xs text-muted">
+                          Kataloğun en iyisine geçseniz: ekran kartı{" "}
+                          <span className="num">+{performance.bottleneck_gain.gpu}</span>,
+                          işlemci{" "}
+                          <span className="num">+{performance.bottleneck_gain.cpu}</span>{" "}
+                          indeks.
+                        </p>
+                      )}
                     </div>
+                  )}
+
+                  <div className="mt-3 space-y-1 text-xs leading-relaxed text-muted">
+                    <p>
+                      Ekran kartı <span className="num">{performance.gpu_index}</span>,
+                      işlemci <span className="num">{performance.cpu_index}</span>. Bu
+                      çözünürlükte ağırlıklar: ekran kartı{" "}
+                      <span className="num">{performance.weights.gpu}</span>, işlemci{" "}
+                      <span className="num">{performance.weights.cpu}</span>. Motor sürümü{" "}
+                      {performance.model_version}. Gerçek FPS iddiası değildir.
+                    </p>
+                    {/* Çipin indeksi kartın ölçümü değildir (K86). */}
+                    {gpuVariant && gpuIndex.origin === "chip" && (
+                      <p>
+                        Ekran kartı indeksi {gpuChip?.label} çipi için ölçüldü; seçtiğiniz
+                        kart için ayrı ölçüm yok. Fabrika hız aşırtması bu sayıya yansımaz.
+                      </p>
+                    )}
+                    {/* Hata payı ölçülür, tahmin edilmez (K79). */}
+                    <p>
+                      Ölçülen sapma: ortalama %
+                      <span className="num">{PERF_MARGIN.meanPercent}</span>, en büyük %
+                      <span className="num">{PERF_MARGIN.maxPercent}</span>.{" "}
+                      {PERF_MARGIN.method} ({PERF_MARGIN.measuredAt})
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-md border border-border bg-surface px-3 py-3">
+                  {olcumEksik ? (
+                    <>
+                      {/* Bu metin EKSİK OLANIN ADINI koyuyor (K126). Eskiden
+                          "performans tahmini için yeterli veri yok" diyordu ve
+                          hemen altında dolu bir FPS listesi duruyordu. */}
+                      <p className="text-sm">
+                        <span className="font-medium">Sistem indeksi</span> hesaplanamıyor —
+                        bu sayı işlemci ve ekran kartının ikisinin de ölçümünü gerektiriyor.
+                      </p>
+                      <ul className="mt-1.5 list-inside list-disc text-xs text-muted">
+                        {performance.missing.map((kind) => (
+                          <li key={kind}>{eksikSebebi(kind)}</li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-xs leading-relaxed text-muted">
+                        Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor.
+                        {fpsRows.length > 0 && (
+                          <>
+                            {" "}
+                            <span className="font-medium text-foreground">
+                              Aşağıdaki oyun bazlı FPS listesi yine de görünüyor:
+                            </span>{" "}
+                            o liste yalnızca ekran kartına bakıyor, işlemciyi hesaba
+                            katmıyor. İki sayı farklı sorulara cevap veriyor.
+                          </>
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm">
+                        Sistem indeksi için hem işlemci hem ekran kartı gerekiyor.
+                      </p>
+                      <ul className="mt-1.5 list-inside list-disc text-xs text-muted">
+                        {performance.missing.map((kind) => (
+                          <li key={kind}>{eksikSebebi(kind)}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {/* ---- Oyun bazlı FPS (A.1) ---- */}
+            <section aria-labelledby="fps-basligi">
+              <SectionTitle id="fps-basligi">Oyun bazlı FPS</SectionTitle>
+              <div className="mt-4">
+                {gpuChipId === undefined ? (
+                  <div className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-muted">
+                    <p>Oyun bazlı tahmin için ekran kartı seçin.</p>
+                    {kapsananOyunlar.length > 0 ? (
+                      <p className="mt-1.5 text-xs leading-relaxed">
+                        Bu çözünürlükte ölçümü olan{" "}
+                        <span className="num">{kapsananOyunlar.length}</span> oyun:{" "}
+                        {kapsananOyunlar.join(", ")}.
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs">
+                        Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <GameFpsList
+                    rows={fpsRows}
+                    gpuSelected
+                    resolution={resolution}
+                    hasDataForResolution={fpsGroupsForRes.length > 0}
+                    cpuIndex={cpuId ? perfIndexes[cpuId] : undefined}
+                    cpuLabel={cpuId ? catalog.cpu.find((c) => c.id === cpuId)?.label : undefined}
+                    bottleneck={performance.ok ? performance.bottleneck : null}
+                  />
+                )}
+              </div>
+            </section>
+
+            {/* ---- Toplam fiyat ---- */}
+            <section aria-labelledby="fiyat-basligi">
+              <SectionTitle id="fiyat-basligi">Toplam fiyat</SectionTitle>
+              <div className="mt-4">
+                {priceSummary.mixedCurrency ? (
+                  <p className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm leading-relaxed text-muted">
+                    Seçilen parçaların fiyatları farklı para birimlerinde (
+                    {priceSummary.currencies.join(", ")}). Toplam hesaplanmıyor — kur
+                    bilgisi olmadan bu sayı yanlış olurdu.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <output className="num text-2xl font-semibold tracking-tight">
+                      {formatPriceMinor(
+                        priceSummary.totalMinor,
+                        priceSummary.currency ?? "USD",
+                      )}
+                    </output>
+                    <span className="text-xs text-muted">tahmini</span>
+                  </div>
+                )}
+                <div className="mt-2 space-y-0.5 text-xs text-muted">
+                  <p>
+                    {priceSummary.latestIso
+                      ? `Son güncelleme: ${formatIsoDate(priceSummary.latestIso)}`
+                      : "Seçilen parçaların hiçbirinde fiyat kaydı yok."}
+                  </p>
+                  {priceSummary.missing > 0 && (
+                    <p>
+                      <span className="num">{priceSummary.missing}</span> parçanın fiyatı
+                      yok, toplama katılmadı.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* ---- Yükseltme önerisi ---- */}
+            <section aria-labelledby="yukseltme-basligi">
+              <SectionTitle id="yukseltme-basligi">Yükseltme önerisi</SectionTitle>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <label htmlFor="butce" className="text-xs text-muted">
+                  Bütçe farkı
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <span aria-hidden="true" className="text-sm text-muted">
+                    +
+                  </span>
+                  <input
+                    id="butce"
+                    className="num w-28 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm"
+                    inputMode="numeric"
+                    placeholder="2000"
+                    value={budgetText}
+                    onChange={(event) => setBudgetText(event.target.value)}
+                  />
+                  <span className="text-sm text-muted">TL</span>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                {olcumEksik ? (
+                  <p className="text-sm leading-relaxed text-muted">
+                    Yükseltme önerisi de performans verisine dayanıyor. Ölçüm toplanana
+                    kadar &ldquo;bu para neyi ne kadar artırır&rdquo; sorusuna dürüst bir
+                    cevap veremiyoruz.
+                  </p>
+                ) : !performance.ok ? (
+                  <p className="text-sm leading-relaxed text-muted">
+                    Öneri için önce işlemci ve ekran kartı seçilmeli — artışın neye göre
+                    ölçüleceği belli olmuyor.
+                  </p>
+                ) : upgrades.length === 0 ? (
+                  <p className="text-sm text-muted">
+                    {budgetMinor === 0
+                      ? "Bütçe farkı girin, bu parayla ne alınabileceğini arayalım."
+                      : "Bu bütçeyle indeksi artıran bir değişiklik bulunamadı."}
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {upgrades.map((upgrade, index) => (
+                      <li
+                        key={upgrade.category}
+                        className={`border-l-2 pl-3 ${
+                          index === 0 ? "border-accent" : "border-border"
+                        }`}
+                      >
+                        <div className="text-sm">
+                          <span className="text-muted">
+                            {CATEGORY_LABEL[upgrade.category as EngineCategory]}:
+                          </span>{" "}
+                          {labelOf(upgrade.category, upgrade.current_part_id)}{" "}
+                          <span aria-hidden="true" className="text-muted">
+                            →
+                          </span>{" "}
+                          <span className="font-medium">
+                            {labelOf(upgrade.category, upgrade.suggested_part_id)}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted">
+                          Fark:{" "}
+                          <span className="num">
+                            {upgrade.price_delta_minor >= 0 ? "+" : ""}
+                            {formatPriceMinor(
+                              upgrade.price_delta_minor,
+                              priceSummary.currency ?? "USD",
+                            )}
+                          </span>{" "}
+                          · İndeks <span className="num">{upgrade.index_before}</span> →{" "}
+                          <span className="num">{upgrade.index_after}</span> (
+                          <span className="num">+{upgrade.index_delta}</span>) tahmini
+                          {index === 0 && upgrades.length > 1 && " · en çok kazandıran"}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+
+            {/* ---- Seçilen sistem + kaydet ---- */}
+            <section
+              aria-labelledby="sistem-basligi"
+              className="rounded-lg border border-border bg-surface p-4 sm:p-5"
+            >
+              <SectionTitle id="sistem-basligi">Seçilen sistem</SectionTitle>
+
+              <ul className="mt-3 flex flex-col gap-1 text-sm">
+                {ENGINE_CATEGORIES.filter((category) => selection[category]).map((category) => {
+                  // Ekran kartında kart seçiliyse listede kart görünür: satın
+                  // alınan, fiyatı toplanan ve kaydedilen satır odur (K86).
+                  const item =
+                    category === "gpu" && gpuVariant
+                      ? gpuVariant
+                      : catalog[category].find(
+                          (candidate) => candidate.id === selection[category],
+                        );
+                  return (
+                    <li key={category}>
+                      <span className="text-muted">{CATEGORY_LABEL[category]}:</span>{" "}
+                      {item?.label}
+                      {category === "gpu" && gpuVariant && (
+                        <span className="text-xs text-muted"> · çip: {gpuChip?.label}</span>
+                      )}
+                      <PriceTag price={item ? prices[item.id] : undefined} />
+                    </li>
+                  );
+                })}
+                {selectedStorage.map((item) => (
+                  <li key={item.id}>
+                    <span className="text-muted">Depolama:</span> {item.label}
+                    <PriceTag price={prices[item.id]} />
                   </li>
                 ))}
               </ul>
-            )}
-          </div>
-        </div>
 
-        {/* Seçilen sistem */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Seçilen sistem</h2>
-          {secilenSayisi === 0 ? (
-            <p className="text-sm opacity-70">Henüz parça seçilmedi.</p>
-          ) : (
-            <ul className="flex flex-col gap-1 text-sm">
-              {ENGINE_CATEGORIES.filter((category) => selection[category]).map((category) => {
-                // Ekran kartında kart seçiliyse listede kart görünür: satın
-                // alınan, fiyatı toplanan ve kaydedilen satır odur (K86).
-                const item =
-                  category === "gpu" && gpuVariant
-                    ? gpuVariant
-                    : catalog[category].find((candidate) => candidate.id === selection[category]);
-                return (
-                  <li key={category}>
-                    <span className="opacity-60">{CATEGORY_LABEL[category]}:</span> {item?.label}
-                    {category === "gpu" && gpuVariant && (
-                      <span className="text-xs opacity-50"> · çip: {gpuChip?.label}</span>
-                    )}
-                    <PriceTag price={item ? prices[item.id] : undefined} />
-                  </li>
-                );
-              })}
-              {selectedStorage.map((item) => (
-                <li key={item.id}>
-                  <span className="opacity-60">Depolama:</span> {item.label}
-                  <PriceTag price={prices[item.id]} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+              <div className="mt-5 border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={save}
+                  disabled={saving || hicSecimYok}
+                  className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-medium text-background disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {saving ? "Kaydediliyor…" : "Sistemi kaydet"}
+                </button>
 
-        {/* Paylaşılabilir link */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Kaydet ve paylaş</h2>
+                <p className="mt-2 text-xs leading-relaxed text-muted">
+                  Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan
+                  değişmez. İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır.
+                  İndeks hesaplanamıyorsa — parça seçilmediği için ya da ölçüm verisi
+                  olmadığı için — sistem yine kaydedilir, indeks yerine sebebi görünür.
+                </p>
 
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving || secilenSayisi === 0}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-40"
-          >
-            {saving ? "Kaydediliyor…" : "Sistemi kaydet"}
-          </button>
+                {shareUrl && (
+                  <div className="mt-4">
+                    <label htmlFor="paylasim-linki" className="text-xs text-muted">
+                      Bu adres sistemi açar
+                    </label>
+                    <input
+                      id="paylasim-linki"
+                      readOnly
+                      value={shareUrl}
+                      onFocus={(event) => event.currentTarget.select()}
+                      className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-1.5 font-mono text-xs"
+                    />
+                    <a className="mt-2 inline-block text-sm text-accent underline" href={shareUrl}>
+                      Kaydedilen sistemi aç →
+                    </a>
+                  </div>
+                )}
 
-          <p className="mt-2 text-xs opacity-60">
-            Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan değişmez.
-            İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır. İndeks
-            hesaplanamıyorsa — parça seçilmediği için ya da ölçüm verisi olmadığı için —
-            sistem yine kaydedilir, indeks yerine sebebi görünür.
-          </p>
-
-          {shareUrl && (
-            <div className="mt-3 text-sm">
-              <p className="mb-1 opacity-70">Bu adres sistemi açar:</p>
-              <input
-                readOnly
-                value={shareUrl}
-                onFocus={(event) => event.currentTarget.select()}
-                className="w-full rounded border px-2 py-1 font-mono text-xs"
-              />
-              <a className="mt-1 inline-block underline" href={shareUrl}>
-                Kaydedilen sistemi aç →
-              </a>
-            </div>
-          )}
-
-          {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
-        </div>
-
-        {/* Uyumluluk */}
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Uyumluluk</h2>
-
-          {/*
-            Uzunluğu bilinmeyen kart, C5'i sessizce atlatır (K52). Motor bunu
-            bulgu olarak üretmiyor — bulgular SCHEMA.md bölüm 7'deki kurallardır
-            ve "veri eksik" bir kural ihlali değil. Ama kullanıcı, kontrolün
-            yapılmadığını "sorun bulunamadı" sanmamalı; o yüzden burada söyleniyor.
-          */}
-          {gpuLengthUnknown && (
-            <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
-              {gpuVariant
-                ? // Kart seçiliyken çipin referans ölçüsüne DÜŞÜLMEZ (K87): AIB
-                  // kartları referanstan uzun olur, referansla "sığar" demek
-                  // satın alınıp takılamayan kart demektir.
-                  "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et."
-                : "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et."}
-            </p>
-          )}
-
-          {gpuTdpFromReference && (
-            <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
-              Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı çipin referans
-              değeriyle yapıldı — özel tasarım kartlar referanstan biraz daha fazla
-              çekebilir.
-            </p>
-          )}
-
-          {psuLengthUnknown && (
-            <p className="mb-3 border-l-4 border-slate-400 pl-3 text-sm">
-              Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
-              Üreticinin sayfasından teyit et.
-            </p>
-          )}
-
-          {findings.length === 0 ? (
-            <p className="text-sm">
-              {secilenSayisi === 0 ? "Parça seçince kontrol edilecek." : "Sorun bulunamadı."}
-            </p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {errors.length > 0 && (
-                <FindingList
-                  title={`Hata (${errors.length}) — sistem bu haliyle kurulamaz`}
-                  findings={errors}
-                  className="border-red-500"
-                />
-              )}
-              {warnings.length > 0 && (
-                <FindingList
-                  title={`Uyarı (${warnings.length}) — kurulur ama dikkat`}
-                  findings={warnings}
-                  className="border-amber-500"
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+                {saveError && (
+                  <p
+                    role="alert"
+                    className="mt-3 rounded-md border border-red-600/40 bg-red-500/[0.07] px-3 py-2 text-sm text-red-700 dark:text-red-400"
+                  >
+                    {saveError}
+                  </p>
+                )}
+              </div>
+            </section>
+          </>
+        )}
+      </div>
     </div>
+  );
+}
+
+/**
+ * Bölüm başlığı — tipografi ölçeğinin tek yerde durması için.
+ *
+ * Yerel bir sunum yardımcısı; tasarım sistemi değil. Başlıklar sessiz
+ * (küçük, büyük harf, gri), veriler yüksek sesli: bu bir ölçüm aleti ve
+ * gözün gitmesi gereken yer sayı, başlık değil.
+ */
+function SectionTitle({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h2 id={id} className="text-xs font-semibold uppercase tracking-wider text-muted">
+      {children}
+    </h2>
   );
 }
 
@@ -817,9 +958,14 @@ function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>)
 
 /** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */
 function PriceTag({ price }: { price?: CurrentPrice }) {
-  if (!price) return <span className="opacity-40"> — fiyat yok</span>;
+  // opacity-40 yerine `text-muted`: %40 saydamlık gövde metninde WCAG AA'yı
+  // (4.5:1) karşılamıyordu; --muted 6.4:1 veriyor.
+  if (!price) return <span className="text-muted"> — fiyat yok</span>;
   return (
-    <span className="opacity-60"> — {formatPriceMinor(price.price_minor, price.currency)}</span>
+    <span className="num text-muted">
+      {" "}
+      — {formatPriceMinor(price.price_minor, price.currency)}
+    </span>
   );
 }
 
@@ -837,10 +983,13 @@ function FindingList({
       <h3 className="mb-2 text-sm font-semibold">{title}</h3>
       <ul className="flex flex-col gap-2">
         {findings.map((finding) => (
-          <li key={finding.code} className={`border-l-4 pl-3 text-sm ${className}`}>
-            <span className="font-mono text-xs opacity-60">{finding.code}</span>{" "}
+          <li key={finding.code} className={`border-l-2 pl-3 text-sm leading-relaxed ${className}`}>
+            {/* Kod renk değil METİN olarak taşınıyor: hata/uyarı ayrımı
+                kenarlık rengiyle DE gösteriliyor ama tek başına renge
+                bağlı değil — başlıkta "Hata"/"Uyarı" yazıyor. */}
+            <span className="font-mono text-xs text-muted">{finding.code}</span>{" "}
             {finding.message}
-            <div className="mt-0.5 font-mono text-xs opacity-50">
+            <div className="mt-0.5 font-mono text-xs text-muted">
               {finding.involved_part_ids.join(", ")}
             </div>
           </li>
