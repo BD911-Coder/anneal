@@ -14,15 +14,15 @@ export const FPS_MARGIN = {
   /** Ortalama mutlak hata. */
   meanPercent: 6.8,
   /** Tahminlerin %90'ı bu hatanın altında. */
-  p90Percent: 15.0,
+  p90Percent: 15.6,
   /** En kötü tek nokta. Gizlenmiyor: %90 dilimin dışı da gerçek. */
-  maxPercent: 35.3,
+  maxPercent: 33.4,
   /** Tahminlerin yüzde kaçı ±%10 içinde kaldı. */
   within10Percent: 78,
   /** Ölçümde kullanılan nokta sayısı (türetilebilir hücreler). */
-  points: 232,
+  points: 192,
   /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
-  measuredAtPoints: 346,
+  measuredAtPoints: 381,
   measuredAt: "2026-08-20",
   // === ÖLÇÜM BİTİŞ ===
 

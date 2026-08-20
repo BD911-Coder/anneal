@@ -11,11 +11,11 @@
 
 export const PERF_MARGIN = {
   // === ÖLÇÜM BAŞLANGIÇ — npm run indeks:sapma yazar, elle değiştirme ===
-  meanPercent: 5.2,
+  meanPercent: 4.9,
   maxPercent: 11.5,
   comparedParts: 25,
   /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
-  measuredAtPoints: 346,
+  measuredAtPoints: 381,
   measuredAt: "2026-08-20",
   // === ÖLÇÜM BİTİŞ ===
 

@@ -61,6 +61,15 @@ const MIN_OYUN = 3;
 const GUNCEL_TUR = [
   // GPU — ComputerBase RX 9070 GRE testi (2026 oyun paketi, 14 kart)
   "amd-radeon-rx-9070-gre-test.97564",
+  // GPU — ComputerBase "GeForce vs Radeon Benchmark Test 2026" parkur makalesi.
+  // AYNI TUR, ayri sayfa: iki makale ayni 23 oyunluk parkuru yayinliyor ve
+  // ORTAK 8 KARTIN DEGERLERI BIREBIR AYNI (Cyberpunk 2077 1440p: RTX 5090
+  // 202,6 / RTX 4090 149,3 / RTX 5070 Ti 124,6 / RX 9070 XT 120,4 / RX 9070
+  // 109,4 / RTX 5070 108,5 / RX 7600 55,3 / RTX 4060 47,2 — sekizi de tutuyor).
+  // Bu bir KOPRU degil; K77'nin yasakladigi sey iki AYRI olcum turunu ortak
+  // kart uzerinden baglamak. Burada olcum tek, sayfa iki. Parkur makalesi
+  // 16 kart yayinliyor; fazladan olan RTX 5080 bu yuzden alinabildi (K123).
+  "nvidia-geforce-amd-radeon-benchmark-test-2026.97097",
   // CPU — ComputerBase islemci ranglistesi, buyuk siralama grafigi (22 islemci).
   // Ayni sayfadaki bellek-kanali karsilastirmasi (12 islemci) AYRI bir turdur
   // ve capayla ayrilmistir; oradan gelen satirlar hesaba girmez.
