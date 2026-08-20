@@ -15,38 +15,21 @@ import { loadEnvFile } from "node:process";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client.ts";
+import { sadeceGelistirmeVeritabani } from "./guard-dev-db.mjs";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
 }
 
 // ---------------------------------------------------------------------------
-// 4. katman: canlıya bağlıysa çalışma
+// 4. katman: yanlış veritabanına bağlıysa çalışma
 // ---------------------------------------------------------------------------
-function refuseIfLive(): void {
-  const reasons: string[] = [];
-
-  if (process.env.NODE_ENV === "production") {
-    reasons.push("NODE_ENV=production");
-  }
-  if (process.env.VERCEL_ENV === "production") {
-    reasons.push("VERCEL_ENV=production");
-  }
-  // Canlı ortamda .env.local dosyası olmaz, değişkenler platformdan gelir.
-  // Bu yüzden bayrağın varlığı "burası bir geliştirme makinesi" demektir.
-  if (process.env.DEV_SEED_ALLOWED !== "true") {
-    reasons.push("DEV_SEED_ALLOWED bayrağı 'true' değil");
-  }
-
-  if (reasons.length > 0) {
-    console.error("Seed çalıştırılmadı. Sebep:");
-    for (const reason of reasons) console.error(`  - ${reason}`);
-    console.error("\nBu script sahte veri üretir ve canlı veritabanına yazılmamalıdır.");
-    process.exit(1);
-  }
-}
-
-refuseIfLive();
+//
+// Koruma `scripts/guard-dev-db.mjs` içinde, `seed:temizle` ile ortak (K94).
+// Bayrak kontrolü tek başına yetmiyordu: DEV_SEED_ALLOWED `.env.local`'den
+// gelir ama DATABASE_URL kabuktan ezilebilir — o zaman bayrak "geliştirme
+// makinesi" der, hedef ise canlı olur. Artık hedefin kendisi doğrulanıyor.
+sadeceGelistirmeVeritabani("Seed", "sahte veri üretir")
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {

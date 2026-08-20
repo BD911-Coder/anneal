@@ -93,6 +93,10 @@ istiyor mu". Kod ve veri bu soruyu cevaplamıyor; kullanıcı cevaplıyor.
 **Bitiş ölçütü:** **10 kişi siteye girip sana hiçbir şey sormadan bir sistem
 toplayabildi.**
 
+- [ ] **Gerçek veriyi canlıya aktar** *(sen çalıştıracaksın)* — plan hazır ve
+      onaylı: `docs/canliya-aktarim-plani.md`. Altı komut, adres kabuk
+      değişkeninde kalır, `.env.local` değişmez. Faz 2'nin ilk adımı: site
+      gerçek veriyle dolmadan kimseye gösterilemez.
 - [ ] Kendin baştan sona kullan, 20 dakika *(sen — bunu hâlâ yapmadın)*
 - [ ] 3 arkadaşına göster, izle, not al
 - [ ] Çıkan sorunları düzelt

@@ -18,26 +18,13 @@ import { existsSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 import pg from "pg";
 
+import { sadeceGelistirmeVeritabani } from "./guard-dev-db.mjs";
+
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
 }
 
-// seed.mts'teki 4. katmanin aynisi: canliya bagliysak calisma.
-function refuseIfLive() {
-  const reasons = [];
-  if (process.env.NODE_ENV === "production") reasons.push("NODE_ENV=production");
-  if (process.env.VERCEL_ENV === "production") reasons.push("VERCEL_ENV=production");
-  if (process.env.DEV_SEED_ALLOWED !== "true") reasons.push("DEV_SEED_ALLOWED bayragi 'true' degil");
-
-  if (reasons.length > 0) {
-    console.error("Temizlik calistirilmadi. Sebep:");
-    for (const r of reasons) console.error(`  - ${r}`);
-    console.error("\nBu script veri siler ve canli veritabaninda calistirilmamalidir.");
-    process.exit(1);
-  }
-}
-
-refuseIfLive();
+sadeceGelistirmeVeritabani("Temizlik", "veri siler");
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {

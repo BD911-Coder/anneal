@@ -2036,3 +2036,52 @@ ortak kart gerekir. Bugünkü veriyle yalnızca "kurulmaz" denebilir.
 
 Ölçüm kaydı: `docs/log/2026-08-20-s37-kopru-olcumu.md`.
 Tur A'dan okunan 30 değer veritabanına **yazılmadı**.
+
+### K94 — Sahte veri yazan script'ler hedefi doğrular, makineyi değil
+
+`db:seed` ve `seed:temizle` yalnızca `.env.local`'in gösterdiği veritabanında
+çalışır. Hedef adres `.env.local`'dekiyle birebir aynı değilse script durur.
+
+Koruma `scripts/guard-dev-db.mjs` içinde, iki script için ortak.
+
+**Kapatılan açık.** Eski koruma `DEV_SEED_ALLOWED` bayrağına bakıyordu ve o
+bayrak `.env.local`'den geliyor. Node'un `loadEnvFile`'i **ortamdan gelen
+değeri ezmez**, dosyadan geleni ezer. Yani:
+
+```
+DATABASE_URL='<canlı>' npm run db:seed
+```
+
+komutunda `DATABASE_URL` kabuktan (canlı), `DEV_SEED_ALLOWED` dosyadan
+(`true`) geliyordu. Eski koruma "burası bir geliştirme makinesi" diye geçirir
+ve **canlı veritabanına dev-seed yazardı.**
+
+Hata bayrağın kendisinde değil, neyi tarif ettiğindeydi: bayrak **makineyi**
+tarif ediyordu, **hedefi** değil. Yeni kontrol hedefe bakıyor.
+
+**Ölçüldü — altı durum:**
+
+| Durum | `db:seed` | `seed:temizle` |
+|---|---|---|
+| `.env.local` adresi | çalıştı | çalıştı (17 parça silindi) |
+| Kabuktan farklı adres | **reddetti**, çıkış 1 | **reddetti**, çıkış 1 |
+| `DATABASE_URL` yok | **reddetti**, çıkış 1 | **reddetti**, çıkış 1 |
+
+Reddetme mesajı iki adresi de özetliyor (parola sızdırmadan):
+
+```
+Seed calistirilmadi. Sebep:
+  - hedef .env.local'deki veritabani DEGIL
+    (hedef: canli-ornek.supabase.com/postgres,
+     .env.local: aws-0-eu-central-1.pooler.supabase.com/postgres)
+```
+
+`.env.local` yoksa ya da içinde `DATABASE_URL` yoksa da reddediyor:
+karşılaştırılacak bir şey olmadan "burası geliştirme" denemez.
+
+**Gerekçe:** dev-seed korumasının 1. ve 4. katmanları (damga + canlıda
+çalışmama) bu açıkla birlikte kâğıt üzerinde kalıyordu. Koruma, hatırlamaya
+değil erişimin doğrulanmasına dayanmalı — K29'un kurduğu mantığın aynısı.
+
+Açık, canlıya aktarım planı yazılırken fark edildi
+(`docs/canliya-aktarim-plani.md`); plan uygulanmadan önce kapatıldı.
