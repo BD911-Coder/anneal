@@ -12,17 +12,17 @@
 export const FPS_MARGIN = {
   // === ÖLÇÜM BAŞLANGIÇ — npm run fps:sapma yazar, elle değiştirme ===
   /** Ortalama mutlak hata. */
-  meanPercent: 6.6,
+  meanPercent: 6.8,
   /** Tahminlerin %90'ı bu hatanın altında. */
-  p90Percent: 13.7,
+  p90Percent: 15.0,
   /** En kötü tek nokta. Gizlenmiyor: %90 dilimin dışı da gerçek. */
   maxPercent: 35.3,
   /** Tahminlerin yüzde kaçı ±%10 içinde kaldı. */
-  within10Percent: 79,
+  within10Percent: 78,
   /** Ölçümde kullanılan nokta sayısı (türetilebilir hücreler). */
-  points: 184,
+  points: 232,
   /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
-  measuredAtPoints: 298,
+  measuredAtPoints: 346,
   measuredAt: "2026-08-20",
   // === ÖLÇÜM BİTİŞ ===
 

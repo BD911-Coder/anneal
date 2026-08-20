@@ -68,7 +68,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
   // gider.
   const fpsPartId =
     gpuIndex.origin === "variant" ? build.gpu_variant_part_id : build.gpu_chip_part_id;
-  const fpsRows = estimateGameFps(fpsPartId, gpuIndex.value, fpsGroups);
+  // Kaydedilen sistemin çözünürlüğü dondurulmuş (K43); liste onu izler.
+  const fpsGroupsForRes = fpsGroups.filter((group) => group.resolution === build.resolution);
+  const fpsRows = estimateGameFps(fpsPartId, gpuIndex.value, fpsGroupsForRes);
 
   const currentItems = build.items.map((item) => ({
     ...item,
@@ -203,7 +205,12 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             indeksi ise {formatIsoDate(build.created_at)} tarihinde dondu. Ölçüm verisi
             yalnızca üstüne eklenerek büyüdüğü için bu sayılar zamanla değişebilir.
           </p>
-          <GameFpsList rows={fpsRows} gpuSelected resolution={build.resolution} />
+          <GameFpsList
+            rows={fpsRows}
+            gpuSelected
+            resolution={build.resolution}
+            hasDataForResolution={fpsGroupsForRes.length > 0}
+          />
         </section>
       )}
 

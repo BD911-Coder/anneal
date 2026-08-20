@@ -154,7 +154,10 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
   // Ölçüm ve indeks çip seviyesinde (K86); kart seçiliyse de çipin id'si
   // gider. `origin === "chip"` uyarısı zaten ayrıca gösteriliyor.
   const fpsPartId = gpuIndex.origin === "variant" ? gpuVariantId : gpuChipId;
-  const fpsRows = estimateGameFps(fpsPartId, gpuIndex.value, fpsGroups);
+  // Liste kullanıcının seçtiği çözünürlüğü izler. Süzme metin eşleştirmesiyle
+  // değil, grubun kendi `resolution` alanıyla yapılıyor.
+  const fpsGroupsForRes = fpsGroups.filter((group) => group.resolution === resolution);
+  const fpsRows = estimateGameFps(fpsPartId, gpuIndex.value, fpsGroupsForRes);
 
   const performance = computePerformance({
     resolution,
@@ -476,7 +479,12 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
           {gpuChipId === undefined ? (
             <p className="text-sm opacity-70">Oyun bazlı tahmin için ekran kartı seçin.</p>
           ) : (
-            <GameFpsList rows={fpsRows} gpuSelected resolution={resolution} />
+            <GameFpsList
+              rows={fpsRows}
+              gpuSelected
+              resolution={resolution}
+              hasDataForResolution={fpsGroupsForRes.length > 0}
+            />
           )}
         </div>
 

@@ -2546,3 +2546,48 @@ olmasının sebebi bu — tercih değil, zorunluluk.
 **Yeniden denenecek tek aday:** OpenBenchmarking, yapılandırılmış veri
 yayınlayan tek aday ve `robots.txt` izin veriyor; 403 aşılabilirse oyun
 kapsamı ölçülmeli. Ama Linux/sentetik ağırlıklı olması bekleniyor.
+
+### K114 — İkinci çözünürlük ekseni açıldı, K75 tavanına pay bırakıldı
+
+**Ölçüm:** kullandığımız inceleme her oyunu **üç çözünürlükte** yayınlıyor
+(2560×1440, 3440×1440, 3840×2160) — sayfa başına 36 grafik, çözünürlük başına
+36. Biz yalnızca 1440p'yi almıştık; **4K ve UWQHD tamamen alınmamıştı.**
+
+**K75 hesabı yeniden yapıldı:**
+
+| | Satır | Oran |
+|---|---|---|
+| Payda (yeniden sayıldı) | 2.448 | — |
+| Tavan (%10) | 244 | — |
+| Alınmış (1440p) | 184 | %7,5 |
+| **Kalan yer** | **60** | — |
+| Eklenen (4K) | 48 | — |
+| **Yeni toplam** | **232** | **%9,48** |
+
+**Neden 8 oyun × 6 kart, 6 oyun × 8 kart değil:** 4K grafiklerinde 14 değil
+**9 kart** var (ComputerBase zayıf kartları 4K'da düşürüyor). 9'un 8'ini almak
+grubun %89'u demekti — K75'in 2. maddesi "grubun tamamı asla alınmaz" diyor ve
+%89 o maddenin ruhunu zorlar. 6/9 = **%67** hem daha az pay, hem daha çok oyun
+kapsıyor.
+
+**Tavan doldurulmadı.** %9,48'de durulup 12 satırlık pay bırakıldı: kaynak
+sayfası değişirse (oyun eklenirse payda değişir) geriye dönük tavanı aşmamak
+için.
+
+**Arayüz sonucu:** oyun listesi artık kullanıcının seçtiği çözünürlüğü
+**izliyor**. Mevcut 1080p/1440p/4K düğmeleri bu liste için de anlam kazandı.
+Süzme, grubun kendi `resolution` alanıyla yapılıyor — metin eşleştirmesiyle
+değil. Veri olmayan çözünürlükte liste dürüst boşluk veriyor: *"Bu çözünürlükte
+(1080p) henüz ölçüm yok."*
+
+Bu, "kart kapsam dışı" durumundan **ayrı** bir mesaj: birincisinde başka kart
+seçmek işe yarar, ikincisinde yaramaz.
+
+**Hata payı yine kötüleşti ve yine dürüst:** ortalama %6,6 → **%6,8**, %90
+dilim %13,7 → **%15,0**. 4K'da kartlar arası sıralama indeks sırasından daha
+çok ayrılıyor (VRAM sınırı devreye giriyor). Otomasyon (K110) sayıyı kendisi
+güncelledi.
+
+**Kart tarafında alınacak kalmadı:** 1440p'de her oyunda 14 karttan 8'i
+alınmış ve K75'in 3. maddesi kombinasyon başına 8'i tavan yapıyor. Mevcut
+gruplara kart eklenemez.

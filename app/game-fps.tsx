@@ -29,10 +29,32 @@ type GameFpsListProps = {
    * sayısı gösterip susmak yanlış olurdu.
    */
   resolution?: Resolution;
+  /**
+   * Seçili çözünürlükte hiç ölçüm grubu var mı?
+   *
+   * "Kart kapsam dışı" ile "bu çözünürlükte hiç veri yok" farklı iki durum ve
+   * kullanıcıya farklı şey söylerler: birincisinde başka kart seçmek işe
+   * yarar, ikincisinde yaramaz.
+   */
+  hasDataForResolution?: boolean;
 };
 
-export function GameFpsList({ rows, gpuSelected, resolution }: GameFpsListProps) {
+export function GameFpsList({
+  rows,
+  gpuSelected,
+  resolution,
+  hasDataForResolution = true,
+}: GameFpsListProps) {
   if (!gpuSelected) return null;
+
+  if (!hasDataForResolution) {
+    return (
+      <p className="text-sm opacity-70">
+        {resolution ? <>Bu çözünürlükte ({RESOLUTION_LABEL[resolution]}) </> : "Bu çözünürlükte "}
+        henüz ölçüm yok. Ölçüm verisi olan çözünürlüğü seçerseniz liste görünür.
+      </p>
+    );
+  }
 
   if (rows.length === 0) {
     return (
@@ -55,15 +77,6 @@ export function GameFpsList({ rows, gpuSelected, resolution }: GameFpsListProps)
   const settings = new Set(rows.map((row) => row.setting_label));
   const singleSetting = settings.size === 1 ? [...settings][0] : null;
 
-  // Ölçüm etiketi "1440p ultra, ..." diye başlıyor; seçili çözünürlük de
-  // "1440p" gibi ham bir değer. Farklıysa kullanıcıya söylenir.
-  //
-  // Etiketi burada tutuyoruz, koşulu değil: JSX'te tekrar daraltma gerekmesin.
-  const mismatchLabel =
-    resolution !== undefined && !sorted.every((row) => row.setting_label.startsWith(resolution))
-      ? RESOLUTION_LABEL[resolution]
-      : null;
-
   return (
     <div className="flex flex-col gap-3 text-sm">
       {/* K99: tek skor ile bu liste farklı şeyler ölçüyor. Çelişki gerçek ve
@@ -81,14 +94,6 @@ export function GameFpsList({ rows, gpuSelected, resolution }: GameFpsListProps)
         <p className="text-xs opacity-60">
           Ayar: <span className="font-medium">{singleSetting}</span>. Şu an tek ayarda ölçüm
           var; başka çözünürlük ve preset için veri toplanmadı.
-        </p>
-      )}
-
-      {mismatchLabel && (
-        <p className="text-xs opacity-60">
-          Seçili çözünürlük <span className="font-medium">{mismatchLabel}</span>, ama
-          elimizdeki ölçümler yukarıdaki ayarda. Bu liste o ayarın sayılarını gösterir,
-          seçtiğiniz çözünürlüğün değil.
         </p>
       )}
 

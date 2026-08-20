@@ -12,6 +12,8 @@
 // K71'in aynısı: hesaplanmış bir sayı ölçüm tablosuna yazılırsa ölçümden
 // ayırt edilemez hale gelir ve "bu sayı nereden geldi" sorusu cevapsız kalır.
 
+import type { Resolution } from "./types";
+
 /** Bir oyunun tek bir ayarındaki ölçümlerden biri. */
 export type FpsMeasurement = {
   /** Ölçümün ait olduğu parça — bugün her zaman bir GPU çipi. */
@@ -33,6 +35,12 @@ export type FpsMeasurement = {
 export type FpsGameGroup = {
   game_id: string;
   game_name: string;
+  /**
+   * Ölçümün çözünürlüğü. Etiketin içinde de geçiyor ama ayrı alan olarak
+   * duruyor: arayüz kullanıcının seçtiği çözünürlüğe göre SÜZÜYOR ve süzme
+   * metin eşleştirmesiyle yapılamaz.
+   */
+  resolution: Resolution;
   /** Kullanıcıya gösterilecek ayar etiketi, örn. "1440p ultra, DLSS/FSR Quality". */
   setting_label: string;
   measurements: FpsMeasurement[];

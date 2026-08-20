@@ -7,6 +7,7 @@
 // yalnızca ham ölçümleri ve indeksleri toplayıp motora verir.
 
 import type { FpsGameGroup, FpsMeasurement } from "@/engine/fps-estimate";
+import type { Resolution } from "@/engine/types";
 
 import { prisma } from "./client.ts";
 import { visibleParts, visibleRows } from "./visibility.ts";
@@ -93,6 +94,7 @@ export async function getFpsGameGroups(modelVersion: string): Promise<FpsGameGro
   type Bucket = {
     game_id: string;
     game_name: string;
+    resolution: Resolution;
     setting_label: string;
     measurements: FpsMeasurement[];
   };
@@ -107,6 +109,8 @@ export async function getFpsGameGroups(modelVersion: string): Promise<FpsGameGro
       bucket = {
         game_id: row.game_id,
         game_name: row.game.name,
+        // Prisma enum uyesi `R1440p`; motorun bekledigi `1440p` (K7 deseni).
+        resolution: row.resolution.replace(/^R/, "") as Resolution,
         setting_label: label,
         measurements: [],
       };

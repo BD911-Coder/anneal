@@ -13,6 +13,7 @@ import type { FpsGameGroup } from "../engine/fps-estimate";
 const cyberpunk: FpsGameGroup = {
   game_id: "cyberpunk-2077",
   game_name: "Cyberpunk 2077",
+  resolution: "1440p",
   setting_label: "1440p ultra, DLSS/FSR Quality",
   measurements: [
     { part_id: "nvidia-rtx-5090", avg_fps: 202.6, index: 216 },

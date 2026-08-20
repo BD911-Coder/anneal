@@ -15,7 +15,7 @@ export const PERF_MARGIN = {
   maxPercent: 11.5,
   comparedParts: 25,
   /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
-  measuredAtPoints: 298,
+  measuredAtPoints: 346,
   measuredAt: "2026-08-20",
   // === ÖLÇÜM BİTİŞ ===
 
