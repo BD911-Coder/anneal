@@ -2169,3 +2169,86 @@ kuralın nereye kadar geçerli olduğunu, kuralın metni değil gerekçesi belir
 
 Bu yüzden her kural kaydında **neden** öyle olduğu yazılıdır; taşıma
 tartışması gerekçe üzerinden yürütülür.
+
+## 2026-08-20 — Faz A.1: oyun bazlı FPS
+
+Karar veren: proje sahibi (S39, S40, S41).
+
+### K97 — Ölçülmüş ve türetilmiş sayı arayüzde ayrılır
+
+Oyun listesinde ölçülmüş FPS'e küçük bir işaret (`● ölçüldü`), türetilmişe
+`○ tahmin ±%12.8` konur. İkisi aynı listede durur ama ayırt edilir.
+
+**Gerekçe (proje sahibinin ifadesi):** *"Bu sitenin tüm duruşu — kullanıcı
+sayının nereden geldiğini görmeli."* K90'ın çip fiyatında ve K74'ün kart
+indeksinde kurduğu desenin aynısı: yaklaşıklığın damgası sayının yanında
+durur, dipnotta değil.
+
+İkinci ve sessiz bir işaret daha var: **türetilen sayı tam sayıya yuvarlanır,
+ölçüm ondalığını korur.** Hata payı ±%10 iken ondalık basamak yanlış bir
+kesinlik vaadidir; 87 dürüst, 87,4 değil.
+
+### K98 — Oyun listesi FPS'e göre sıralanmaz
+
+Sıra alfabetiktir (Türkçe).
+
+**Gerekçe:** FPS'e göre sıralamak kullanıcıyı "en yüksek sayıyı gör" yönünde
+koşullandırır. Oysa kullanıcı belirli bir oyunu arıyor; listeyi tarayıp kendi
+oyununu bulması gerekiyor. Sıralama, hangi sayının önemli olduğuna dair sessiz
+bir mesaj verir ve o mesaj burada yanlış olurdu.
+
+Sıralama motorda değil arayüzde yapılır: bir sunum kararıdır, `/engine`'in işi
+değil. `estimateGameFps` girdi sırasını korur ve testi bunu sabitler.
+
+### K99 — Tek skor ile oyun listesinin çeliştiği gizlenmez
+
+Listenin başında kalıcı bir not durur:
+
+> Bu değerler, işlemcinin sınırlamadığı bir test sisteminde ölçülmüştür. Sizin
+> işlemciniz bazı oyunlarda bu sayının altında kalmasına yol açabilir.
+> Yukarıdaki sistem indeksi işlemciyi hesaba katar, bu liste katmaz — ikisi
+> farklı şeyler ölçüyor.
+
+**Gerekçe:** Çelişki gerçek ve kaçınılmaz. Ölçüldü: CPU ölçümlerinin oyunları
+ile GPU ölçümlerinin oyunları **sıfır kesişiyor** (`cyberpunk-2077` ≠
+`cyberpunk-2077-phantom-liberty`, `f1-24` ≠ `f1-25`), üstelik iki küme farklı
+çözünürlük, preset ve upscaling ayarında. Yani A.1'in verdiği sayı GPU-sınırlı
+FPS'tir ve işlemciyi hesaba katamaz. Zayıf CPU + güçlü GPU sisteminde tek skor
+"işlemci sınırlıyor" derken liste yüksek FPS gösterir. Bu tarayıcıda görüldü:
+RTX 5090 + Ryzen 5 9600X sisteminde tam olarak böyle oldu.
+
+**Test sisteminin işlemcisi yazılmaz.** Proje sahibinin önerdiği metinde
+"(RTX 5090 test sistemi)" ifadesi vardı; yazılmadı. İki sebep: RTX 5090 bir
+ekran kartıdır (CPU ölçümlerinin sabitlenmiş GPU'su), ve GPU ölçümlerinin 64
+satırında `cpu_part_id` **boştur** — hangi işlemcide ölçüldüğü verimizde
+kayıtlı değil. Kaynağı olmayan bir iddia arayüze yazılmaz (K4, kaynak defteri).
+Notun niyeti korundu, kaynaksız kısmı çıkarıldı.
+
+### K100 — Türetilen FPS hiçbir tabloya yazılmaz
+
+Okuma anında hesaplanır. Şema değişikliği yapılmadı, yeni tablo açılmadı.
+
+**Gerekçe K71'in aynısı:** hesaplanmış bir sayı ölçüm tablosuna yazılırsa
+ölçümden ayırt edilemez hale gelir ve "bu sayı nereden geldi" sorusu cevapsız
+kalır. `benchmark_points` append-only ve gerçek ölçüm tablosudur.
+
+### K101 — Ölçüm grubu: oyun + ayar, ve aynı parça grupta bir kez
+
+`data/benchmarks.ts` ölçümleri (oyun, çözünürlük, preset, upscaling)
+dörtlüsüne göre gruplar. Bir grup kullanılabilir sayılır ancak:
+
+1. Aynı GPU grupta **birden fazla kez geçmiyorsa**, ve
+2. Grupta **en az 3 farklı GPU** varsa.
+
+**Gerekçe:** 1080p medium ölçümüyle 1440p ultra ölçümü aynı orana giremez.
+Aynı GPU grupta iki kez geçiyorsa "bu kartın bu oyundaki FPS'i" sorusunun iki
+cevabı olur; ortalamasını almak bir modelleme kararıdır ve verilmedi —
+belirsizliği sessizce çözmektense grubu atlamak doğru.
+
+**Bu kural bugün somut bir iş yapıyor:** 178 ölçümün 114'ü tek bir GPU'ya
+(RTX 5090) sabitlenmiş CPU ölçümleridir ve o gruplarda aynı GPU 12-15 kez
+geçer, dolayısıyla düşerler. Geriye tam olarak 8 GPU ölçüm grubu kalır.
+
+Kural **veri şekline** bakıyor, `cpu_part_id`'ye sabitlenmiş bir filtreye
+değil. Sebebi K95b: filtre yazılsaydı bugünkü veri şekline özel olurdu ve
+ikinci bir ölçüm yöntemi geldiğinde sessizce yanlış davranırdı.

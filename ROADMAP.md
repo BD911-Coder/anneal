@@ -55,11 +55,16 @@ da görüyor.
 Yeni veri toplamadan, **bugünkü veriyle** ne gösterilebiliyorsa o gösterilir.
 Ayrıntılı plan ve ölçümler: **`docs/faz-a1-plani.md`**
 
-- [ ] `engine/fps-estimate.ts` — saf motor, oyun içi indeks oranıyla tahmin
-- [ ] `/engine` testleri *(kural gereği: sessizce yanlış sonuç verebilen yer)*
-- [ ] Veri okuma yolu — `benchmark_points` + `perf_index` birlikte
-- [ ] Arayüz: oyun listesi, FPS, **ölçüm mü türetme mi**, hata payı
-- [ ] Kapsam dışı kartta dürüst boşluk *(58/118 GPU'da veri yok)*
+- [x] `engine/fps-estimate.ts` — saf motor, oyun içi indeks oranıyla tahmin
+- [x] `/engine` testleri — **16 test**, `tests/fps-estimate.test.ts`
+- [x] Veri okuma yolu — `data/benchmarks.ts`, `benchmark_points` + `perf_index`
+- [x] Arayüz: oyun listesi, FPS, **ölçüm mü türetme mi**, hata payı
+- [x] Kapsam dışı kartta dürüst boşluk *(58/118 GPU'da veri yok)*
+
+**Tarayıcıda doğrulandı** (20 Ağustos): RX 9070 GRE → 5 ölçüm + 3 tahmin,
+RTX 5090 → 4 + 4, RTX 5080 (indekssiz) → "bu kart için ölçüm yok".
+Sıra alfabetik, ölçüm/tahmin ayrı işaretli, hata payı listenin altında.
+`docs/log/2026-08-20-a1-oyun-bazli-fps.md`
 
 **Bugünkü kapsam ölçüldü:** 8 oyun × 14 çip = 112 hücre; **64'ü ölçülmüş**,
 48'i türetilebilir. Kart tarafında 46 kart çipinden miras alıyor —
@@ -241,9 +246,6 @@ yayınlayabiliyor ve tahmin tutuyor.
 
 | # | Konu | Faz |
 |---|---|---|
-| **S39** | **Ölçülmüş ve türetilmiş FPS yan yana mı?** | **A.1** |
-| **S40** | **Oyun listesi sıralaması** | **A.1** |
-| **S41** | **Tek skor ile oyun listesi çelişirse** | **A.1** |
 | S16 | `benchmark_points.game_id` oyun dışı iş yüklerinde | F |
 | S18 | Önizleme dağıtımları | B |
 | S22 | 14 kullanılmayan zorunlu alan | B |

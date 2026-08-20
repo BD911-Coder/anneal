@@ -143,41 +143,40 @@ Acil değil, karar iş yükü genişletildiğinde verilir.
 
 ---
 
-### S39 — Ölçülmüş ve türetilmiş FPS aynı listede yan yana mı dursun? 🆕 (2026-08-20)
-
-Faz A.1'de 8 oyunun 64 hücresi **ölçüm**, 48'i indeks oranıyla **türetme**.
-İkisi aynı listede yan yana durursa liste dolu görünür ama kullanıcı ölçümle
-tahmini karıştırabilir; ayrılırsa dürüst olur ama liste parçalanır.
-
-**Öneri:** yan yana, ama türetilmiş satırda hata payı satırın kendisinde
-yazılı (`±%10`). K90'ın çip fiyatında kurduğu desenin aynısı.
-→ `docs/faz-a1-plani.md` bölüm 5.5
-
----
-
-### S40 — Oyun listesi hangi sırayla gösterilsin? 🆕 (2026-08-20)
-
-Ölçülmüş hücresi olanlar önce mi, alfabetik mi, yoksa kullanıcının kartına en
-yakın ölçüm hangi oyundaysa o mu? Sıralama, hangi sayının daha güvenilir
-olduğuna dair sessiz bir mesaj veriyor.
-→ `docs/faz-a1-plani.md` bölüm 5.5
-
----
-
-### S41 — Tek skor ile oyun listesi çelişirse ne yazılır? 🆕 (2026-08-20)
-
-Zayıf CPU + güçlü GPU sisteminde tek skor "işlemci sınırlıyor" derken, oyun
-listesi yüksek FPS gösterecek — çünkü A.1'in FPS sayısı **GPU-sınırlıdır** ve
-CPU'yu hesaba katmaz (CPU ve GPU ölçümlerinin oyunları sıfır kesişiyor).
-
-İkisi farklı sorulara cevap veriyor ama kullanıcı bunu çelişki olarak
-okuyabilir. Çözüm A.2'de CPU/GPU'nun aynı oyunda ölçülmesi; o zamana kadar
-arayüzün ne diyeceği karar bekliyor.
-→ `docs/faz-a1-plani.md` bölüm 3.2
-
----
-
 ## Kapanmış sorular
+
+### S39 — Ölçülmüş ve türetilmiş FPS aynı listede yan yana mı dursun? ✅ CEVAPLANDI (2026-08-20)
+
+**Cevap: AYRILSIN.** Ölçülmüşe küçük bir işaret (`● ölçüldü`), türetilmişe
+`○ tahmin ±%12.8`. Aynı listede dururlar ama ayırt edilirler.
+
+Proje sahibinin gerekçesi: *"Bu sitenin tüm duruşu — kullanıcı sayının nereden
+geldiğini görmeli."* → `docs/KARARLAR.md` K97
+
+---
+
+### S40 — Oyun listesi hangi sırayla gösterilsin? ✅ CEVAPLANDI (2026-08-20)
+
+**Cevap: FPS'e göre SIRALANMASIN.** Alfabetik (Türkçe).
+
+Gerekçe: FPS'e göre sıralamak kullanıcıyı "en yüksek sayıyı gör" yönünde
+koşullandırır; oysa kullanıcı belirli bir oyunu arıyor.
+→ `docs/KARARLAR.md` K98
+
+---
+
+### S41 — Tek skor ile oyun listesi çelişirse ne yazılır? ✅ CEVAPLANDI (2026-08-20)
+
+**Cevap: çelişki gerçek, dürüstçe açıklansın.** Listenin başına kalıcı not.
+
+Proje sahibinin önerdiği metindeki "(RTX 5090 test sistemi)" ifadesi
+**yazılmadı**: RTX 5090 bir ekran kartıdır ve GPU ölçümlerinin 64 satırında
+`cpu_part_id` boştur — hangi işlemcide ölçüldüğü verimizde kayıtlı değil.
+Kaynağı olmayan iddia arayüze yazılmaz. Notun niyeti korundu.
+→ `docs/KARARLAR.md` K99
+
+---
+
 
 ### S37 — GPU kapsamı 14'te kilitli, K77 ikinci turu engelliyor ✅ 2026-08-20
 

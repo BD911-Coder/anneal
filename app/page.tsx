@@ -1,3 +1,4 @@
+import { getFpsGameGroups } from "@/data/benchmarks";
 import { getPerfIndexes } from "@/data/perf";
 import { getBuilderCatalog } from "@/data/parts";
 import { getCurrentPrices } from "@/data/prices";
@@ -12,11 +13,14 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   // Fiyat ve indeks, katalogla aynı anda okunuyor: üçü de bağımsız sorgu.
-  const [catalog, prices, perfIndexes] = await Promise.all([
+  const [catalog, prices, perfIndexes, fpsGroups] = await Promise.all([
     getBuilderCatalog(),
     getCurrentPrices(),
     // Sayfanın okuduğu sürüm ile motorun ürettiği sürüm hep aynı olmalı.
     getPerfIndexes(MODEL_VERSION),
+    // Oyun bazlı FPS ölçümleri (Faz A.1). Türetilen FPS hiçbir tabloya
+    // yazılmaz; burada okunanlar ham ölçümler, hesap istemcide yapılıyor.
+    getFpsGameGroups(MODEL_VERSION),
   ]);
 
   const toplamParca = Object.values(catalog).reduce((sum, list) => sum + list.length, 0);
@@ -31,7 +35,12 @@ export default async function HomePage() {
         </p>
       </header>
 
-      <Builder catalog={catalog} prices={prices} perfIndexes={perfIndexes} />
+      <Builder
+        catalog={catalog}
+        prices={prices}
+        perfIndexes={perfIndexes}
+        fpsGroups={fpsGroups}
+      />
 
       <section className="rounded border p-4">
         <FeedbackForm />
