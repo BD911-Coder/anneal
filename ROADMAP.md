@@ -3,8 +3,8 @@
 Bu belge projenin tamamını faz faz gösterir. Her fazın bir **bitiş ölçütü** vardır;
 o karşılanmadan sonraki faza geçilmez.
 
-Güncelleme: 20 Ağustos 2026 — A.1 bitti, A.2 kaynak sınırına dayandı, beta
-kapısı envanteri çıkarıldı.
+Güncelleme: 20 Ağustos 2026 — A.1 bitti, **A.2 emekle çözülebilecek her şeyi
+bitirdi**, beta kapısı envanteri çıkarıldı.
 
 > **Sıralama ilkesi:** Fazlar ürünün kendisidir. Fiyat, katalog derinliği ve
 > indeks kapsamı gibi altyapı işleri kendi başına faz değildir — hangi ürün
@@ -23,16 +23,16 @@ kapısı envanteri çıkarıldı.
 | | Durum |
 |---|---|
 | Site | Vercel'de canlı, arama motorlarına kapalı |
-| Katalog | 237 gerçek parça |
+| Katalog | **332 gerçek parça** |
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
 | Performans indeksi | 14 GPU + 12 CPU |
 | Benchmark ölçümü | **346 nokta**, tek kaynak (ComputerBase) |
 | Hata payı | **script yazıyor**, eskiyince `kural:kontrol` duruyor |
-| Oyun bazlı FPS | **23 oyun (1440p) + 8 oyun (4K)**, 60 ekran kartı |
+| Oyun bazlı FPS | **23 oyun (1440p) + 8 oyun (4K)**, **87 ekran kartı** |
 | Fiyat | 22 parçada gerçek fiyat (USD, Newegg) |
 | Kullanıcı | 0 |
 
-**Katalog dağılımı:** GPU çipi 60 · GPU kartı 58 · CPU 42 · anakart 19 ·
+**Katalog dağılımı:** GPU çipi 60 · **GPU kartı 153** · CPU 42 · anakart 19 ·
 RAM 20 · depolama 14 · kasa 12 · PSU 12
 
 ---
@@ -61,7 +61,7 @@ Ayrıntılı plan ve ölçümler: **`docs/faz-a1-plani.md`**
 - [x] `/engine` testleri — **16 test**, `tests/fps-estimate.test.ts`
 - [x] Veri okuma yolu — `data/benchmarks.ts`, `benchmark_points` + `perf_index`
 - [x] Arayüz: oyun listesi, FPS, **ölçüm mü türetme mi**, hata payı
-- [x] Kapsam dışı kartta dürüst boşluk *(58/118 GPU'da veri yok)*
+- [x] Kapsam dışı kartta dürüst boşluk *(126/213 GPU'da veri yok)*
 - [x] **Kaydedilmiş sistem sayfası** — paylaşılan link de listeyi gösteriyor.
       FPS **dondurulmaz**, bugünkü hesap ayrı kutuda (K102).
 - [x] **Ana sayfa metni** durum başına ayrıldı; kapsam sayıları veriden
@@ -77,7 +77,7 @@ Paylaşım linki (`/sistem/s62dqq`, 4K'da kaydedilmiş) listeyi gösteriyor ve
 
 **Kapsam (20 Ağustos, A.2 sonrası):** **23 oyun** × 14 çip = 322 hücre;
 **184'ü ölçülmüş**, 138'i türetilebilir. Kart tarafında 46 kart çipinden
-miras alıyor — **118 seçilebilir GPU'nun 60'ında** FPS gösterilebiliyor.
+miras alıyor — **213 seçilebilir GPU'nun 87'sinde** FPS gösterilebiliyor.
 
 **Tek ayar var:** 1440p / ultra / DLSS-FSR Quality. Başka çözünürlük, başka
 preset ve yerel (upscaling kapalı) çıktı **yok** — uydurulmayacak.
@@ -114,9 +114,17 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
             işlemci var ama sayfa yalnızca toplu 720p rating yayınlıyor;
             oyun başına FPS yok. Rangliste'nin oyun başına sayfaları da
             içerik duvarının arkasına geçmiş. CPU 12'de kalıyor.
-- [ ] **Kart varyantı 58 → 150** *(kalan çipler; her kart çipinden miras
-      aldığı için kapsamı doğrudan büyütüyor)* — A.2'de kalan tek açık
-      **veri** maddesi; yeni kaynak gerektirmiyor, üretici sayfalarından.
+- [x] **Kart varyantı 58 → 153** *(20 Ağustos)* — yapıldı. Aynı dört marka,
+      yeni kaynak yok. **+95 kart**, kapsanan çip 20 → **47/60**,
+      `length_mm` **%99 dolu**, C5 **125 → 245** kombinasyon.
+      FPS gösterebilen GPU **60 → 87**. Öncelik uygulandı: indeksli 14 çipin
+      12'sinde artık kart var (önce 8).
+      - [ ] **`amd-rx-9070-gre`** — indeksli, hâlâ 0 kart. Dört markanın
+            hiçbirinde ürün sayfası bulunamadı (Çin pazarına özel çıkış).
+      - [ ] **`intel-arc-b580`** — indeksli, hâlâ 0 kart. 🔒 **ERİŞİM YOK
+            (K121):** Arc'ı dört markadan hiçbiri yapmıyor; ASRock/Sparkle
+            `robots.txt` izin veriyor ama sayfa ne `curl`'e ne tarayıcıya
+            geliyor.
 - [x] **Oyun sayısı 8 → 23** *(20 Ağustos)* — yapıldı. Mevcut kaynakta
       **alınacak oyun/kart kalmadı**: 1440p'de 23 oyunun hepsi alındı, her
       grupta 14 karttan 8'i (K75 tavanı), 4K'da 8 oyun. Kaynağın **%9,48**'i
@@ -201,7 +209,7 @@ kalan tek gerçek engel fiyat verisi.**
 
 ### 🟢 Eksik ama dürüstçe söyleniyor — engel değil
 
-- 58/118 ekran kartında FPS yok · 1080p'de ölçüm yok · FPS işlemciyi hesaba
+- 126/213 ekran kartında FPS yok · 1080p'de ölçüm yok · FPS işlemciyi hesaba
   katmıyor. Üçünü de arayüz açıkça yazıyor.
 
 ### ✅ Akışlar sınandı ve çalışıyor
@@ -373,8 +381,8 @@ Geriye kalan iki iş de **veri** işi ve ikisi de senin kararını bekliyor:
 
 1. **Fiyat kaynağı** — eBay başvurusu (20 dk, senin). Bu olmadan yedi
    kategorili bir sistem toplanamıyor ve kaydedilemiyor.
-2. *(isteğe bağlı)* Kart varyantı 58 → 150 — yeni kaynak gerektirmiyor,
-   üretici sayfalarından; A.2'de kalan tek açık veri maddesi.
+2. *(bitti — 20 Ağustos)* ~~Kart varyantı 58 → 150~~ → **153 yapıldı.**
+   A.2'de emekle çözülebilecek veri maddesi kalmadı.
 
 **Kaynak yokluğundan kapalı olanlar** (K105, K113): rekabetçi oyunlar,
 CPU kapsamı, CPU'nun FPS sayısına girmesi. Bunlar emekle çözülmüyor.
