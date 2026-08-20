@@ -2252,3 +2252,62 @@ geçer, dolayısıyla düşerler. Geriye tam olarak 8 GPU ölçüm grubu kalır.
 Kural **veri şekline** bakıyor, `cpu_part_id`'ye sabitlenmiş bir filtreye
 değil. Sebebi K95b: filtre yazılsaydı bugünkü veri şekline özel olurdu ve
 ikinci bir ölçüm yöntemi geldiğinde sessizce yanlış davranırdı.
+
+### K102 — Kaydedilmiş sistemde oyun bazlı FPS dondurulmaz, bugünkü hesap gösterilir
+
+`/sistem/<id>` sayfasında oyun listesi **ayrı, kesikli çerçeveli bir kutuda**
+durur ve dondurulmuş değerlerin üzerine yazmaz. Kutunun başında "bu liste
+dondurulmamıştır" yazar.
+
+**Üç gerekçe:**
+
+1. **Dondurulmuş bir FPS yok ve olamaz.** `builds` tablosunda FPS alanı
+   bulunmuyor; eklemek şema değişikliği olurdu ve K100'ü doğrudan ihlal ederdi
+   (türetilen FPS hiçbir tabloya yazılmaz).
+2. **Sayfada aynı sorunun kurulmuş cevabı zaten var: fiyat.** Dondurulmuş
+   toplam "Kayıt anındaki değerler"de, güncel fiyat ayrı kesikli kutuda; biri
+   diğerinin üstüne yazmıyor (SCHEMA.md bölüm 5). FPS o desene giriyor.
+3. **Donmanın sebebi FPS'te yok.** `perf_index_snapshot` donuyor çünkü
+   `model_version` değişebilir ve eski kaydın sayısını yeni motorunkiyle
+   karşılaştırmak iki ayrı cetveli karıştırmak olur. FPS'in altındaki
+   `benchmark_points` ise **append-only ölçüm**: geçmişe dönük değişmiyor,
+   yalnızca üstüne ekleniyor. Bugünkü sayı kayıt anındakinden ancak *daha çok
+   ölçüm olduğu için* farklı çıkar — bu bozulma değil iyileşme.
+
+Ayrıca: bu özellikten önce kaydedilmiş sistemlerde liste hiç yoktu, yani onlar
+için "kayıt anındaki FPS" diye bir şey zaten mevcut değil.
+
+**Çözünürlük uyuşmazlığı söylenir.** Sistem 4K'da kaydedilmiş olabilir ama
+elimizdeki ölçümler 1440p ultra. Bu durumda liste "seçili çözünürlük 4K, ama
+ölçümler şu ayarda" der. 4K seçmiş birine 1440p sayısı gösterip susmak yanlış
+olurdu.
+
+### K103 — Arayüz metni durum başına ayrılır, tek cümleye sıkıştırılmaz
+
+Ana sayfadaki tek cümle şunu diyordu: *"Fiyatlar örnek veridir; performans
+tahmini için ölçüm verisi henüz toplanmadı."* İkinci yarısı **artık yanlıştı**
+— 8 oyunda ve 60 ekran kartında FPS gösteriliyor.
+
+Metin üç maddeye ayrıldı: oyun bazlı FPS, sistem indeksi, fiyat. Üçünün
+olgunluğu farklı ve tek cümlede birleştirildiklerinde en kötümser olanı
+hepsini temsil ediyordu.
+
+**Kapsam sayıları metne gömülmez, veriden okunur.** `fpsGames` ve
+`fpsCoveredGpus` sayfada hesaplanıyor; ölçüm eklendikçe metin kendiliğinden
+güncelleniyor. Bu metnin eskimesinin sebebi tam olarak elle yazılmış olmasıydı.
+
+Sayılan küme "ölçümü olan çip" değil **FPS gösterilebilen seçenek**: türetme
+indeks gerektiriyor ve kartlar indeksi çiplerinden miras alıyor (K86). Yalnızca
+ölçülmüş çipler sayılsaydı 14 çıkardı ve 46 kart görünmezdi.
+
+### K104 — Oyun listesi tek bileşen, iki sayfa
+
+`app/game-fps.tsx`. K97/K98/K99'un metinleri ve kuralları burada tek kopya
+duruyor; oluşturucu ve kaydedilmiş sistem sayfası ikisi de bunu çağırıyor.
+
+**Gerekçe:** iki kopya olsaydı biri güncellenip diğeri unutulurdu ve iki sayfa
+aynı veri hakkında farklı şey söylerdi. Sıralama (K98) da bileşenin içinde,
+yani çağıran taraf yanlışlıkla FPS'e göre sıralayamaz.
+
+Aynı turda `RESOLUTION_LABEL` de `lib/format.ts`'e taşındı: aynı sayfada bir
+kutu "4K", başka bir kutu "2160p" diyordu ve ikisi aynı şeydi.

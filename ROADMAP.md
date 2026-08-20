@@ -60,11 +60,18 @@ Ayrıntılı plan ve ölçümler: **`docs/faz-a1-plani.md`**
 - [x] Veri okuma yolu — `data/benchmarks.ts`, `benchmark_points` + `perf_index`
 - [x] Arayüz: oyun listesi, FPS, **ölçüm mü türetme mi**, hata payı
 - [x] Kapsam dışı kartta dürüst boşluk *(58/118 GPU'da veri yok)*
+- [x] **Kaydedilmiş sistem sayfası** — paylaşılan link de listeyi gösteriyor.
+      FPS **dondurulmaz**, bugünkü hesap ayrı kutuda (K102).
+- [x] **Ana sayfa metni** durum başına ayrıldı; kapsam sayıları veriden
+      okunuyor, metne gömülü değil (K103).
 
 **Tarayıcıda doğrulandı** (20 Ağustos): RX 9070 GRE → 5 ölçüm + 3 tahmin,
 RTX 5090 → 4 + 4, RTX 5080 (indekssiz) → "bu kart için ölçüm yok".
 Sıra alfabetik, ölçüm/tahmin ayrı işaretli, hata payı listenin altında.
-`docs/log/2026-08-20-a1-oyun-bazli-fps.md`
+Paylaşım linki (`/sistem/s62dqq`, 4K'da kaydedilmiş) listeyi gösteriyor ve
+çözünürlük uyuşmazlığını söylüyor.
+`docs/log/2026-08-20-a1-oyun-bazli-fps.md` ·
+`docs/log/2026-08-20-a1-paylasim-ve-metin.md`
 
 **Bugünkü kapsam ölçüldü:** 8 oyun × 14 çip = 112 hücre; **64'ü ölçülmüş**,
 48'i türetilebilir. Kart tarafında 46 kart çipinden miras alıyor —

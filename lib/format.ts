@@ -1,8 +1,10 @@
-// Sayı ve tarih biçimlendirme.
+// Sayı, tarih ve çözünürlük biçimlendirme.
 //
 // Intl / toLocaleString kullanılmıyor. Sebebi: bu değerler hem sunucuda hem
 // tarayıcıda basılıyor ve iki tarafın dil verisi farklı olursa React uyumsuzluk
 // hatası veriyor. Elle biçimlendirme her yerde aynı çıktıyı üretir.
+
+import type { Resolution } from "@/engine/types";
 
 /**
  * Kuruş -> okunur fiyat. `149999` -> `1.499,99 ₺`
@@ -33,3 +35,16 @@ export function formatIsoDate(iso: string): string {
   const [year, month, day] = iso.slice(0, 10).split("-");
   return `${day}.${month}.${year}`;
 }
+
+/**
+ * Çözünürlüğün ekranda görünen adı. Motorun tanıdığı değer `2160p`; "4K"
+ * yalnızca ekranda yazan ad.
+ *
+ * Tek yerde durmasının sebebi yaşandı: aynı sayfada bir kutu "4K", başka bir
+ * kutu "2160p" diyordu ve ikisi aynı şeydi.
+ */
+export const RESOLUTION_LABEL: Record<Resolution, string> = {
+  "1080p": "1080p",
+  "1440p": "1440p",
+  "2160p": "4K",
+};

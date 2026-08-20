@@ -174,6 +174,17 @@ export type SavedBuild = {
   perf_index_snapshot: number | null;
   model_version: string;
   items: SavedBuildItem[];
+  /**
+   * Sistemdeki ekran kartının **çip** id'si — kart (AIB) kaydedilmişse onun
+   * çipi, çip kaydedilmişse kendisi. Ekran kartı yoksa `undefined`.
+   *
+   * Ayrıca duruyor çünkü `items` yalnızca kaydedilen satırı taşıyor ve o satır
+   * bir kart olabilir; ölçüm ve indeks ise çip seviyesinde (K86). Bağ olmadan
+   * sayfa hangi çipin ölçümünü okuyacağını bilemez.
+   */
+  gpu_chip_part_id?: string;
+  /** Kart kaydedildiyse kartın id'si. Çip kaydedildiyse `undefined`. */
+  gpu_variant_part_id?: string;
 };
 
 /**
@@ -189,7 +200,19 @@ export async function getBuild(id: string): Promise<SavedBuild | null> {
     where: { id },
     include: {
       build_items: {
-        include: { part: { select: { brand: true, model: true, category: true, source: true } } },
+        include: {
+          part: {
+            select: {
+              brand: true,
+              model: true,
+              category: true,
+              source: true,
+              // Kaydedilen ekran kartı bir AIB kartı olabilir; ölçüm ve indeks
+              // çipten okunur (K86). saveBuild da aynı bağı kuruyor.
+              gpu_variant_specs: { select: { chip_part_id: true } },
+            },
+          },
+        },
         orderBy: { part_id: "asc" },
       },
     },
@@ -199,6 +222,14 @@ export async function getBuild(id: string): Promise<SavedBuild | null> {
   if (IS_LIVE && build.build_items.some((item) => item.part.source === "dev_seed")) {
     return null;
   }
+
+  // saveBuild'deki çözümlemenin aynısı: kart kaydedilmişse çipi onun üstünden
+  // bulunur, yoksa doğrudan çip satırı kullanılır.
+  const gpuItems = build.build_items.filter((item) => item.part.category === "gpu");
+  const gpuVariant = gpuItems.find((item) => item.part.gpu_variant_specs);
+  const gpuChipId =
+    gpuVariant?.part.gpu_variant_specs?.chip_part_id ??
+    gpuItems.find((item) => !item.part.gpu_variant_specs)?.part_id;
 
   return {
     id: build.id,
@@ -216,5 +247,7 @@ export async function getBuild(id: string): Promise<SavedBuild | null> {
       quantity: item.quantity,
       unit_price_minor_at_save: item.unit_price_minor_at_save,
     })),
+    gpu_chip_part_id: gpuChipId,
+    gpu_variant_part_id: gpuVariant?.part_id,
   };
 }
