@@ -14,7 +14,9 @@
 import { countByOrigin } from "@/engine/fps-estimate";
 import type { GameFpsEstimate } from "@/engine/fps-estimate";
 import type { Resolution } from "@/engine/types";
+import type { Bottleneck } from "@/engine/types";
 import { RESOLUTION_LABEL } from "@/lib/format";
+import { FPS_BAND_NOTE, bandFor } from "@/lib/fps-bands";
 import { FPS_MARGIN } from "@/lib/fps-margin";
 
 type GameFpsListProps = {
@@ -37,13 +39,28 @@ type GameFpsListProps = {
    * yarar, ikincisinde yaramaz.
    */
   hasDataForResolution?: boolean;
+  /**
+   * Seçilen işlemcinin indeksi ve adı. Liste GPU-sınırlı olduğu için
+   * işlemci sayıya girmiyor (K99) — ama kullanıcının işlemcisinin nerede
+   * durduğunu SÖYLEMEK, sayıyı değiştirmeden yanıltıcılığı azaltıyor.
+   */
+  cpuIndex?: number;
+  cpuLabel?: string;
+  /** Sistem indeksinin darboğaz sonucu (K83). Listeye de bağlanıyor. */
+  bottleneck?: Bottleneck | null;
 };
+
+/** İşlemci indeksinin referansı — K73'teki sabit referans parça = 100. */
+const REFERANS_CPU_INDEKS = 100;
 
 export function GameFpsList({
   rows,
   gpuSelected,
   resolution,
   hasDataForResolution = true,
+  cpuIndex,
+  cpuLabel,
+  bottleneck,
 }: GameFpsListProps) {
   if (!gpuSelected) return null;
 
@@ -83,12 +100,40 @@ export function GameFpsList({
           gizlenmiyor. Test sisteminin işlemcisi ölçüm satırlarımızda kayıtlı
           DEĞİL (cpu_part_id boş), o yüzden hangi işlemci olduğu yazılmıyor —
           yazılsaydı kaynağı olmayan bir iddia olurdu. */}
-      <p className="rounded border border-amber-500/40 bg-amber-500/5 p-3 text-xs">
-        Bu değerler, işlemcinin sınırlamadığı bir test sisteminde ölçülmüştür. Sizin
-        işlemciniz bazı oyunlarda bu sayının altında kalmasına yol açabilir. Yukarıdaki
-        sistem indeksi işlemciyi hesaba katar, bu liste katmaz — ikisi farklı şeyler
-        ölçüyor.
-      </p>
+      <div className="rounded border border-amber-500/40 bg-amber-500/5 p-3 text-xs">
+        <p>
+          <span className="font-medium">Bu sayılar yalnızca ekran kartına göredir.</span>{" "}
+          İşlemcinin sınırlamadığı bir test sisteminde ölçülmüştür; seçtiğiniz işlemci bu
+          sayılara <span className="font-medium">girmiyor</span>. İşlemciye yüklenen
+          oyunlarda gerçek sonuç bunun altında kalabilir.
+        </p>
+        {/* Sayıyı değiştirmiyoruz (veri yok) ama kullanıcının işlemcisinin
+            nerede durduğunu SÖYLÜYORUZ — çerçeve düzeltmesi. */}
+        {cpuIndex !== undefined && (
+          <p className="mt-1.5">
+            Seçtiğiniz işlemci{cpuLabel ? ` (${cpuLabel})` : ""}: indeks{" "}
+            <span className="font-medium">{cpuIndex}</span> — referans işlemci{" "}
+            {REFERANS_CPU_INDEKS}.{" "}
+            {cpuIndex < REFERANS_CPU_INDEKS
+              ? "Referansın altında; işlemciye yüklenen oyunlarda fark daha belirgin olur."
+              : cpuIndex > REFERANS_CPU_INDEKS
+                ? "Referansın üstünde."
+                : "Referans işlemcinin kendisi."}
+          </p>
+        )}
+        {bottleneck === "cpu_limited" && (
+          <p className="mt-1.5 font-medium">
+            Sistem indeksi bu kurulumda işlemciyi sınırlayıcı buluyor — aşağıdaki sayılar
+            bu yüzden iyimser olabilir.
+          </p>
+        )}
+        {cpuIndex === undefined && (
+          <p className="mt-1.5">
+            Henüz ölçümü olan bir işlemci seçmediniz. Liste yalnızca ekran kartına baktığı
+            için yine de görünüyor.
+          </p>
+        )}
+      </div>
 
       {singleSetting && (
         <p className="text-xs opacity-60">
@@ -103,6 +148,10 @@ export function GameFpsList({
             <span className="flex-1">{row.game_name}</span>
             <span className="text-lg font-semibold tabular-nums">{row.fps}</span>
             <span className="text-xs opacity-60">FPS</span>
+            {/* Ham sayı tek başına bir şey söylemiyor: 47 FPS iyi mi? */}
+            <span className={`w-28 shrink-0 text-xs ${bandFor(row.fps).tone}`}>
+              {bandFor(row.fps).label}
+            </span>
             {/* K97: ölçülmüş ve türetilmiş AYRILIR. Kullanıcı sayının nereden
                 geldiğini görmeli — bu sitenin tüm duruşu. */}
             {row.origin === "measured" ? (
@@ -131,6 +180,7 @@ export function GameFpsList({
         {FPS_MARGIN.meanPercent}, tahminlerin %90&apos;ı %{FPS_MARGIN.p90Percent} altında, en
         kötü %{FPS_MARGIN.maxPercent}. {FPS_MARGIN.method} ({FPS_MARGIN.measuredAt})
       </p>
+      <p className="text-xs opacity-50">{FPS_BAND_NOTE}</p>
     </div>
   );
 }

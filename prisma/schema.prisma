@@ -530,8 +530,11 @@ model PerfIndex {
 model Build {
   id                  String  @id // kısa, paylaşılabilir slug: k3n9x2
   title               String? // kullanıcının verdiği ad
-  total_price_minor   Int // kayıt anında dondurulur
-  currency            String
+  // Opsiyonel (K124): fiyati olmayan parca iceren sistem de kaydedilir ve
+  // toplam null olur. Kismi toplam YAZILMAZ -- oldugundan ucuz gorunur ve
+  // dondugu icin sonradan duzeltilemez (K92 ile ayni mantik).
+  total_price_minor   Int? // kayıt anında dondurulur
+  currency            String?
 
   // Kullanıcının kaydettiği çözünürlük (K43). İndeks bu çözünürlükte
   // hesaplanır; yazılmasaydı dondurulan sayı neyi ifade ettiği bilinmeyen
@@ -561,7 +564,8 @@ model BuildItem {
   part     Part   @relation(fields: [part_id], references: [id])
 
   quantity                 Int
-  unit_price_minor_at_save Int
+  // Opsiyonel (K124): kayit aninda fiyati olmayan parca da kaydedilebilir.
+  unit_price_minor_at_save Int?
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)

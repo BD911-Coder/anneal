@@ -158,6 +158,10 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
   // değil, grubun kendi `resolution` alanıyla yapılıyor.
   const fpsGroupsForRes = fpsGroups.filter((group) => group.resolution === resolution);
   const fpsRows = estimateGameFps(fpsPartId, gpuIndex.value, fpsGroupsForRes);
+  // Kapsanan oyunlar seçimden ÖNCE gösteriliyor; beklenti baştan kurulsun.
+  const kapsananOyunlar = [...new Set(fpsGroupsForRes.map((g) => g.game_name))].sort((a, b) =>
+    a.localeCompare(b, "tr"),
+  );
 
   const performance = computePerformance({
     resolution,
@@ -451,12 +455,32 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
             <div className="text-sm opacity-70">
               {olcumEksik ? (
                 <>
-                  <p>Performans tahmini için henüz yeterli veri yok.</p>
+                  {/* Bu metin EKSIK OLANIN ADINI koyuyor. Eskiden "performans
+                      tahmini için yeterli veri yok" diyordu ve hemen altında
+                      dolu bir oyun FPS listesi duruyordu — kullanıcı için
+                      çelişki. İki şey ayrı: sistem indeksi İKİ parçayı birden
+                      gerektiriyor, oyun listesi yalnızca ekran kartını. */}
+                  <p>
+                    <span className="font-medium">Sistem indeksi</span> hesaplanamıyor —
+                    bu sayı işlemci ve ekran kartının ikisinin de ölçümünü gerektiriyor.
+                  </p>
+                  <ul className="mt-1 list-inside list-disc text-xs opacity-80">
+                    {performance.missing.map((kind) => (
+                      <li key={kind}>{eksikSebebi(kind)}</li>
+                    ))}
+                  </ul>
                   <p className="mt-1 text-xs opacity-80">
-                    Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor ve fiyat
-                    toplanıyor. Eksik olan ölçüm verisi: performans indeksi gerçek
-                    karşılaştırma sonuçlarından hesaplanıyor ve o veri henüz toplanmadı.
-                    Uydurma bir sayı göstermektense hiç göstermiyoruz.
+                    Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor.
+                    {fpsRows.length > 0 && (
+                      <>
+                        {" "}
+                        <span className="font-medium">
+                          Aşağıdaki oyun bazlı FPS listesi yine de görünüyor:
+                        </span>{" "}
+                        o liste yalnızca ekran kartına bakıyor, işlemciyi hesaba katmıyor.
+                        İki sayı farklı sorulara cevap veriyor.
+                      </>
+                    )}
                   </p>
                 </>
               ) : (
@@ -480,13 +504,30 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
           <h2 className="mb-3 text-lg font-semibold">Oyun bazlı FPS</h2>
 
           {gpuChipId === undefined ? (
-            <p className="text-sm opacity-70">Oyun bazlı tahmin için ekran kartı seçin.</p>
+            // Kullanici hangi oyunlarin kapsandigini SECIM YAPMADAN gormeli;
+            // yoksa kart secip tanimadigi bir listeyle karsilasiyor.
+            <div className="text-sm opacity-70">
+              <p>Oyun bazlı tahmin için ekran kartı seçin.</p>
+              {fpsGroupsForRes.length > 0 ? (
+                <p className="mt-1 text-xs">
+                  Bu çözünürlükte ölçümü olan {kapsananOyunlar.length} oyun:{" "}
+                  {kapsananOyunlar.join(", ")}.
+                </p>
+              ) : (
+                <p className="mt-1 text-xs">
+                  Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin.
+                </p>
+              )}
+            </div>
           ) : (
             <GameFpsList
               rows={fpsRows}
               gpuSelected
               resolution={resolution}
               hasDataForResolution={fpsGroupsForRes.length > 0}
+              cpuIndex={cpuId ? perfIndexes[cpuId] : undefined}
+              cpuLabel={cpuId ? catalog.cpu.find((c) => c.id === cpuId)?.label : undefined}
+              bottleneck={performance.ok ? performance.bottleneck : null}
             />
           )}
         </div>

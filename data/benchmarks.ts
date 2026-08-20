@@ -51,10 +51,17 @@ function settingLabel(
  * parçası (K111): aynı oyunun raster ve raytracing ölçümleri aynı orana
  * giremez, aralarındaki fark kartın gücü değil ayarın maliyetidir.
  *
- * **Neden aynı GPU iki kez geçen grup düşüyor:** o durumda "bu kartın bu
- * oyundaki FPS'i" sorusunun iki cevabı olur ve hangisinin gösterileceği bir
- * karardır — ortalamasını almak da bir modelleme kararıdır ve verilmedi.
- * Belirsizliği sessizce çözmektense grubu atlamak doğru.
+ * **Aynı GPU için ÇELİŞEN değer varsa grup düşer** (K125). "Bu kartın bu
+ * oyundaki FPS'i" sorusunun iki farklı cevabı olamaz; hangisinin
+ * gösterileceği bir karardır, ortalamasını almak da bir modelleme kararıdır
+ * ve verilmedi. Belirsizliği sessizce çözmektense grubu atlamak doğru.
+ *
+ * **Ama AYNI değerin iki kez geçmesi çelişki değil.** ComputerBase aynı
+ * ölçümü iki sayfada yayınlıyor (kart incelemesi + parkur makalesi) ve
+ * değerler birebir aynı. Bunları iki ayrı ölçüm saymak, tek bir ölçümü
+ * çelişki sanıp o oyunu listeden düşürürdü — nitekim düşürdü ve 23 oyun
+ * 18'e indi. Aynı değerler önce teke indiriliyor, çelişki kontrolü ondan
+ * sonra yapılıyor.
  *
  * Bu iki kural bugün somut bir iş yapıyor: 178 ölçümün 114'ü tek bir GPU'ya
  * (RTX 5090) sabitlenmiş CPU ölçümleridir. O satırlarda aynı GPU bir grupta
@@ -124,12 +131,25 @@ export async function getFpsGameGroups(modelVersion: string): Promise<FpsGameGro
     });
   }
 
-  return [...buckets.values()].filter((bucket) => {
-    const ids = bucket.measurements.map((m) => m.part_id);
-    const distinct = new Set(ids);
+  return [...buckets.values()]
+    .map((bucket) => {
+      // Aynı (kart, değer) ikilisi birden fazla sayfadan gelmiş olabilir;
+      // tek ölçümün iki yayını çelişki değildir (K125). Önce teke indir.
+      const gorulen = new Set<string>();
+      bucket.measurements = bucket.measurements.filter((m) => {
+        const anahtar = `${m.part_id}|${m.avg_fps}`;
+        if (gorulen.has(anahtar)) return false;
+        gorulen.add(anahtar);
+        return true;
+      });
+      return bucket;
+    })
+    .filter((bucket) => {
+      const ids = bucket.measurements.map((m) => m.part_id);
+      const distinct = new Set(ids);
 
-    // Aynı GPU birden fazla kez geçiyorsa grup belirsiz — atlanır.
-    if (distinct.size !== ids.length) return false;
-    return distinct.size >= MIN_DISTINCT_GPUS;
-  });
+      // Buraya kalan tekrar GERÇEK çelişkidir: aynı kart, farklı değer.
+      if (distinct.size !== ids.length) return false;
+      return distinct.size >= MIN_DISTINCT_GPUS;
+    });
 }

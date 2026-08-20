@@ -52,7 +52,6 @@ function newBuildId(): string {
 export type SaveBuildFailure =
   | "empty" // hiç parça seçilmemiş
   | "unknown_part" // gönderilen id kataloğda yok
-  | "missing_price" // fiyatı olmayan parça var, toplam dürüst olmaz
   | "id_collision"; // beş denemede de boş kimlik bulunamadı
 
 export type SaveBuildResult =
@@ -94,10 +93,14 @@ export async function saveBuild(
     getPerfIndexes(MODEL_VERSION),
   ]);
 
-  // Fiyatı olmayan parça 0 sayılmaz: toplam olduğundan ucuz görünür ve bu
-  // dondurulduğu için sonradan düzeltilemez. Kayıt reddedilir.
+  // K124: fiyat kaydı ENGELLEMEZ. Fiyat beta ölçütünden çıktı (site performans
+  // tahmini yapıyor), dolayısıyla fiyatın olmaması paylaşım akışını
+  // kilitlememeli. Eskiden burada `missing_price` ile reddediliyordu.
+  //
+  // Ama fiyatı olmayan parça 0 SAYILMAZ: kısmi toplam olduğundan ucuz görünür
+  // ve donduğu için sonradan düzeltilemez. Eksik varsa toplam `null` olur —
+  // K92'nin karışık para birimi için verdiği kararla aynı mantık.
   const unpriced = ids.filter((id) => !prices[id]);
-  if (unpriced.length > 0) return { ok: false, reason: "missing_price", parts: unpriced };
 
   // Ekran kartı iki satır olabilir: çip (gpu_specs) ya da kart (gpu_variant_specs).
   // Kart kaydedilmişse indeks çipinden okunur — arayüzün yaptığının aynısı,
@@ -121,11 +124,16 @@ export async function saveBuild(
   const items = ids.map((id) => ({
     part_id: id,
     quantity: 1, // beta'da adet seçimi yok; her parça bir kez
-    unit_price_minor_at_save: prices[id].price_minor,
+    unit_price_minor_at_save: prices[id]?.price_minor ?? null,
   }));
-  const totalMinor = items.reduce((sum, item) => sum + item.unit_price_minor_at_save, 0);
-  // Beta'da tek para birimi var; ilk parçanınki hepsini temsil ediyor.
-  const currency = prices[ids[0]].currency;
+  // Tek bir parçanın fiyatı bile eksikse toplam üretilmez (K124).
+  const totalMinor =
+    unpriced.length > 0
+      ? null
+      : items.reduce((sum, item) => sum + (item.unit_price_minor_at_save ?? 0), 0);
+  // Beta'da tek para birimi var; fiyatı olan ilk parçanınki hepsini temsil
+  // ediyor. Hiç fiyat yoksa null.
+  const currency = ids.map((id) => prices[id]?.currency).find((c) => c !== undefined) ?? null;
 
   for (let attempt = 0; attempt < ID_ATTEMPTS; attempt++) {
     const id = newBuildId();
@@ -160,15 +168,17 @@ export type SavedBuildItem = {
   label: string;
   category: string;
   quantity: number;
-  unit_price_minor_at_save: number;
+  /** Kayıt anında fiyatı yoksa `null` (K124). */
+  unit_price_minor_at_save: number | null;
 };
 
 export type SavedBuild = {
   id: string;
   title: string | null;
   created_at: string; // ISO
-  total_price_minor: number;
-  currency: string;
+  /** Fiyatsız parça varsa `null` — kısmi toplam yazılmaz (K124). */
+  total_price_minor: number | null;
+  currency: string | null;
   resolution: Resolution;
   /** Hesaplanamadıysa null — "indeks sıfır" demek değil (K44). */
   perf_index_snapshot: number | null;

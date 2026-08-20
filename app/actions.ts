@@ -19,7 +19,6 @@ export type SaveBuildAction =
 const SAVE_BUILD_MESSAGE: Record<string, string> = {
   empty: "Kaydetmeden önce en az bir parça seçin.",
   unknown_part: "Seçilen parçalardan biri artık kataloğda yok. Sayfayı yenileyip tekrar deneyin.",
-  missing_price: "Fiyatı olmayan parça var. Toplam fiyat dondurulacağı için sistem kaydedilmiyor.",
   id_collision: "Sistem kimliği üretilemedi. Lütfen tekrar deneyin.",
 };
 

@@ -476,8 +476,8 @@ sayıyı kartın ölçümü gibi göstermez.
 |---|---|---|
 | `id` | text | Kısa, paylaşılabilir slug: `k3n9x2` |
 | `title` | text? | Kullanıcının verdiği ad |
-| `total_price_minor` | integer | **Kayıt anında dondurulur** |
-| `currency` | text | |
+| `total_price_minor` | integer? | **Kayıt anında dondurulur.** Fiyatsız parça varsa **null** |
+| `currency` | text? | Hiçbir parçanın fiyatı yoksa **null** |
 | `resolution` | enum | `1080p`, `1440p`, `2160p` — kullanıcının kaydettiği çözünürlük |
 | `perf_index_snapshot` | float? | Kayıt anındaki indeks. Hesaplanamadıysa **null** |
 | `model_version` | text | Kayıt anındaki motor sürümü |
@@ -488,6 +488,17 @@ fiyatını ve o günün hesabını göstermelidir. Canlı fiyatla hesaplanırsa 
 yanlış bilgi verir ve bu sonradan düzeltilemez.
 
 Güncel fiyatı ayrıca göstermek serbest — ama dondurulmuş değerin üzerine yazılmaz.
+
+**Fiyat kaydı engellemez** (K124). Fiyatı olmayan parça içeren sistem de
+kaydedilir; `total_price_minor` o durumda **null** olur. Kısmi toplam
+yazılmaz — bir parçanın fiyatı eksikken üretilen toplam, olduğundan ucuz
+görünür ve dondurulduğu için sonradan düzeltilemez (K92'nin karışık para
+birimi için verdiği kararla aynı mantık: sessizce yanlış bir sayı vermektense
+hiç vermemek).
+
+Bu, sitenin bir **performans tahmin sitesi** olmasının sonucu: fiyat beta
+ölçütünden çıkarıldı, dolayısıyla fiyatın olmaması paylaşım akışını
+kilitlememeli.
 
 **Neden `resolution` saklanır:** Sistem indeksi çözünürlüğe göre değişir (bölüm 8).
 Çözünürlük yazılmasaydı dondurulan sayı neyi ifade ettiği bilinmeyen bir sayı
@@ -520,7 +531,7 @@ Yan etkisi istenen bir kısıttır: aynı parça bir sistemde iki satır olamaz,
 | `build_id` | FK — birincil anahtarın parçası |
 | `part_id` | FK — birincil anahtarın parçası |
 | `quantity` | int |
-| `unit_price_minor_at_save` | integer |
+| `unit_price_minor_at_save` | integer? | Kayıt anında fiyat yoksa **null** |
 
 > `builds` ilk günden kalıcı bir nesnedir. Kullanıcı hesabı eklendiğinde yapılacak
 > tek şey bu tabloya `user_id` eklemektir — yeniden yazım gerekmez.

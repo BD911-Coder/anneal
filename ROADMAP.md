@@ -26,9 +26,9 @@ bitirdi**, beta kapısı envanteri çıkarıldı.
 | Katalog | **332 gerçek parça** |
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
 | Performans indeksi | 14 GPU + 12 CPU |
-| Benchmark ölçümü | **346 nokta**, tek kaynak (ComputerBase) |
+| Benchmark ölçümü | **381 nokta**, tek kaynak (ComputerBase) |
 | Hata payı | **script yazıyor**, eskiyince `kural:kontrol` duruyor |
-| Oyun bazlı FPS | **23 oyun (1440p) + 8 oyun (4K)**, **87 ekran kartı** |
+| Oyun bazlı FPS | **23 oyun (1440p) + 8 oyun (4K)**, **94 ekran kartı** |
 | Fiyat | 22 parçada gerçek fiyat (USD, Newegg) |
 | Kullanıcı | 0 |
 
@@ -61,7 +61,7 @@ Ayrıntılı plan ve ölçümler: **`docs/faz-a1-plani.md`**
 - [x] `/engine` testleri — **16 test**, `tests/fps-estimate.test.ts`
 - [x] Veri okuma yolu — `data/benchmarks.ts`, `benchmark_points` + `perf_index`
 - [x] Arayüz: oyun listesi, FPS, **ölçüm mü türetme mi**, hata payı
-- [x] Kapsam dışı kartta dürüst boşluk *(126/213 GPU'da veri yok)*
+- [x] Kapsam dışı kartta dürüst boşluk *(119/213 GPU'da veri yok)*
 - [x] **Kaydedilmiş sistem sayfası** — paylaşılan link de listeyi gösteriyor.
       FPS **dondurulmaz**, bugünkü hesap ayrı kutuda (K102).
 - [x] **Ana sayfa metni** durum başına ayrıldı; kapsam sayıları veriden
@@ -77,7 +77,7 @@ Paylaşım linki (`/sistem/s62dqq`, 4K'da kaydedilmiş) listeyi gösteriyor ve
 
 **Kapsam (20 Ağustos, A.2 sonrası):** **23 oyun** × 14 çip = 322 hücre;
 **184'ü ölçülmüş**, 138'i türetilebilir. Kart tarafında 46 kart çipinden
-miras alıyor — **213 seçilebilir GPU'nun 87'sinde** FPS gösterilebiliyor.
+miras alıyor — **213 seçilebilir GPU'nun 94'ünde** FPS gösterilebiliyor.
 
 **Tek ayar var:** 1440p / ultra / DLSS-FSR Quality. Başka çözünürlük, başka
 preset ve yerel (upscaling kapalı) çıktı **yok** — uydurulmayacak.
@@ -125,10 +125,12 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
             (K121):** Arc'ı dört markadan hiçbiri yapmıyor; ASRock/Sparkle
             `robots.txt` izin veriyor ama sayfa ne `curl`'e ne tarayıcıya
             geliyor.
-- [ ] **Aynı sürücü döneminde ikinci bir ComputerBase GPU incelemesi var mı?**
-      ❓ **ölçülmedi.** Varsa yeni payda = yeni K75 tavanı demek; kart kapsamı,
-      1080p/4K genişletme ve RT/1% low aynı anda açılır. K77 sürücü döneminin
-      doğrulanmasını şart koşuyor. `docs/performans-eksikleri.md` bölüm 2
+- [x] **İkinci ComputerBase GPU incelemesi ölçüldü** *(20 Ağustos, K123)* —
+      var, ama **aynı tur**: parkur makalesi kart incelemesiyle aynı ölçümü
+      yayınlıyor (ortak 8 kartın değerleri birebir aynı). Köprü değil.
+      **Kazanç:** parkur makalesi 16 kart yayınlıyor (14 yerine) → **RTX 5080**
+      alındı, indeksli çip 14 → **15**, FPS gösterilebilen GPU 87 → **94**.
+      Yeni payda 2.448 → **2.808**; oran %9,51, tavana **13 satır** kaldı.
 - [x] **Oyun sayısı 8 → 23** *(20 Ağustos)* — yapıldı. Mevcut kaynakta
       **alınacak oyun/kart kalmadı**: 1440p'de 23 oyunun hepsi alındı, her
       grupta 14 karttan 8'i (K75 tavanı), 4K'da 8 oyun. Kaynağın **%9,48**'i
@@ -153,17 +155,17 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
 Yeni beta ölçütünün doğrudan hedefi. **Dördü de veri gerektirmiyor**, toplamı
 ~2 gün. Ölçüm ve gerekçe: `docs/performans-eksikleri.md`
 
-- [ ] **CPU çerçevesi** 🔴 — kullanıcı hangi işlemciyi seçerse seçsin aynı FPS
-      görüyor; en yanıltıcı eksik bu çünkü **sessiz**. Sayı değişmeyecek
-      (veri yok), ama çerçeve düzelecek: seçilen işlemcinin referansa göre
-      nerede durduğunu söyle, CPU seçilmeden listeyi uyarısız gösterme,
-      darboğaz göstergesini listeye bağla.
-- [ ] **"Bu FPS iyi mi" eşik etiketleri** — sistem indeksinin bandı var, oyun
-      listesinin yok. 47 FPS iyi mi? Eşikler karar gerektirir, ölçüm değil.
-- [ ] **30/42 işlemcide çelişkili ekran** — "performans tahmini yok" ile dolu
-      FPS listesi aynı ekranda. İkisinin farklı sorular olduğu söylenmeli.
-- [ ] **Kapsanan oyunları baştan söyle** — kullanıcı kartını seçtikten sonra
-      tanımadığı 23 oyunla karşılaşıyor; beklenti baştan kurulmalı.
+- [x] **30/42 işlemcide çelişkili ekran** *(K126)* — artık eksik olanın **adı**
+      konuyor: "Sistem indeksi hesaplanamıyor", ve liste görünüyorsa "o liste
+      yalnızca ekran kartına bakıyor" deniyor.
+- [x] **CPU çerçevesi** *(K128)* — "bu sayılar yalnızca ekran kartına göredir",
+      seçilen işlemcinin indeksi ve referansa göre yeri, darboğaz `cpu_limited`
+      ise listenin başında uyarı.
+- [x] **"Bu FPS iyi mi" eşik etiketleri** *(K127)* — 30/60/120 →
+      `zor` · `oynanır` · `akıcı` · `yüksek tazeleme`. Eşiklerin **karar**
+      olduğu arayüzde yazılı.
+- [x] **Kapsanan oyunları baştan söyle** *(K129)* — ekran kartı seçilmeden de
+      "bu çözünürlükte ölçümü olan 23 oyun: …" görünüyor.
 
 ## A.3 — Doğruluk ölçümü ve yayınlanan hata payı
 
@@ -214,14 +216,13 @@ gerçek bilinmeyeni bu ve kod değil kullanıcı cevaplıyor.
 
 **Envanter:** `docs/beta-kapisi-envanteri.md` (fiyat maddeleri artık Faz E'de).
 
-### 🔴 Engelleyici — kaldırılacak kısıt
+### ✅ Kısıt kaldırıldı *(20 Ağustos, K124)*
 
-- [ ] **Fiyatsız parça seçilince sistem kaydedilemiyor — bu kısıt kalkacak.**
-      `saveBuild` bugün `missing_price` ile reddediyor; fiyat beta ölçütünden
-      çıktığına göre bu kısıt paylaşım akışını sebepsiz kilitliyor.
-      Dokunulacak yerler: `data/builds.ts` (`missing_price` reddi),
-      `builds.total_price_minor` fiyatsız sistemde ne yazacağı.
-      *(Bu turda uygulanmadı — yalnızca karar kaydedildi.)*
+- [x] **Fiyatsız parça seçilince sistem artık kaydedilebiliyor.** `saveBuild`
+      `missing_price` ile reddetmiyor; `total_price_minor`, `currency` ve
+      `unit_price_minor_at_save` opsiyonel oldu. **Kısmi toplam yazılmıyor** —
+      eksik varsa `null` ve arayüz "Toplam fiyat dondurulmadı" deyip sebebini
+      söylüyor (K92 ile aynı mantık).
 
 ### ✅ Envanterde bulundu ve düzeltildi *(20 Ağustos, K119)*
 

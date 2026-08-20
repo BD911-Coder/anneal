@@ -71,6 +71,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
   // Kaydedilen sistemin çözünürlüğü dondurulmuş (K43); liste onu izler.
   const fpsGroupsForRes = fpsGroups.filter((group) => group.resolution === build.resolution);
   const fpsRows = estimateGameFps(fpsPartId, gpuIndex.value, fpsGroupsForRes);
+  // Kaydedilen sistemin işlemcisi — liste GPU-sınırlı olduğu için sayıya
+  // girmiyor, ama nerede durduğu söyleniyor (çerçeve düzeltmesi).
+  const cpuPartId = build.items.find((i) => i.category === "cpu")?.part_id;
 
   const currentItems = build.items.map((item) => ({
     ...item,
@@ -83,7 +86,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
     (sum, item) => sum + (item.current_price_minor ?? 0),
     0,
   );
-  const totalDelta = currentTotalMinor - build.total_price_minor;
+  // Dondurulmus toplam yoksa fark da yok (K124).
+  const totalDelta =
+    build.total_price_minor === null ? null : currentTotalMinor - build.total_price_minor;
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
@@ -93,9 +98,8 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             değerler o günün, bugünkü fiyat ve oyun bazlı FPS bugünün. Tek
             cümlede "aşağıdaki değerler o günün" demek ikisini karıştırırdı. */}
         <p className="text-sm opacity-70">
-          {formatIsoDate(build.created_at)} tarihinde kaydedildi. Toplam fiyat ve sistem
-          indeksi o gün donduruldu; kesikli çerçeveli kutular bugünün verisiyle
-          hesaplanır.
+          {formatIsoDate(build.created_at)} tarihinde kaydedildi. Dondurulan değerler o
+          güne aittir; kesikli çerçeveli kutular bugünün verisiyle hesaplanır.
         </p>
       </header>
 
@@ -105,12 +109,27 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
 
         <div className="flex flex-col gap-3 text-sm">
           <div>
-            <p className="text-2xl font-semibold">
-              {formatPriceMinor(build.total_price_minor, build.currency)}
-            </p>
-            <p className="opacity-70">
-              Toplam fiyat — {formatIsoDate(build.created_at)} tarihinde donduruldu
-            </p>
+            {/* K124: fiyatsiz parca iceren sistem de kaydedilir; toplam null
+                olur ve KISMI toplam yazilmaz. */}
+            {build.total_price_minor !== null ? (
+              <>
+                <p className="text-2xl font-semibold">
+                  {formatPriceMinor(build.total_price_minor, build.currency ?? "USD")}
+                </p>
+                <p className="opacity-70">
+                  Toplam fiyat — {formatIsoDate(build.created_at)} tarihinde donduruldu
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="opacity-70">Toplam fiyat dondurulmadı.</p>
+                <p className="text-xs opacity-50">
+                  Sistemdeki parçalardan en az birinin kayıt anında fiyatı yoktu. Eksik
+                  fiyatla üretilen toplam olduğundan ucuz görünürdü ve donduğu için
+                  sonradan düzeltilemezdi; bu yüzden hiç yazılmadı.
+                </p>
+              </>
+            )}
           </div>
 
           {build.perf_index_snapshot !== null ? (
@@ -145,8 +164,7 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                 Bu sistem {RESOLUTION_LABEL[build.resolution]} seçiliyken kaydedildi. İndeks
                 ekran kartı ve işlemcinin ikisini birden gerektiriyor ve her ikisinin de
                 ölçüm verisinin bulunmasını şart koşuyor; kaydedildiği anda bu koşul
-                sağlanmıyordu. Sistem geçerli, fiyatı dondu; sadece hızı hakkında bir sayı
-                üretilemedi.
+                sağlanmıyordu. Sistem geçerli; sadece hızı hakkında bir sayı üretilemedi.
               </p>
             </div>
           )}
@@ -158,8 +176,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
         <h2 className="mb-3 text-lg font-semibold">Parçalar ({build.items.length})</h2>
         <ul className="flex flex-col gap-2 text-sm">
           {currentItems.map((item) => {
+            // Fark ancak IKI fiyat da varsa hesaplanir (K124).
             const delta =
-              item.current_price_minor === null
+              item.current_price_minor === null || item.unit_price_minor_at_save === null
                 ? null
                 : item.current_price_minor - item.unit_price_minor_at_save;
             return (
@@ -171,15 +190,17 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                   {item.label}
                 </div>
                 <div className="text-xs opacity-70">
-                  Kayıt anında: {formatPriceMinor(item.unit_price_minor_at_save, build.currency)}
+                  {item.unit_price_minor_at_save !== null
+                    ? `Kayıt anında: ${formatPriceMinor(item.unit_price_minor_at_save, build.currency ?? "USD")}`
+                    : "Kayıt anında fiyatı yoktu"}
                   {item.current_price_minor !== null ? (
                     <>
-                      {" · "}bugün: {formatPriceMinor(item.current_price_minor, build.currency)}
+                      {" · "}bugün: {formatPriceMinor(item.current_price_minor, build.currency ?? "USD")}
                       {delta !== null && delta !== 0 && (
                         <span className={delta > 0 ? "text-red-600" : "text-green-700"}>
                           {" "}
                           ({delta > 0 ? "+" : ""}
-                          {formatPriceMinor(delta, build.currency)})
+                          {formatPriceMinor(delta, build.currency ?? "USD")})
                         </span>
                       )}
                     </>
@@ -210,6 +231,7 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             gpuSelected
             resolution={build.resolution}
             hasDataForResolution={fpsGroupsForRes.length > 0}
+            cpuIndex={cpuPartId ? perfIndexes[cpuPartId] : undefined}
           />
         </section>
       )}
@@ -220,14 +242,14 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
         {allPricedNow ? (
           <p className="text-sm">
             <span className="text-xl font-semibold">
-              {formatPriceMinor(currentTotalMinor, build.currency)}
+              {formatPriceMinor(currentTotalMinor, build.currency ?? "USD")}
             </span>{" "}
             <span className="text-xs opacity-60">tahmini</span>
-            {totalDelta !== 0 && (
+            {totalDelta !== null && totalDelta !== 0 && (
               <span className="opacity-70">
                 {" — kayıt anına göre "}
                 {totalDelta > 0 ? "+" : ""}
-                {formatPriceMinor(totalDelta, build.currency)}
+                {formatPriceMinor(totalDelta, build.currency ?? "USD")}
               </span>
             )}
           </p>

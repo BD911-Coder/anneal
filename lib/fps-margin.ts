@@ -20,7 +20,7 @@ export const FPS_MARGIN = {
   /** Tahminlerin yüzde kaçı ±%10 içinde kaldı. */
   within10Percent: 78,
   /** Ölçümde kullanılan nokta sayısı (türetilebilir hücreler). */
-  points: 192,
+  points: 250,
   /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
   measuredAtPoints: 381,
   measuredAt: "2026-08-20",

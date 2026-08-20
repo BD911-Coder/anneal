@@ -2724,3 +2724,113 @@ okunmadığı bir `source_url` ile üretildi.
 budur: satırdaki adres, sayının **gerçekten okunduğu** sayfa olmak zorunda.
 
 **Bir sonraki toplamada:** önbellek anahtarı URL olmalı, slug değil.
+
+## 2026-08-20 — Parkur makalesi, çerçeve düzeltmeleri, fiyatsız kayıt
+
+### K123 — İkinci ComputerBase makalesi aynı turdur, köprü değildir
+
+`nvidia-geforce-amd-radeon-benchmark-test-2026.97097` (parkur makalesi) ile
+`amd-radeon-rx-9070-gre-test.97564` (kart incelemesi) **aynı ölçüm kümesini**
+yayınlıyor. Kanıt: ortak sekiz kartın değerleri birebir aynı.
+
+```
+Cyberpunk 2077, 1440p, DLSS/FSR Quality — iki makalede de:
+RTX 5090 202,6 · RTX 4090 149,3 · RTX 5070 Ti 124,6 · RX 9070 XT 120,4
+RX 9070 109,4 · RTX 5070 108,5 · RX 7600 55,3 · RTX 4060 47,2
+```
+
+**Bu yüzden K77 ihlal edilmiyor.** K77 iki **ayrı ölçüm turunu** ortak kart
+üzerinden bağlamayı yasaklıyor; burada ölçüm tek, sayfa iki. `GUNCEL_TUR`
+listesine bu gerekçeyle eklendi.
+
+**Kazanç:** parkur makalesi **16 kart** yayınlıyor (kart incelemesi 14).
+Fazladan olan RTX 5080 alındı (7 kart × 5 oyun = 35 satır, aynı upscaling
+rejimi — K78 uyumlu). Sonuç: indeksli çip **14 → 15**, FPS gösterilebilen
+GPU **87 → 94**.
+
+**K75 paydası da değişti:** parkur makalesi 2.808 değer yayınlıyor (2.448
+yerine). Bütün satırlarımız **buna karşı** sayıldı — muhafazakâr okuma,
+çünkü ölçüm aynı iş: `267/2808 = %9,51` (tavan 280).
+
+### K125 — Aynı değerin iki kez geçmesi çelişki değildir
+
+Ölçüm grubu kuralı (K101) "aynı GPU birden fazla kez geçiyorsa grup düşer"
+diyordu. Parkur makalesi eklenince bu kural **beş oyunu listeden düşürdü**
+(23 → 18): aynı ölçüm iki sayfadan geldiği için kart iki kez görünüyordu.
+
+Kural keskinleştirildi: **önce aynı `(kart, değer)` ikilileri teke indirilir,
+sonra çelişki aranır.** Geriye kalan tekrar gerçek çelişkidir — aynı kart,
+**farklı** değer — ve o grup hâlâ düşer.
+
+**Gerekçe:** tek bir ölçümün iki yayını, iki ölçüm değildir. Eski kural bunu
+ayırt edemiyordu ve doğru veriyi kaybediyordu.
+
+### K126 — Sistem indeksi ile oyun listesi ayrı ayrı adlandırılır
+
+Arayüz eskiden *"Performans tahmini için henüz yeterli veri yok"* diyordu ve
+**hemen altında dolu bir oyun FPS listesi** duruyordu. Kullanıcı için çelişki;
+30/42 işlemcide bu hâl normaldi.
+
+Metin artık eksik olanın **adını** koyuyor: *"Sistem indeksi hesaplanamıyor —
+bu sayı işlemci ve ekran kartının ikisinin de ölçümünü gerektiriyor"*, ve
+liste görünüyorsa *"o liste yalnızca ekran kartına bakıyor"* diye ekliyor.
+
+**İlke:** iki farklı sayı, iki farklı soruya cevap veriyorsa, biri
+hesaplanamadığında **hangisi** olduğu söylenir. "Veri yok" genel ifadesi,
+elde olan veriyi de yokmuş gibi gösteriyordu.
+
+### K127 — Oyun FPS'i eşiklerle yorumlanır; eşikler karar, ölçüm değil
+
+`lib/fps-bands.ts`: **30 / 60 / 120** sınırlarıyla `zor` · `oynanır` ·
+`akıcı` · `yüksek tazeleme`.
+
+**Bunlar ölçüm değil.** "60 FPS akıcı mıdır" sorusunun deneysel cevabı yok;
+ekranın tazeleme hızına ve oyunun türüne göre değişir. Bu yüzden sayının
+yanında **yorum** olarak duruyorlar ve arayüz eşiklerin karar olduğunu
+yazıyor.
+
+**Neden yine de var:** "47 FPS" gören kullanıcı bunu iyi mi kötü mü bilemez.
+Site performans **tahmini** yapıyorsa, tahmini yorumlamak da işinin parçası.
+Ham sayıyı yorumsuz bırakmak dürüstlük değil, eksiklik.
+
+### K128 — İşlemci sayıya girmiyorsa bu açıkça yazılır
+
+Oyun FPS listesi GPU-sınırlı (K99) ve bunu düzeltecek veri yok (K113).
+Sayı değiştirilemiyor; **çerçeve** düzeltildi:
+
+1. Başlık cümlesi: *"Bu sayılar yalnızca ekran kartına göredir… seçtiğiniz
+   işlemci bu sayılara girmiyor."*
+2. Seçilen işlemcinin indeksi ve referansa göre yeri yazılıyor.
+3. Sistem indeksinin darboğaz sonucu (K83) `cpu_limited` ise listenin başında
+   *"aşağıdaki sayılar bu yüzden iyimser olabilir"* uyarısı çıkıyor.
+
+**Gerekçe:** en yanıltıcı eksik **sessiz** olandı — kullanıcı hangi işlemciyi
+seçerse seçsin aynı listeyi görüyor ve "işlemci fark etmiyormuş" sonucunu
+çıkarıyordu. Sayıyı düzeltemiyorsak, sayının ne olmadığını söylemek zorundayız.
+
+### K129 — Kapsanan oyunlar seçimden önce gösterilir
+
+Ekran kartı seçilmeden de "bu çözünürlükte ölçümü olan 23 oyun: …" listesi
+görünüyor.
+
+**Gerekçe:** kullanıcı kartını seçtikten sonra tanımadığı bir listeyle
+karşılaşıyordu (Steam ilk 100'ünden yalnızca 4 oyun — K106). Beklentiyi
+baştan kurmak, sonradan hayal kırıklığı yaşatmaktan iyi.
+
+### K124 — Fiyat kaydı engellemez
+
+`saveBuild` artık `missing_price` ile reddetmiyor. Fiyatı olmayan parça
+içeren sistem de kaydedilir ve paylaşılabilir.
+
+Migration: `20260820172348_fiyatsiz_sistem_kaydedilebilir`.
+`builds.total_price_minor`, `builds.currency` ve
+`build_items.unit_price_minor_at_save` opsiyonel oldu.
+
+**Gerekçe:** fiyat beta ölçütünden çıkarıldı — bu bir **performans tahmin
+sitesi**. Fiyatın olmaması paylaşım akışını kilitlememeli; kilitliyordu.
+
+**Ama kısmi toplam yazılmaz.** Bir parçanın fiyatı eksikken üretilen toplam
+olduğundan ucuz görünür ve donduğu için sonradan düzeltilemez. Eksik varsa
+`total_price_minor = null` ve arayüz *"Toplam fiyat dondurulmadı"* diyip
+sebebini yazıyor. K92'nin karışık para birimi için verdiği kararla aynı
+mantık: sessizce yanlış bir sayı vermektense hiç vermemek.
