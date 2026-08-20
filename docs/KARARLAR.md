@@ -2667,3 +2667,60 @@ Ayrı `game_id` sayısına çevrildi.
 doğru sayıyı **yanlış biçimde** gösteriyordu. Sayının doğru olması yeterli
 değil; nasıl gösterildiği de ölçülmeli. Envanter olmasa üçü de fark
 edilmeden yabancıya gösterilirdi.
+
+## 2026-08-20 — Kart varyantı kapsamı 58 → 153
+
+### K120 — ASUS ölçü satırında birim seçilir, ilk üçlü alınmaz
+
+ASUS eski ürün sayfalarında ölçüyü **aynı satırda hem inç hem metrik** veriyor:
+
+```
+7.87 " x 4.84 " x 1.496 " Inch20  x 12.3  x 3.8  Centimeter
+12 x 5.43 x 2.55 inch305 x 138 x 65 mm
+```
+
+İlk üçlüyü almak inç değerini milimetre sanmaktır: RTX 3060 için **200 mm
+yerine 8** yazılırdı. Toplama sırasında tam olarak bu oldu ve şüpheli değer
+taraması yakaladı (`length_mm < 150`).
+
+**Kural:** birim etiketine göre seçilir — sıra `mm` > `cm` > `inch`, bulunan
+birim mm'ye çevrilir, K91 gereği **yukarı** yuvarlanır.
+
+**Bu K60 ihlali değil:** birim sayfada **etiketli**. Doğru birimi seçmek
+çıkarım değil okumadır; yanlış olan, etiketi görmezden gelip ilk sayıyı almaktı.
+
+**Ders:** çok birimli yayın, etiketsiz yayından daha tehlikeli. Etiketsizde
+K91 devreye girer ve dikkat çeker; çok birimlide sayı **makul görünür**
+(8, 11, 12 hepsi geçerli bir "mm" gibi durur) ve sessizce yanlış olur.
+Toplama sonrası aralık taraması bu yüzden zorunlu.
+
+### K121 — Intel Arc kapsanamadı, sebebi kaynak erişimi
+
+`intel-arc-b580` **indeksli** bir çip ve hâlâ **sıfır kartı var**.
+
+Sebep: Arc kartlarını dört markadan hiçbiri yapmıyor (SAPPHIRE yalnızca AMD).
+Baskın üreticiler ASRock ve Sparkle. `robots.txt` **ikisinde de izin veriyor**
+— engel izin değil erişim:
+
+| Yol | Sonuç |
+|---|---|
+| `curl` (tam başlık seti) | 836 bayt, 82 karakter metin — içerik yok |
+| Tarayıcı paneli | `innerText` uzunluğu **0** — sayfa boş |
+
+ASRock ürün sayfası her iki yolla da okunamadı. Sparkle denenmedi.
+
+**Sonuç:** Arc B580 indeksli olmasına rağmen kart gösteremiyor. Bu, K113'ün
+(kaynak biçimi) kardeşi bir engel: orada sayı görselde, burada sayfa hiç
+gelmiyor. İkisi de emekle çözülmüyor.
+
+### K122 — Kart toplamada slug önbelleği URL'i değil slug'ı anahtarlar
+
+Toplama script'i indirdiği sayfayı **slug adıyla** önbellekliyor. Aynı slug
+için ikinci bir URL denendiğinde (GIGABYTE'ın `-rev-10` varyantı, SAPPHIRE'ın
+düzeltilmiş adresi) önbellek **eski sayfayı** verdi ve satır, verinin
+okunmadığı bir `source_url` ile üretildi.
+
+İki satırda yakalandı ve doğru adresli olan tutuldu. Kaynak defterinin anlamı
+budur: satırdaki adres, sayının **gerçekten okunduğu** sayfa olmak zorunda.
+
+**Bir sonraki toplamada:** önbellek anahtarı URL olmalı, slug değil.
