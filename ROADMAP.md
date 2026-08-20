@@ -14,7 +14,7 @@ Güncelleme: 20 Ağustos 2026
 | | Durum |
 |---|---|
 | Site | Vercel'de canlı, arama motorlarına kapalı |
-| Katalog | 208 gerçek parça |
+| Katalog | 237 gerçek parça |
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
 | Performans indeksi | 14 GPU + 7 CPU (60 ve 40 üzerinden) |
 | Benchmark ölçümü | 106 nokta, tek kaynak (ComputerBase) |
@@ -64,10 +64,14 @@ Yani çalışan bir özellik yarıda kalmış durumda.
 
 Dört kategori beta için fazla dar. Kullanıcının seçenek hissi olmalı.
 
-- [ ] PSU: 4 → 12 *(550W–1200W, farklı verimlilik)*
-- [ ] Kasa: 5 → 12 *(ITX/mATX/ATX, farklı GPU açıklığı)*
-- [ ] Depolama: 6 → 14 *(Gen4/Gen5 NVMe, SATA, HDD)*
-- [ ] RAM: 14 → 20 *(DDR5 farklı hız/kapasite + DDR4)*
+- [x] PSU: 4 → **12** *(550W–1200W, Bronze→Platinum, biri SFX)*
+- [x] Kasa: 5 → **12** *(ITX/mATX/ATX/E-ATX, GPU açıklığı 290–423 mm)*
+- [x] Depolama: 6 → **14** *(Gen5/Gen4 NVMe, SATA SSD, HDD; 1–4 TB)*
+- [x] RAM: 14 → **20** *(DDR5 16–128 GB / 5200–8000, DDR4 32–128 GB)*
+
+Sonuç: eşik uyarısı 3 → **2**. C5 uyarıdan çıktı (2 → 125 kombinasyon).
+Kalan: W2 (2), W5 (1). Marka çeşitliliği dar — kasaların 11'i Fractal,
+PSU'ların 11'i Corsair. `docs/log/2026-08-20-kategori-derinligi.md`
 
 Kurallar aynen geçerli: üretici sayfaları, K59/K60/K62, uydurma yok.
 
