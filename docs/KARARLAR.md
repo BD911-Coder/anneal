@@ -2505,3 +2505,44 @@ Doğrulama iki satırı düzeltti — ikisi de konsol/PC farkıydı:
 
 32 oyunun 31'i artık Steam'i kaynak gösteriyor (K109 tutarsızlığı kapandı);
 Alan Wake 2 doğrulanamadığı için kaynağı ComputerBase kaldı.
+
+### K113 — Donanım basını FPS'i görsel yayınlıyor; ComputerBase istisna
+
+**İkinci tur kaynak araması da olumsuz** (2026-08-20). Ölçüt tekti ve önce
+sorulan buydu: oyun başına FPS **makine tarafından okunabilir metin** olarak
+mı yayınlanıyor?
+
+| Kaynak | Metinde FPS | Görsel grafik | Sonuç |
+|---|---|---|---|
+| **ComputerBase** | ✅ 2.448 değer | — | kullanılıyor |
+| GamersNexus (Mega Charts) | ❌ **0** | 32 | elendi |
+| Notebookcheck | ❌ **0** (`fps` kelimesi bile 0 kez) | 39 | elendi |
+| TechPowerUp | ❌ 0 | var | elendi (1. tur) |
+| PCGamesHardware | ❌ 0 | var | elendi (1. tur) |
+| Igor's Lab | ❌ 0 | 32 | elendi (1. tur) |
+| TechSpot / HUB | ❌ 0 | 123 | elendi (1. tur) |
+| Guru3D | görsel | var | elendi (1. tur) |
+| OpenBenchmarking | **doğrulanamadı** — `robots.txt` izin veriyor ama sayfa **403** döndü | | denenemedi |
+| Tom's Hardware | — | — | K105 gereği kaynak olamaz |
+| howmanyfps, pc-builds, DropReference, PCGameBenchmark, TechBenchPro | metin ✅ ama **ölçüm değil türetme** | | reddedildi |
+
+**Yazılan sonuç:** bu bir arama eksikliği değil, **sektörün yayın biçimi**.
+Donanım basını benchmark sonucunu neredeyse istisnasız **grafik görseli**
+olarak yayınlıyor. ComputerBase bu kuralın istisnası ve bugün tek kaynağımız
+olmasının sebebi bu — tercih değil, zorunluluk.
+
+**Sonuçları:**
+
+1. **CPU kapsamı 12'de kalıyor.** Oyun bazlı FPS CPU'yu hesaba katamamaya
+   devam ediyor (kesişim hâlâ sıfır).
+2. **Tek kaynak riski yapısal.** İkinci bir metin kaynağı bulunana kadar
+   çeşitlendirme mümkün değil; K80'in aynası bu riski görünür tutan tek şey.
+3. **Bir sonraki arama turunda önce biçim sorulacak** (Igor's Lab dersi):
+   izin en net olan kaynak bile sayıları görselde yayınlıyorsa kullanılamaz.
+4. **Görselden sayı okumak seçenek değil.** OCR ya da grafik piksel ölçümü,
+   kaynağı doğrulanamayan bir sayı üretir — K71'in reddettiği şeyin aynısı,
+   bir katman daha gizlenmiş hali.
+
+**Yeniden denenecek tek aday:** OpenBenchmarking, yapılandırılmış veri
+yayınlayan tek aday ve `robots.txt` izin veriyor; 403 aşılabilirse oyun
+kapsamı ölçülmeli. Ama Linux/sentetik ağırlıklı olması bekleniyor.
