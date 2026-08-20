@@ -1,0 +1,4 @@
+id,brand,model,release_year,collected_at,source_url,confidence,storage_type,capacity_gb,interface,read_speed_mbs
+crucial-t705-2tb,Crucial,T705 2TB PCIe Gen5 NVMe M.2 (CT2000T705SSD3),,2026-08-20,https://www.crucial.com/ssd/t705/ct2000t705ssd3,high,nvme,2000,NVMe (PCIe Gen 5 x4),14500
+crucial-t500-2tb,Crucial,T500 2TB PCIe Gen4 NVMe M.2 (CT2000T500SSD8),,2026-08-20,https://www.crucial.com/ssd/t500/ct2000t500ssd8,high,nvme,2000,NVMe (PCIe Gen 4 x4),7400
+crucial-p310-2tb,Crucial,P310 2TB PCIe Gen4 NVMe 2230 M.2 (CT2000P310SSD2),,2026-08-20,https://www.crucial.com/ssd/p310/ct2000p310ssd2,high,nvme,2000,NVMe (PCIe Gen 4 x4),7100
