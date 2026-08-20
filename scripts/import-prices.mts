@@ -54,7 +54,7 @@ function toMinor(usd: string): number {
 }
 
 /**
- * K91: pazaryeri fiyati, ayni cipin en ucuz MAGAZA fiyatinin 2 katini gecerse
+ * K96: pazaryeri fiyati, ayni cipin en ucuz MAGAZA fiyatinin 2 katini gecerse
  * alinmaz. Iki kati asan sayi fiyat degil spekulasyondur.
  *
  * Tavan CSV'nin kendisinden hesaplaniyor: ayni dosyada o cipin magaza satisli
@@ -109,7 +109,7 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".csv")).sort()) {
         }
       }
 
-      // K91: pazaryeri tavani. Yalnizca kart satirlarina uygulanir — cip
+      // K96: pazaryeri tavani. Yalnizca kart satirlarina uygulanir — cip
       // satirlarinin fiyati zaten magaza satisli bir karttan okunuyor.
       if (row.seller && row.seller !== row.retailer) {
         const variant = await prisma.gpuVariantSpecs.findUnique({
@@ -183,7 +183,7 @@ const fiyatli = (await prisma.priceSnapshot.groupBy({
   where: { source: "manual" },
 })).length;
 
-console.log(`\nOZET: ${yeni} yeni, ${atlanan} atlandi, ${elenen} elendi (K91), ${hatali} hata.`);
+console.log(`\nOZET: ${yeni} yeni, ${atlanan} atlandi, ${elenen} elendi (K96), ${hatali} hata.`);
 console.log(`Gercek fiyati olan parca: ${fiyatli}`);
 
 await prisma.$disconnect();

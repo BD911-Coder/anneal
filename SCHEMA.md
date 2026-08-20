@@ -290,6 +290,12 @@ Cybenetics veriyor, 80 PLUS vermiyor. Değer sayfada yazdığı gibi girilir.
 >    değerleri tutarsız yayınlıyor; zorunluluk veriyi dışarıda bırakmaktan
 >    başka işe yaramıyor. İlgili kural eksik alanda kendini atlar, arayüz
 >    kullanıcıya bildirir.
+> 5. **ATX güç kaynağında sabit iki eksen tanınıyorsa kalan uzunluktur**
+>    (K95). Etiketsiz üçlüde **hem 150 hem 86** varsa, kalan değer
+>    `psu_specs.length_mm`'e yazılır — ATX12V genişliği 150, yüksekliği 86 mm
+>    olarak sabitler. Biri yoksa kural kendini kapatır ve 1. madde işler.
+>    SFX/SFX-L kapsam dışıdır. Bu, K91'in ekran kartı kuralı **değildir**:
+>    orada en büyük değer uzunluktur, PSU'da en büyük değer genişliktir.
 
 **`storage_specs`**
 

@@ -1,5 +1,9 @@
 # 2026-08-20 — Amazon fiyat denemesi: kapalı
 
+> **Sonradan eklenen not (2026-08-20).** Bu raporda "K91" diye geçen
+> pazaryeri tavanı kararı **K96** olarak yeniden numaralandırıldı — K91 zaten
+> başka bir karara aitti. Metindeki atıflar düzeltildi; içerik değişmedi.
+
 Faz 1.1'in kalan beş kategorisi (anakart, RAM, PSU, kasa, depolama) için
 Amazon denendi. **Kullanılamıyor.** Veri toplanmadı, tek satır yazılmadı.
 
@@ -107,7 +111,7 @@ Karar proje sahibinin; hiçbiri kendiliğinden uygulanmadı.
 2. **Türkiye perakendecileri + TRY.** Fiyatlar zaten TRY'ye dönerdi ve
    K92 sayesinde karışık para birimi artık sessizce yanlış toplam üretmiyor.
    Ama "marka hedefi global, fiyat USD olsun" kararıyla çelişir.
-3. **Newegg'de devam, pazaryeri tavanını gevşetmek.** K91 şu an mağaza
+3. **Newegg'de devam, pazaryeri tavanını gevşetmek.** K96 şu an mağaza
    referansı olmayan pazaryeri satırını eliyor. Beş kategoride denenen
    listelerin **hepsi** pazaryeri satıcısıydı; tavan gevşetilirse fiyat
    girilebilir ama spekülatif sayılar veritabanına girer.

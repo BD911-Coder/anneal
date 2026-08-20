@@ -1951,7 +1951,12 @@ slug'ı CSV'de ve `raw_imports.payload`'da duruyor, veritabanı satırında
 `product_url` kartın sayfasını gösteriyor. Sütun eklemek şema değişikliğidir
 ve sorulmadan yapılmadı.
 
-### K91 — Pazaryeri fiyatına iki kat tavanı
+### K96 — Pazaryeri fiyatına iki kat tavanı
+
+> **Numaralandırma düzeltmesi (2026-08-20).** Bu karar 2026-08-20'de yanlışlıkla
+> K91 numarasıyla yazıldı; K91 zaten "etiketsiz ölçü üçlüsünde en büyük değer
+> uzunluktur" kararına aitti. İçerik değişmedi, yalnızca numara düzeltildi.
+> Eski raporlarda ve komut çıktılarında bu karar K91 diye geçebilir.
 
 Perakendecinin kendi sattığı ürün ile pazaryeri satıcısının sattığı ürün aynı
 sayfada görünür ama aynı şey değildir.
@@ -2085,3 +2090,82 @@ değil erişimin doğrulanmasına dayanmalı — K29'un kurduğu mantığın ayn
 
 Açık, canlıya aktarım planı yazılırken fark edildi
 (`docs/canliya-aktarim-plani.md`); plan uygulanmadan önce kapatıldı.
+
+## 2026-08-20 — PSU uzunluğu: standardın sabit ölçüsü (Faz 1.2 devamı)
+
+Karar veren: proje sahibi.
+
+### K95 — Etiketsiz PSU üçlüsünde standardın iki sabiti tanınıyorsa kalan uzunluktur
+
+Üreticinin **kendi spec tablosunda** güç kaynağı ölçüsü eksen etiketi olmadan
+üçlü halinde verilmişse ve üçlüde **hem 150 hem 86** varsa, kalan üçüncü değer
+`psu_specs.length_mm`'e yazılır. ATX12V standardı güç kaynağının genişliğini
+150 mm, yüksekliğini 86 mm olarak sabitler; değişebilen tek eksen derinliktir.
+
+**Dört koşul, hepsi zorunlu:**
+
+1. Değer üreticinin kendi spec tablosundan okunmuş olmalı — pazarlama
+   metnindeki sayı değil.
+2. Üçlüde **hem 150 hem 86 birlikte** bulunmalı.
+3. Ürünün form faktörü **ATX** olmalı.
+4. Ondalık varsa **yukarı** yuvarlanır.
+
+**Kural kendini kapatır.** 150 veya 86 bulunamıyorsa değer yazılmaz, alan boş
+kalır ve K60 aynen yürürlüktedir. Bu, kuralın en önemli güvenlik özelliğidir:
+bu bir **tanıma** kuralıdır, çıkarım kuralı değil. Tanıyamazsa çalışmaz.
+Standart dışı bir ünitede sessizce yanlış yazmaktansa hiç yazmaz.
+
+**SFX ve SFX-L kapsam dışı.** Sabitleri farklı (125 × 63.5) ve ölçülmedi.
+Kataloğun tek SFX'i olan Corsair SF750'nin sayfasında zaten ölçü yok — yani
+SFX dalı bugün **sıfır satır doldururdu**. Ölçülmemiş bir standardın
+sabitlerini kurala yazmak, ölçüm olmadan kural yazmak olur.
+
+**Ölçüm (2026-08-20).** Karar veriden sonra verildi, önce değil:
+
+- Katalogdaki 11 Corsair PSU sayfası çekildi. Yedisinde üçlü var, dördünde
+  sayfada Dimensions satırı hiç yok (CX550, CX650, HX1200i, SF750).
+- Üçlü veren **7/7 satırda 150 ve 86 istisnasız var**: `140x150x86` (dört
+  satır) ve `160x150x86` (üç satır). Corsair'in gömülü JSON'undan çıkan
+  dördüncü desen de aynı: `180mm x 150mm x 86mm`.
+- **Bağımsız doğrulama, ekseni etiketleyen üreticiden.** Seasonic beş seri
+  sayfasında üçlüyü etiketliyor. Toplanan her üçlü:
+  `140 mm (L) x 150 mm (W) x 86 mm (H)`, `170 mm (L) x 150 (W) x 86 (H)`,
+  `210 mm (L) x 150 (W) x 86 (H)`. Uzunluk 140→170→210 değişiyor, **W=150 ve
+  H=86 hiç değişmiyor** ve etiket hangi eksen olduğunu açıkça söylüyor.
+- İki marka, beş farklı uzunluk (140/160/170/180/210), **karşı örnek sıfır**.
+
+**Ölçülen bedel:** `length_mm` dolu PSU **1 → 8** (12'de). W5 kombinasyonu
+**1 → 14**; tetiklenen kasa 1'den 3'e çıktı (Terra 130, Pop Mini Air 150,
+North 155). Kuralın iki ucu da tek satır olmaktan çıktı — asıl kırılganlık
+buydu.
+
+### K95 ile K91: aynı mantık, aynı işlem değil
+
+K91 "etiketsiz ölçü üçlüsünde **en büyük değer** uzunluktur" diyor ve bu
+ekran kartı için doğru. **K91'in harfi PSU'da yanlış sonuç verir:**
+`140x150x86` üçlüsünün en büyüğü 150'dir ve o **genişliktir**. K91'i olduğu
+gibi taşımak dört Corsair'e yanlış uzunluk yazardı.
+
+İki kararın dayanağı farklı:
+
+| | Dayanak |
+|---|---|
+| **K91** (ekran kartı) | **Fiziksel sınır** — kartın en uzun ekseni PCIe yuvasına paralel olmak zorundadır; diğer ikisi braket yüksekliği ve kart kalınlığıyla sınırlıdır. |
+| **K95** (güç kaynağı) | **Standardın sabit ölçüsü** — ATX12V genişliği ve yüksekliği sabitler; değişebilen tek eksen derinliktir. |
+
+Ortak olan yalnızca şu: ikisi de çıkarım değil, bilinen bir zorunluluğun
+okunmasıdır.
+
+### K95b — GENEL KURAL: bir kural yeni alana taşınırken harfi değil gerekçesi taşınır
+
+Bir kuralı yeni bir alana uygularken taşınan şey kuralın **işlemi** değil
+**gerekçesidir**. Gerekçe o alanda geçerli değilse kural taşınmaz — işlem
+tesadüfen doğru sonuç veriyor olsa bile.
+
+**Gerekçe:** K91'in işlemi ("en büyüğünü al") PSU'ya taşınsaydı sessizce
+yanlış veri üretirdi ve yanlışlık kural biçiminde göründüğü için
+sorgulanmazdı. Kuralın kendisi doğru; taşındığı yerde dayanağı yoktu. Bir
+kuralın nereye kadar geçerli olduğunu, kuralın metni değil gerekçesi belirler.
+
+Bu yüzden her kural kaydında **neden** öyle olduğu yazılıdır; taşıma
+tartışması gerekçe üzerinden yürütülür.

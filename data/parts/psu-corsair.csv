@@ -1,11 +1,11 @@
 id,brand,model,release_year,collected_at,source_url,confidence,wattage,efficiency_rating,modularity,length_mm
-corsair-rm650e,Corsair,RM650e,,2026-08-19,https://www.corsair.com/us/en/p/psu/cp-9020302-na/rme-series-rm650e-fully-modular-low-noise-atx-power-supply-cp-9020302-na,medium,650,Cybenetics Gold,full,
-corsair-rm850e,Corsair,RM850e,,2026-08-19,https://www.corsair.com/us/en/p/psu/cp-9020296-na/rme-series-rm850e-fully-modular-low-noise-atx-power-supply-cp-9020296-na,medium,850,Cybenetics Gold,full,
-corsair-rm1000e,Corsair,RM1000e,,2026-08-19,https://www.corsair.com/us/en/p/psu/cp-9020297-na/rme-series-rm1000e-fully-modular-low-noise-atx-power-supply-cp-9020297-na,medium,1000,Cybenetics Gold,full,
-corsair-rm750e,Corsair,RM750e,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020295-na/rme-series-rm750e-fully-modular-low-noise-atx-power-supply-cp-9020295-na,medium,750,Cybenetics Gold,full,
-corsair-rm750x,Corsair,RMx Series RM750x,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020285-na/rmx-series-rm750x-fully-modular-power-supply-cp-9020285-na,medium,750,Cybenetics Gold,full,
-corsair-rm750x-shift,Corsair,RM750x SHIFT,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020251-na/rm750x-shift-80-plus-gold-fully-modular-atx-power-supply-cp-9020251-na,medium,750,80+ Gold,full,
-corsair-rm850x-shift,Corsair,RM850x SHIFT,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020252-na/rm850x-shift-80-plus-gold-fully-modular-atx-power-supply-cp-9020252-na,medium,850,80+ Gold,full,
+corsair-rm650e,Corsair,RM650e,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020302-na/rme-series-rm650e-fully-modular-low-noise-atx-power-supply-cp-9020302-na,medium,650,Cybenetics Gold,full,140
+corsair-rm850e,Corsair,RM850e,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020296-na/rme-series-rm850e-fully-modular-low-noise-atx-power-supply-cp-9020296-na,medium,850,Cybenetics Gold,full,140
+corsair-rm1000e,Corsair,RM1000e,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020297-na/rme-series-rm1000e-fully-modular-low-noise-atx-power-supply-cp-9020297-na,medium,1000,Cybenetics Gold,full,140
+corsair-rm750e,Corsair,RM750e,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020295-na/rme-series-rm750e-fully-modular-low-noise-atx-power-supply-cp-9020295-na,medium,750,Cybenetics Gold,full,140
+corsair-rm750x,Corsair,RMx Series RM750x,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020285-na/rmx-series-rm750x-fully-modular-power-supply-cp-9020285-na,medium,750,Cybenetics Gold,full,160
+corsair-rm750x-shift,Corsair,RM750x SHIFT,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020251-na/rm750x-shift-80-plus-gold-fully-modular-atx-power-supply-cp-9020251-na,medium,750,80+ Gold,full,160
+corsair-rm850x-shift,Corsair,RM850x SHIFT,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020252-na/rm850x-shift-80-plus-gold-fully-modular-atx-power-supply-cp-9020252-na,medium,850,80+ Gold,full,160
 corsair-sf750,Corsair,SF Series SF750 (SFX),,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020284-na/sf-series-sf750-fully-modular-80-plus-platinum-sfx-power-supply-cp-9020284-na,medium,750,80+ Platinum,full,
 corsair-hx1200i,Corsair,HX1200i,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020307-na/hx1200i-fully-modular-ultra-low-noise-platinum-atx-1200-watt-pc-power-supply-cp-9020307-na,medium,1200,80+ Platinum,full,
 corsair-cx550,Corsair,CX Series CX550,,2026-08-20,https://www.corsair.com/us/en/p/psu/cp-9020277-na/cx-series-cx550-550-watt-80-plus-bronze-atx-power-supply-cp-9020277-na,medium,550,80+ Bronze,none,

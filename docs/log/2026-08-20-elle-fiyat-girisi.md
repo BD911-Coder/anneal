@@ -1,5 +1,10 @@
 # 2026-08-20 — Elle fiyat girişi (Faz 1.1)
 
+> **Sonradan eklenen not (2026-08-20).** Bu raporda "K91" diye geçen
+> pazaryeri tavanı kararı **K96** olarak yeniden numaralandırıldı — K91 zaten
+> başka bir karara aitti. Metindeki atıflar düzeltildi; aşağıdaki komut
+> çıktısı o gün çalıştığı haliyle bırakıldı ve hâlâ "K91" yazıyor.
+
 **22 parçada gerçek fiyat var** (17 GPU + 5 CPU), hepsi Newegg, USD,
 `source='manual'`. Kart seçili sistem artık kaydedilebiliyor — 1.1'in
 engelleyici maddesi kalktı.
@@ -58,7 +63,7 @@ değilse satır reddediliyor. `confidence = medium`.
 Aynı çipin MSI GAMING TRIO OC'si $849.99 — daha pahalı olduğu için referans
 olmadı.
 
-### K91 — Pazaryeri fiyatına iki kat tavanı
+### K96 — Pazaryeri fiyatına iki kat tavanı
 
 Perakendecinin kendi sattığı ürünle pazaryeri satıcısının sattığı ürün aynı
 sayfada görünüyor ama aynı şey değil.
@@ -146,7 +151,7 @@ veriyor. Her parçanın ürün sayfası arama motoruyla tek tek bulunmak zorunda
 ve bir arama ortalama **2-3 kullanılabilir adres** döndürüyor. 60 parça için
 ~25 arama + ~25 çekim gerekiyordu.
 
-**b) Pazaryeri satıcıları listelerin çoğunu kaplıyor.** K91'in mağaza
+**b) Pazaryeri satıcıları listelerin çoğunu kaplıyor.** K96'nın mağaza
 referansı olmadan tavan hesaplanamıyor ve satır eleniyor. Bu tur atlananlar:
 
 | Parça | Fiyat | Satıcı | Neden atlandı |

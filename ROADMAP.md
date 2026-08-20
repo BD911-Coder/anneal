@@ -53,7 +53,7 @@ Yani çalışan bir özellik yarıda kalmış durumda.
       hepsi hâlâ 0)*. Kullanıcı bugün yedi kategorili bir sistem toplayıp
       toplam fiyat **göremiyor**.
       - Newegg: bu beş kategoride denenen listelerin hepsi pazaryeri
-        satıcısıydı, K91 tavanı hesaplanamadığı için elendi.
+        satıcısıydı, K96 tavanı hesaplanamadığı için elendi.
       - **Amazon denendi, kapalı:** konum engeli — ürün ve arama
         sayfalarında sıfır fiyat gösteriliyor ("Deliver to Turkey / No
         featured offers available"). `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
@@ -68,12 +68,20 @@ Dört kategori beta için fazla dar. Kullanıcının seçenek hissi olmalı.
 - [x] Kasa: 5 → **12** *(ITX/mATX/ATX/E-ATX, GPU açıklığı 290–423 mm)*
 - [x] Depolama: 6 → **14** *(Gen5/Gen4 NVMe, SATA SSD, HDD; 1–4 TB)*
 - [x] RAM: 14 → **20** *(DDR5 16–128 GB / 5200–8000, DDR4 32–128 GB)*
+- [x] **K95 — PSU uzunluğu** *(20 Ağustos)*. ATX12V genişliği (150) ve
+      yüksekliğini (86) sabitliyor; etiketsiz üçlüde bu ikisi tanınıyorsa kalan
+      değer uzunluktur. `length_mm` dolu PSU **1 → 8**.
+      `docs/log/2026-08-20-psu-uzunlugu-k95.md`
 
-Sonuç: eşik uyarısı 3 → **2**. C5 uyarıdan çıktı (2 → 125 kombinasyon).
-Kalan: W2 (2), W5 (1). Marka çeşitliliği dar — kasaların 11'i Fractal,
-PSU'ların 11'i Corsair. `docs/log/2026-08-20-kategori-derinligi.md`
+Sonuç: eşik uyarısı 3 → **1**. C5 uyarıdan çıktı (2 → 125 kombinasyon),
+**W5 de çıktı (1 → 14 kombinasyon)** — K95 ile kuralın iki ucu da tek satır
+olmaktan kurtuldu, tetiklenen kasa 1'den 3'e çıktı.
+Kalan tek uyarı: W2 (2 kombinasyon).
 
-Kurallar aynen geçerli: üretici sayfaları, K59/K60/K62, uydurma yok.
+Marka çeşitliliği hâlâ dar — kasaların 11'i Fractal, PSU'ların 11'i Corsair.
+`docs/log/2026-08-20-kategori-derinligi.md`
+
+Kurallar aynen geçerli: üretici sayfaları, K59/K60/K62/K95, uydurma yok.
 
 ### 1.3 — Performans indeksi kapsamı
 
