@@ -2434,6 +2434,10 @@ Arayüzdeki iki hata payı da (`lib/perf-margin.ts`, `lib/fps-margin.ts`) artık
 2. **Eşik aşılırsa dosya yazılmaz.** %25 eşiği aşan bir ölçüm yayına
    girmiyorsa, arayüzün okuduğu yere de işlenmez — durdurulmuş bir yayını
    yayınlanmış gibi göstermek olurdu.
+**`npm run sapma:tumu` ikisini birden çalıştırır.** İki ayrı komut olması,
+birinin çalıştırılıp diğerinin unutulmasına açıktı; eskime kontrolü bunu
+yakalıyordu ama sonradan. Kısayol, hatayı hiç yapmamayı ucuzlaştırıyor.
+
 3. **Eskime kontrolü.** İki dosya da ölçüm anındaki `benchmark_points` satır
    sayısını (`measuredAtPoints`) taşıyor. `npm run kural:kontrol` bunu güncel
    sayıyla karşılaştırıyor ve farklıysa **hata verip duruyor**, düzeltecek

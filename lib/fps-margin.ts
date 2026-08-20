@@ -4,7 +4,7 @@
 // her ifade bu dosyadan okunur; iki yerde ayrı sayı yazılamasın diye tek
 // tanım. `lib/perf-margin.ts` ile aynı desen.
 //
-// Ölçüm `npm run fps:sapma` ile yapılır ve **script aşağıdaki işaretli bloğu
+// Ölçüm `npm run fps:sapma` ile yapılır (ikisini birden: `npm run sapma:tumu`) ve **script aşağıdaki işaretli bloğu
 // kendisi yazar** (K110). Blok dışındaki her şey elle yazılır ve script ona
 // dokunmaz: sayı otomatik güncellenir, gerekçe insan tarafından gözden
 // geçirilir.

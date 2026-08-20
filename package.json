@@ -24,6 +24,7 @@
     "indeks:hesapla": "node scripts/compute-perf-index.mts",
     "indeks:sapma": "node scripts/check-index-margin.mts",
     "fps:sapma": "node scripts/measure-fps-margin.mts",
+    "sapma:tumu": "npm run indeks:sapma && npm run fps:sapma",
     "kural:kontrol": "node scripts/check-rules.mts",
     "varyant:kontrol": "node scripts/check-gpu-variant.mts"
   },
