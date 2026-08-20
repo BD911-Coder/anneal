@@ -3,7 +3,8 @@
 Bu belge projenin tamamını faz faz gösterir. Her fazın bir **bitiş ölçütü** vardır;
 o karşılanmadan sonraki faza geçilmez.
 
-Güncelleme: 20 Ağustos 2026 — **fazlar ürüne göre yeniden sıralandı.**
+Güncelleme: 20 Ağustos 2026 — A.1 bitti, A.2 kaynak sınırına dayandı, beta
+kapısı envanteri çıkarıldı.
 
 > **Sıralama ilkesi:** Fazlar ürünün kendisidir. Fiyat, katalog derinliği ve
 > indeks kapsamı gibi altyapı işleri kendi başına faz değildir — hangi ürün
@@ -25,9 +26,9 @@ Güncelleme: 20 Ağustos 2026 — **fazlar ürüne göre yeniden sıralandı.**
 | Katalog | 237 gerçek parça |
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
 | Performans indeksi | 14 GPU + 12 CPU |
-| Benchmark ölçümü | **298 nokta**, tek kaynak (ComputerBase) |
+| Benchmark ölçümü | **346 nokta**, tek kaynak (ComputerBase) |
 | Hata payı | **script yazıyor**, eskiyince `kural:kontrol` duruyor |
-| Oyun bazlı FPS | **23 oyun, 60 ekran kartı** — çalışıyor |
+| Oyun bazlı FPS | **23 oyun (1440p) + 8 oyun (4K)**, 60 ekran kartı |
 | Fiyat | 22 parçada gerçek fiyat (USD, Newegg) |
 | Kullanıcı | 0 |
 
@@ -90,28 +91,36 @@ FPS'tir ve arayüz bunu söyler.
 A.1 dürüst ama dar. Buradaki her madde doğrudan A.1'in kapsadığı hücre
 sayısını artırıyor — altyapı işleri bu yüzden burada.
 
-- [ ] **İkinci çözünürlük/ayar ekseni** — 1080p veya yerel 1440p ölçümü.
-      Bugün tek ayar var; ikincisi olmadan "ayar seç" diye bir şey yok.
-- [ ] **CPU ile GPU'yu aynı oyunda ölç** — kesişim sıfır olduğu sürece CPU
-      hiçbir FPS sayısına giremez. En az 3 ortak oyun gerekiyor.
-      **Mevcut kaynakta çözülmüyor (ölçüldü):** ComputerBase'in oyun başına
-      benchmark makaleleri yalnızca GPU; CPU paketinin 9 oyunu GPU paketinin
-      23 oyunuyla hâlâ sıfır kesişiyor. Başka kaynak gerekiyor.
+- [x] **İkinci çözünürlük ekseni açıldı** *(20 Ağustos, K114)* — **4K**,
+      8 oyun, 48 ölçüm. Oyun listesi artık seçili çözünürlüğü izliyor;
+      mevcut 1080p/1440p/4K düğmeleri bu liste için de anlam kazandı.
+      1080p'de hâlâ ölçüm yok ve arayüz bunu dürüstçe söylüyor.
+- [ ] **CPU ile GPU'yu aynı oyunda ölç** — 🔒 **KAYNAK YOK (K113)**.
+      Kesişim sıfır olduğu sürece CPU hiçbir FPS sayısına giremez.
+      İki tur kaynak araması yapıldı, sekiz kaynak elendi: hepsinde FPS
+      **grafik görselinde**, metinde sıfır. Bu bir arama eksikliği değil,
+      sektörün yayın biçimi; ComputerBase istisna.
+      Yeniden açılma koşulu K113'te.
 - [ ] **İndeks kapsamı: 14 GPU → 30, 12 CPU → 20**
       - [x] **S37 ölçümü — sonuç olumsuz, köprü kurulmadı.** Dağılım %12.4
             (eşik %5), fark markadan değil **VRAM**'den geliyor. K77
             doğrulandı. `docs/log/2026-08-20-s37-kopru-olcumu.md`
-      - [x] **Yeni kaynak araması yapıldı, sonuç olumsuz.** TechPowerUp,
-            PCGamesHardware, Igor's Lab, TechSpot, Guru3D, GamersNexus:
-            hepsinde FPS **grafik görselinde**, metinde sıfır. İzin sorun
-            değil, biçim sorun. `docs/faz-a2-oyun-hedefi.md` bölüm 4
+      - [x] **Kaynak araması iki tur yapıldı, ikisi de olumsuz (K113).**
+            TechPowerUp, PCGamesHardware, Igor's Lab, TechSpot, Guru3D,
+            GamersNexus (Mega Charts), Notebookcheck: hepsinde FPS **grafik
+            görselinde**, metinde sıfır. İzin sorun değil, **biçim** sorun.
+            OpenBenchmarking tek yapılandırılmış aday ama 403 döndü.
       - [x] **CPU 12 → 34 denendi, olmadı.** 16 Temmuz 2026 testinde 34
             işlemci var ama sayfa yalnızca toplu 720p rating yayınlıyor;
             oyun başına FPS yok. Rangliste'nin oyun başına sayfaları da
             içerik duvarının arkasına geçmiş. CPU 12'de kalıyor.
 - [ ] **Kart varyantı 58 → 150** *(kalan çipler; her kart çipinden miras
-      aldığı için kapsamı doğrudan büyütüyor)*
-- [x] **Oyun sayısı 8 → 23** *(20 Ağustos)* — yapıldı. 15 oyun mevcut
+      aldığı için kapsamı doğrudan büyütüyor)* — A.2'de kalan tek açık
+      **veri** maddesi; yeni kaynak gerektirmiyor, üretici sayfalarından.
+- [x] **Oyun sayısı 8 → 23** *(20 Ağustos)* — yapıldı. Mevcut kaynakta
+      **alınacak oyun/kart kalmadı**: 1440p'de 23 oyunun hepsi alındı, her
+      grupta 14 karttan 8'i (K75 tavanı), 4K'da 8 oyun. Kaynağın **%9,48**'i
+      alınmış durumda (tavan %10). 15 oyun mevcut
       incelemeden alındı: aynı sürücü, aynı 14 kart, köprü yok, yeni kaynak
       yok. **120 yeni ölçüm, toplam 184.** Kaynağın oranı %2,6 → **%7,5**
       (K75 tavanı %10; payda toplamadan önce yeniden sayıldı: 2.448).
@@ -140,6 +149,8 @@ site, tahmin veren siteden farklı bir şeydir.
       Sayı bu tur iki kez elle güncellendi; üçüncüde unutulacaktı.
 - [x] Hata payı arayüzde yayınlansın — A.1'de yapıldı
 - [x] `docs/KARARLAR.md`'ye ölçülen hata payı ve ölçüm yöntemi yazılsın
+- [x] **`npm run sapma:tumu`** — iki ölçüm tek komutta; biri çalıştırılıp
+      diğeri unutulmasın *(20 Ağustos)*
 - [ ] Kapsam dışı ve düşük güvenli hücreler işaretlensin
 
 **Son ölçüm** (birini-dışarıda-bırak, **184 nokta**, 20 Ağustos):
@@ -165,15 +176,41 @@ Bu bir faz değil; A bittikten sonra geçilmesi gereken bir kapıdır. Projenin 
 gerçek bilinmeyeni "insanlar burada sistem toplamak istiyor mu" ve bunu kod
 değil kullanıcı cevaplıyor.
 
-- [ ] **Fiyat — kalan beş kategori** *(anakart, RAM, PSU, kasa, depolama:
-      hepsi hâlâ 0)*. Kullanıcı bugün yedi kategorili bir sistem toplayıp
-      toplam fiyat **göremiyor**. B fazının da ön koşulu.
-      - [x] Elle fiyat girişi — **22 parça** (17 GPU + 5 CPU), Newegg, USD.
-            `docs/log/2026-08-20-elle-fiyat-girisi.md`
-      - [ ] **eBay geliştirici + EPN başvurusu** *(sen — 20 dk)*. Fiyat verisi
-            ve affiliate linkini birden çözüyor.
+**Envanter çıkarıldı ve ölçüldü** (20 Ağustos):
+`docs/beta-kapisi-envanteri.md`. Sonuç tek cümleyle: **kod tarafı temiz,
+kalan tek gerçek engel fiyat verisi.**
+
+### 🔴 Engelleyici — bu olmadan gösterilemez
+
+- [ ] **Fiyat — kalan beş kategori.** Ölçüldü: anakart **0/19**, RAM **0/20**,
+      PSU **0/12**, depolama **0/14**, kasa **0/12**. (GPU 17/118, CPU 5/42.)
+      Kullanıcı yedi kategorili sistem toplayıp toplam **göremiyor**; üstelik
+      fiyatsız parça seçilirse sistem **kaydedilemiyor**, yani paylaşım akışı
+      da kilitleniyor. Sitenin vaadi tutulmuyor. B fazının da ön koşulu.
+      - [x] Elle fiyat girişi — **22 parça**, Newegg, USD.
+      - [ ] **eBay geliştirici + EPN başvurusu** *(sen — 20 dk)*
       - [ ] Kaynak kararı: Newegg pazaryeri elendi (K96 tavanı), Amazon konum
             engelli. `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
+
+### ✅ Envanterde bulundu ve düzeltildi *(20 Ağustos, K119)*
+
+- [x] **Para birimi hatası** — USD fiyatlar açılır listede `₺` gösteriliyordu;
+      aynı ekranda toplam `USD` diyordu. Dört çağrı yeri düzeltildi.
+- [x] **Mobil taşma** — 375 px ekranda sayfa 660 px çiziliyordu. Artık 375 px.
+- [x] **"31 oyunda" yanlış sayısı** — grup sayısı gösteriliyordu, 23 oyun var.
+
+### 🟢 Eksik ama dürüstçe söyleniyor — engel değil
+
+- 58/118 ekran kartında FPS yok · 1080p'de ölçüm yok · FPS işlemciyi hesaba
+  katmıyor. Üçünü de arayüz açıkça yazıyor.
+
+### ✅ Akışlar sınandı ve çalışıyor
+
+- Sistem kaydetme · paylaşım linki · geri bildirim · çözünürlük geçişi ·
+  konsol/ağ temiz.
+
+### Kalan adımlar
+
 - [ ] **Gerçek veriyi canlıya aktar** *(sen çalıştıracaksın)* — plan hazır ve
       onaylı: `docs/canliya-aktarim-plani.md`
 - [ ] Kendin baştan sona kullan, 20 dakika *(sen — bunu hâlâ yapmadın)*
@@ -301,8 +338,9 @@ yayınlayabiliyor ve tahmin tutuyor.
 |---|---|---|
 | S16 | `benchmark_points.game_id` oyun dışı iş yüklerinde | F |
 | S18 | Önizleme dağıtımları | B |
-| S22 | 14 kullanılmayan zorunlu alan | B |
+| S22 | 14 kullanılmayan zorunlu alan *(içerik güncellendi)* | B |
 | S38 | Güç konnektörü alt tablosu | B |
+| **S44** | **K56 kontrolünün kör noktası** *(benchmark_points, perf_index)* | B |
 
 ---
 
@@ -326,8 +364,17 @@ Bunlar 95+ kararın özeti. Yeni bir iş başlarken kontrol et:
 
 ## Şu an sıradaki tek iş
 
-**A.1 — Mevcut 178 ölçümden oyun bazlı FPS üret ve göster.**
+**Fiyat — beş kategori.** Beta kapısındaki tek gerçek engel bu.
 
-Plan hazır ve ölçümlere dayanıyor: **`docs/faz-a1-plani.md`**
-Yeni veri toplamayı gerektirmiyor; bugünkü veriyle 60 GPU'da FPS
-gösterilebiliyor.
+A.1 bitti, A.2'de mevcut kaynaktan alınacak veri kalmadı (%9,48 / %10 tavan),
+A.3'ün ölçüm otomasyonu kuruldu. Beta kapısındaki üç kod hatası düzeltildi.
+
+Geriye kalan iki iş de **veri** işi ve ikisi de senin kararını bekliyor:
+
+1. **Fiyat kaynağı** — eBay başvurusu (20 dk, senin). Bu olmadan yedi
+   kategorili bir sistem toplanamıyor ve kaydedilemiyor.
+2. *(isteğe bağlı)* Kart varyantı 58 → 150 — yeni kaynak gerektirmiyor,
+   üretici sayfalarından; A.2'de kalan tek açık veri maddesi.
+
+**Kaynak yokluğundan kapalı olanlar** (K105, K113): rekabetçi oyunlar,
+CPU kapsamı, CPU'nun FPS sayısına girmesi. Bunlar emekle çözülmüyor.
