@@ -125,6 +125,10 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
             (K121):** Arc'ı dört markadan hiçbiri yapmıyor; ASRock/Sparkle
             `robots.txt` izin veriyor ama sayfa ne `curl`'e ne tarayıcıya
             geliyor.
+- [ ] **Aynı sürücü döneminde ikinci bir ComputerBase GPU incelemesi var mı?**
+      ❓ **ölçülmedi.** Varsa yeni payda = yeni K75 tavanı demek; kart kapsamı,
+      1080p/4K genişletme ve RT/1% low aynı anda açılır. K77 sürücü döneminin
+      doğrulanmasını şart koşuyor. `docs/performans-eksikleri.md` bölüm 2
 - [x] **Oyun sayısı 8 → 23** *(20 Ağustos)* — yapıldı. Mevcut kaynakta
       **alınacak oyun/kart kalmadı**: 1440p'de 23 oyunun hepsi alındı, her
       grupta 14 karttan 8'i (K75 tavanı), 4K'da 8 oyun. Kaynağın **%9,48**'i
@@ -143,6 +147,23 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
       CPU testinde 34 işlemci var ama sayfa yalnızca **toplu 720p rating**
       yayınlıyor, oyun başına FPS yok. Rangliste'nin oyun başına sayfaları
       içerik duvarının arkasına geçmiş. CPU 12'de kalıyor.
+
+## A.4 — Sunum: "ne performans alacağım" sorusunu gerçekten cevapla
+
+Yeni beta ölçütünün doğrudan hedefi. **Dördü de veri gerektirmiyor**, toplamı
+~2 gün. Ölçüm ve gerekçe: `docs/performans-eksikleri.md`
+
+- [ ] **CPU çerçevesi** 🔴 — kullanıcı hangi işlemciyi seçerse seçsin aynı FPS
+      görüyor; en yanıltıcı eksik bu çünkü **sessiz**. Sayı değişmeyecek
+      (veri yok), ama çerçeve düzelecek: seçilen işlemcinin referansa göre
+      nerede durduğunu söyle, CPU seçilmeden listeyi uyarısız gösterme,
+      darboğaz göstergesini listeye bağla.
+- [ ] **"Bu FPS iyi mi" eşik etiketleri** — sistem indeksinin bandı var, oyun
+      listesinin yok. 47 FPS iyi mi? Eşikler karar gerektirir, ölçüm değil.
+- [ ] **30/42 işlemcide çelişkili ekran** — "performans tahmini yok" ile dolu
+      FPS listesi aynı ekranda. İkisinin farklı sorular olduğu söylenmeli.
+- [ ] **Kapsanan oyunları baştan söyle** — kullanıcı kartını seçtikten sonra
+      tanımadığı 23 oyunla karşılaşıyor; beklenti baştan kurulmalı.
 
 ## A.3 — Doğruluk ölçümü ve yayınlanan hata payı
 
@@ -178,32 +199,33 @@ CPU tarafı değişmedi.
 
 ## Beta ölçütü — faz değil, kapı
 
-**10 kişi siteye girip yardım almadan bir sistem toplayabildi.** *(CLAUDE.md)*
+> **Ölçüt değişti (20 Ağustos 2026).** Eskiden "10 kişi bir sistem toplayıp
+> **toplam fiyatını** görebildi" idi. Yeni ölçüt:
+>
+> ### **10 kişi sistemini seçip ne performans alacağını anlayabildi.**
+>
+> **Gerekçe:** bu bir **performans tahmin sitesi**. Fiyat ve gelir modeli
+> sonraki aşama — fiyat maddeleri **Faz E**'ye taşındı. Beta'nın cevaplaması
+> gereken soru "insanlar burada fiyat karşılaştırır mı" değil, **"insanlar
+> burada ne performans alacaklarını anlayabiliyor mu"**.
 
 Bu bir faz değil; A bittikten sonra geçilmesi gereken bir kapıdır. Projenin tek
-gerçek bilinmeyeni "insanlar burada sistem toplamak istiyor mu" ve bunu kod
-değil kullanıcı cevaplıyor.
+gerçek bilinmeyeni bu ve kod değil kullanıcı cevaplıyor.
 
-**Envanter çıkarıldı ve ölçüldü** (20 Ağustos):
-`docs/beta-kapisi-envanteri.md`. Sonuç tek cümleyle: **kod tarafı temiz,
-kalan tek gerçek engel fiyat verisi.**
+**Envanter:** `docs/beta-kapisi-envanteri.md` (fiyat maddeleri artık Faz E'de).
 
-### 🔴 Engelleyici — bu olmadan gösterilemez
+### 🔴 Engelleyici — kaldırılacak kısıt
 
-- [ ] **Fiyat — kalan beş kategori.** Ölçüldü: anakart **0/19**, RAM **0/20**,
-      PSU **0/12**, depolama **0/14**, kasa **0/12**. (GPU 17/118, CPU 5/42.)
-      Kullanıcı yedi kategorili sistem toplayıp toplam **göremiyor**; üstelik
-      fiyatsız parça seçilirse sistem **kaydedilemiyor**, yani paylaşım akışı
-      da kilitleniyor. Sitenin vaadi tutulmuyor. B fazının da ön koşulu.
-      - [x] Elle fiyat girişi — **22 parça**, Newegg, USD.
-      - [ ] **eBay geliştirici + EPN başvurusu** *(sen — 20 dk)*
-      - [ ] Kaynak kararı: Newegg pazaryeri elendi (K96 tavanı), Amazon konum
-            engelli. `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
+- [ ] **Fiyatsız parça seçilince sistem kaydedilemiyor — bu kısıt kalkacak.**
+      `saveBuild` bugün `missing_price` ile reddediyor; fiyat beta ölçütünden
+      çıktığına göre bu kısıt paylaşım akışını sebepsiz kilitliyor.
+      Dokunulacak yerler: `data/builds.ts` (`missing_price` reddi),
+      `builds.total_price_minor` fiyatsız sistemde ne yazacağı.
+      *(Bu turda uygulanmadı — yalnızca karar kaydedildi.)*
 
 ### ✅ Envanterde bulundu ve düzeltildi *(20 Ağustos, K119)*
 
-- [x] **Para birimi hatası** — USD fiyatlar açılır listede `₺` gösteriliyordu;
-      aynı ekranda toplam `USD` diyordu. Dört çağrı yeri düzeltildi.
+- [x] **Para birimi hatası** — USD fiyatlar açılır listede `₺` gösteriliyordu.
 - [x] **Mobil taşma** — 375 px ekranda sayfa 660 px çiziliyordu. Artık 375 px.
 - [x] **"31 oyunda" yanlış sayısı** — grup sayısı gösteriliyordu, 23 oyun var.
 
@@ -247,8 +269,9 @@ sıfırdan sistem kurmaya genişletiyor.
 **Bitiş ölçütü:** Kullanıcı bütçe + oyun + hedef FPS girip uyumlu, alınabilir
 bir sistem alıyor.
 
-- [ ] **Ön koşul: fiyat.** Bütçe sorusu fiyatsız sorulamaz — Beta kapısındaki
-      fiyat maddesi bitmeden B başlamaz.
+- [ ] **Ön koşul: fiyat.** Bütçe sorusu fiyatsız sorulamaz — **Faz E**'deki
+      fiyat maddesi bitmeden B başlamaz. (Fiyat 20 Ağustos'ta beta
+      kapısından Faz E'ye taşındı.)
 - [ ] Hedeften geriye çözüm — "60 FPS için hangi indeks gerekiyor"
 - [ ] Bütçe dağıtımı — parçalar arası denge
 - [ ] Uyumluluk motoruyla doğrulama *(11 kural zaten hazır)*
@@ -301,9 +324,28 @@ yayınlayabiliyor ve tahmin tutuyor.
 
 ---
 
-# FAZ E — Gelir altyapısı
+# FAZ E — Fiyat ve gelir altyapısı
+
+> **Fiyat buraya taşındı (20 Ağustos 2026).** Beta ölçütünden çıkarıldı:
+> bu bir performans tahmin sitesi, fiyat karşılaştırma sitesi değil. Fiyat
+> zaten gelir modelinin (affiliate) ön koşulu — doğal yeri burası.
 
 **Bitiş ölçütü:** Gelir en azından aylık gideri karşılıyor.
+
+### Fiyat verisi
+
+- [ ] **Kalan beş kategori.** Ölçüldü: anakart **0/19**, RAM **0/20**,
+      PSU **0/12**, depolama **0/14**, kasa **0/12**. (GPU 17/118, CPU 5/42.)
+      - [x] Elle fiyat girişi — **22 parça**, Newegg, USD.
+      - [ ] **eBay geliştirici + EPN başvurusu** *(sen — 20 dk)*. Fiyat verisi
+            ve affiliate linkini birden çözüyor.
+      - [ ] Kaynak kararı: Newegg pazaryeri elendi (K96 tavanı), Amazon konum
+            engelli. `docs/log/2026-08-20-amazon-fiyat-denemesi.md`
+- [ ] **Para birimi/kur sorunu** — bugün tek para birimi (USD) ve K92 karışık
+      birimde toplam üretmiyor. Çoklu birim gerekirse kur kaynağı ve tarihi
+      ayrı bir karar.
+
+### Gelir
 
 - [ ] Alan adı al *(anneal.com veya .dev)*
 - [ ] Marka tescili — USPTO/EUIPO/TÜRKPATENT, sınıf 9 ve 42
@@ -372,17 +414,12 @@ Bunlar 95+ kararın özeti. Yeni bir iş başlarken kontrol et:
 
 ## Şu an sıradaki tek iş
 
-**Fiyat — beş kategori.** Beta kapısındaki tek gerçek engel bu.
+**A — oyun bazlı FPS'i gerçekten kullanılır hale getirmek.**
 
-A.1 bitti, A.2'de mevcut kaynaktan alınacak veri kalmadı (%9,48 / %10 tavan),
-A.3'ün ölçüm otomasyonu kuruldu. Beta kapısındaki üç kod hatası düzeltildi.
+Fiyat beta kapısından çıktı; sıradaki iş artık performans tarafında.
+Eksiklerin ölçümü ve öncelik sırası: **`docs/performans-eksikleri.md`**
 
-Geriye kalan iki iş de **veri** işi ve ikisi de senin kararını bekliyor:
-
-1. **Fiyat kaynağı** — eBay başvurusu (20 dk, senin). Bu olmadan yedi
-   kategorili bir sistem toplanamıyor ve kaydedilemiyor.
-2. *(bitti — 20 Ağustos)* ~~Kart varyantı 58 → 150~~ → **153 yapıldı.**
-   A.2'de emekle çözülebilecek veri maddesi kalmadı.
-
-**Kaynak yokluğundan kapalı olanlar** (K105, K113): rekabetçi oyunlar,
-CPU kapsamı, CPU'nun FPS sayısına girmesi. Bunlar emekle çözülmüyor.
+Kısaca: A.2'de **emekle** çözülebilecek veri işi kalmadı — kalan bütün
+maddeler kaynak ya da erişim engelli (K105, K113, K121). Bu yüzden sıradaki
+gerçek iş **yeni kaynak değil, elimizdeki veriyi kullanıcıya daha dürüst ve
+daha kullanışlı sunmak**.
