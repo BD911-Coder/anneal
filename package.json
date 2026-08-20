@@ -23,6 +23,7 @@
     "fiyat:aktar": "node scripts/import-prices.mts",
     "indeks:hesapla": "node scripts/compute-perf-index.mts",
     "indeks:sapma": "node scripts/check-index-margin.mts",
+    "fps:sapma": "node scripts/measure-fps-margin.mts",
     "kural:kontrol": "node scripts/check-rules.mts",
     "varyant:kontrol": "node scripts/check-gpu-variant.mts"
   },

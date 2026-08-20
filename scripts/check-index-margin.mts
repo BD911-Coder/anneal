@@ -10,8 +10,10 @@
 // (paket ortalamasi, game_id karsiligi yok) — bu yuzden kaynagimizdan bagimsiz.
 // data/benchmarks/crosscheck-toms.csv icinde, benchmark_points'a girmiyor.
 //
-// Cikti lib/perf-margin.ts'e elle islenir; script dosyayi kendi yazmaz ki
-// sayinin yaninda duran yontem ve tarih insan tarafindan gozden gecirilsin.
+// Cikti lib/perf-margin.ts'teki ISARETLI BLOGA script tarafindan YAZILIR
+// (K110). Blok disindaki gerekce ve tarihi notlar elle yaziliyor ve script
+// onlara dokunmuyor. Elle isleme bir tur icinde iki kez yapildi ve ucuncude
+// unutulacakti; sayinin sessizce eskimesi tam olarak kacindigimiz hata sinifi.
 
 import { existsSync, readFileSync } from "node:fs";
 import { loadEnvFile } from "node:process";
@@ -19,6 +21,7 @@ import { loadEnvFile } from "node:process";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client.ts";
+import { bir, blokYaz, bugun } from "./margin-file.mts";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
@@ -50,6 +53,7 @@ const bizim = new Map(indeksler.map((r) => [r.part_id, r.index_value]));
 
 const hepsi: number[] = [];
 let engel = false;
+let karsilastirilan = 0;
 
 for (const kind of ["gpu", "cpu"] as const) {
   const kume = satirlar.filter((s) => s.kind === kind && bizim.has(s.part_id));
@@ -71,6 +75,7 @@ for (const kind of ["gpu", "cpu"] as const) {
     hepsi.push(Math.abs(fark));
     console.log(`${s.part_id.padEnd(26)} ${biz.toFixed(1).padStart(7)} ${ayna.toFixed(1).padStart(7)} ${(fark >= 0 ? "+" : "") + fark.toFixed(1)}%`.padEnd(4));
   }
+  karsilastirilan += kume.length;
   const ort = sapmalar.reduce((t, v) => t + v, 0) / sapmalar.length;
   const enb = Math.max(...sapmalar);
   console.log(`  ortalama ${ort.toFixed(1)}%   en buyuk ${enb.toFixed(1)}%`);
@@ -81,7 +86,25 @@ const ort = hepsi.reduce((t, v) => t + v, 0) / hepsi.length;
 const enb = Math.max(...hepsi);
 console.log(`\nTOPLAM  ortalama mutlak sapma: ${ort.toFixed(1)}%   en buyuk: ${enb.toFixed(1)}%`);
 console.log(`Esik %${ESIK}: ${enb <= ESIK ? "GECTI" : "ASILDI"}`);
-console.log(`\nlib/perf-margin.ts'e islenecek: meanPercent ${ort.toFixed(1)}, maxPercent ${enb.toFixed(1)}`);
+// Esik asildiysa dosya YAZILMAZ: yayinlanmayacak bir sayiyi arayuzun okudugu
+// yere islemek, durdurulmus bir yayini yayinlanmis gibi gostermek olurdu.
+if (engel) {
+  console.error("\nEsik asildi — lib/perf-margin.ts yazilmadi.");
+  await prisma.$disconnect();
+  process.exit(1);
+}
+
+const noktaSayisi = await prisma.benchmarkPoint.count({ where: { source: { not: "dev_seed" } } });
+
+blokYaz("lib/perf-margin.ts", [
+  `meanPercent: ${bir(ort)},`,
+  `maxPercent: ${bir(enb)},`,
+  `comparedParts: ${karsilastirilan},`,
+  "/** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */",
+  `measuredAtPoints: ${noktaSayisi},`,
+  `measuredAt: "${bugun()}",`,
+]);
+console.log(`\nlib/perf-margin.ts yazildi: meanPercent ${bir(ort)}, maxPercent ${bir(enb)}, ` +
+  `comparedParts ${karsilastirilan}, measuredAtPoints ${noktaSayisi}.`);
 
 await prisma.$disconnect();
-if (engel) process.exit(1);

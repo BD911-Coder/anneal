@@ -143,29 +143,28 @@ Acil değil, karar iş yükü genişletildiğinde verilir.
 
 ---
 
-### S42 — Render modu için ayrı alan gerekli mi? 🆕 (2026-08-20)
+### S42 — Render modu için ayrı alan gerekli mi? ✅ CEVAPLANDI (2026-08-20)
 
-Şemada raytracing için alan yok. Yalnızca RT grafiği yayınlanan dört oyunda
-(Crimson Desert, Doom: The Dark Ages, Indiana Jones, Star Wars Outlaws) mod
-`upscaling` alanına yazıldı: `DLSS/FSR Quality + Raytracing` (K108).
+**Cevap: evet, açıldı.** `benchmark_points.render_mode` enum (`raster`,
+`raytracing`, `pathtracing`). Mevcut 32 satır (4 oyun) taşındı, `upscaling`
+alanı temizlendi. K108 geri alındı.
 
-Bedeli: alan artık iki ayrı ayarı taşıyor ve sorgulanamıyor. Doğrusu ayrı bir
-`render_mode` alanı. Bugün hiçbir kural bu alanı okumuyor, o yüzden acil değil
-— ama ikinci bir kaynak RT'li ve RT'siz ölçümü aynı oyunda verirse gerekli
-olur. Şema değişikliği, sorulmadan yapılmaz.
-→ `docs/KARARLAR.md` K108
+Gerekçe: dört oyunken düzeltmek ucuz, kırk oyunken pahalı; alan bir kez
+kirlendikten sonra her yeni satır borcu büyütür.
+→ `docs/KARARLAR.md` K111
 
 ---
 
-### S43 — Mevcut 17 oyunun `source_url`'i düzeltilsin mi? 🆕 (2026-08-20)
+### S43 — Mevcut 17 oyunun `source_url`'i düzeltilsin mi? ✅ CEVAPLANDI (2026-08-20)
 
-Yeni 15 oyun satırında `source_url` Steam mağaza sayfası: oyunun adı ve çıkış
-yılı oradan doğrulandı (K109). Mevcut 17 satır ise ComputerBase incelemesini
-gösteriyor, oysa çıkış yılları oradan gelmiyor.
+**Cevap: evet, düzeltildi.** 17 oyunun çıkış yılı Steam'den doğrulandı ve
+`source_url` Steam'e çevrildi. 32 oyunun 31'i artık aynı yöntemde.
 
-Geriye dönük düzeltmek 17 satırın yılını Steam'den doğrulamayı gerektirir.
-Sormadan yapılmadı.
-→ `docs/KARARLAR.md` K109
+Doğrulama üç satırı düzeltti: Death Stranding 2 (2025→2026) ve Marvel's
+Spider-Man 2 (2023→2025) konsol/PC farkıydı; **Alan Wake 2 Steam'de yok**
+(Epic'e özel) ve yılı boş bırakıldı — bunun için `release_year` opsiyonel
+oldu (K112).
+→ `docs/KARARLAR.md` K109, K112
 
 ---
 

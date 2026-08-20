@@ -99,6 +99,16 @@ enum Preset {
   ultra
 }
 
+// Render modu. Raytracing FPS'i %30-50 degistirir; upscaling kadar belirleyici
+// bir ayar oldugu icin kendi alani var (K111). pathtracing bugun kullanilmiyor
+// ama simdi tanimlandi: sonradan eklenirse bugunku satirlarin modu geriye
+// donuk tahmin edilmek zorunda kalirdi.
+enum RenderMode {
+  raster
+  raytracing
+  pathtracing
+}
+
 enum BenchmarkSourceType {
   review
   user_submission
@@ -437,7 +447,10 @@ model PriceSnapshot {
 model Game {
   id           String @id // slug: cyberpunk-2077
   name         String
-  release_year Int
+  // Opsiyonel (K112): hicbir kural ve arayuz kullanmiyor (K56 olcutu) ve her
+  // oyun Steam'de bulunmuyor -- Alan Wake 2 Epic'e ozel cikti. Zorunluluk,
+  // dogrulanamayan bir yili uydurmaya zorlardi. Deger PC cikis yilidir.
+  release_year Int?
   gpu_weight   Float // 0-1, oyunun GPU'ya bağımlılığı
   cpu_weight   Float // 0-1
 
@@ -468,6 +481,10 @@ model BenchmarkPoint {
   resolution          Resolution
   preset              Preset
   upscaling           String?
+  // Varsayilan raster: kaynaklarin cogu raster olcuyor ve mevcut satirlarin
+  // hepsi oyleydi. Varsayilan olmasi, olcumu girenin modu soylememesine izin
+  // vermek degil -- ice aktarici CSV'de sutunu bekliyor.
+  render_mode         RenderMode @default(raster)
   avg_fps             Float
   one_percent_low_fps Float?
 

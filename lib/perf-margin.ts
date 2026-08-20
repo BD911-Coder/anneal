@@ -4,16 +4,23 @@
 // her ifade bu dosyadan okunur; iki yerde ayrı sayı yazılamasın diye tek
 // tanım.
 //
-// Ölçüm `npm run indeks:sapma` ile yapılır. Script bu dosyayı KENDİ YAZMAZ:
-// sayının yanındaki yöntem ve tarih insan tarafından gözden geçirilsin diye
-// elle işlenir. K80: sapma kaydedilmeden indeks yayınlanmaz.
+// Ölçüm `npm run indeks:sapma` ile yapılır ve **script aşağıdaki işaretli
+// bloğu kendisi yazar** (K110). Blok dışındaki her şey elle yazılır ve script
+// ona dokunmaz: sayı otomatik güncellenir, gerekçe insan tarafından gözden
+// geçirilir. K80: sapma kaydedilmeden indeks yayınlanmaz.
 
 export const PERF_MARGIN = {
+  // === ÖLÇÜM BAŞLANGIÇ — npm run indeks:sapma yazar, elle değiştirme ===
   meanPercent: 5.2,
   maxPercent: 11.5,
+  comparedParts: 25,
+  /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
+  measuredAtPoints: 298,
   measuredAt: "2026-08-20",
+  // === ÖLÇÜM BİTİŞ ===
+
   method:
-    "20 parçanın indeksi, bağımsız bir kaynağın aynı parçalar için verdiği sıralamayla karşılaştırıldı",
+    "parçaların indeksi, bağımsız bir kaynağın aynı parçalar için verdiği sıralamayla karşılaştırıldı",
 
   /**
    * Bilinen sistematik fark: işlemci tarafında bütün indeksler aynaya göre

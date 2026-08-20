@@ -2410,3 +2410,94 @@ düzeltilmedi. → `SORULAR.md` S43
 **Not:** `release_year` hiçbir kural ve arayüz tarafından kullanılmıyor, yani
 K56 ölçütüne göre zorunlu olmamalı; şemada zorunlu. S22'nin kapsamındaki
 alanlardan biri.
+
+## 2026-08-20 — Hata payı otomatikleşti, render modu kendi alanına çıktı
+
+### K110 — Yayınlanan hata payını script yazar, eskimesini kontrol yakalar
+
+Arayüzdeki iki hata payı da (`lib/perf-margin.ts`, `lib/fps-margin.ts`) artık
+**script tarafından yazılıyor**:
+
+| Komut | Yazdığı dosya | Yöntem |
+|---|---|---|
+| `npm run indeks:sapma` | `lib/perf-margin.ts` | bağımsız aynayla karşılaştırma (K80) |
+| `npm run fps:sapma` | `lib/fps-margin.ts` | birini-dışarıda-bırak |
+
+**Üç parça var, üçü de gerekli:**
+
+1. **İşaretli blok.** Script yalnızca `// === ÖLÇÜM BAŞLANGIÇ` ile
+   `// === ÖLÇÜM BİTİŞ ===` arasını yazar. Blok dışındaki gerekçe, yöntem ve
+   tarihî notlar elle yazılıyor ve script onlara dokunmuyor. Bütün dosyayı
+   yazsaydı o yazılar her ölçümde silinirdi; hiç yazmasaydı sayı eskirdi.
+   İşaretçi bulunamazsa script **hata verir** — "yazdım" deyip hiçbir şey
+   yazmaması, tam olarak kaçınılan sessiz başarısızlık olurdu.
+2. **Eşik aşılırsa dosya yazılmaz.** %25 eşiği aşan bir ölçüm yayına
+   girmiyorsa, arayüzün okuduğu yere de işlenmez — durdurulmuş bir yayını
+   yayınlanmış gibi göstermek olurdu.
+3. **Eskime kontrolü.** İki dosya da ölçüm anındaki `benchmark_points` satır
+   sayısını (`measuredAtPoints`) taşıyor. `npm run kural:kontrol` bunu güncel
+   sayıyla karşılaştırıyor ve farklıysa **hata verip duruyor**, düzeltecek
+   komutu da yazarak.
+
+**Gerekçe:** Bu sayılar tek bir iş biriminde **iki kez** elle güncellendi
+(oyun paketi 8→23 olunca ikisi de eskidi) ve üçüncüde unutulacaktı. Unutulsa
+arayüz "±%12.8" demeye devam ederdi; gerçek değer %13.7 olduğu halde. Sessizce
+yanlış bir kesinlik vaadi — projenin K52'den K74'e kadar reddettiği şeyin
+aynısı, üstelik hata payının kendisinde.
+
+**Otomasyonun kendisi de bir hatayı yakaladı:** `comparedParts` elle "20"
+yazılmıştı, script "25" ölçtü.
+
+### K111 — `render_mode` kendi alanı oldu, `upscaling` temizlendi
+
+`benchmark_points.render_mode` enum: `raster`, `raytracing`, `pathtracing`.
+Varsayılan `raster`.
+
+Migration: `20260820142440_render_mode_alani` (alan) +
+`20260820142632_render_mode_veri_tasima` (mevcut 32 satır).
+
+**K108 geri alındı.** Raytracing bir süre `upscaling` alanına
+`DLSS/FSR Native + Raytracing` biçiminde yazılıyordu. O karar kendi bedelini
+yazmıştı: alan iki ayrı ayarı taşıyor ve sorgulanamaz hale geliyordu.
+
+**Neden şimdi:** dört oyunken düzeltmek ucuz, kırk oyunken pahalı. Alan bir
+kez kirlendikten sonra her yeni satır borcu büyütür.
+
+**Neden `pathtracing` de tanımlandı:** bugün hiçbir satır kullanmıyor. Ama
+sonradan eklenseydi, bugün girilmiş satırların hangi modda olduğu geriye dönük
+tahmin edilmek zorunda kalırdı — `workload`'ın şemaya erken girmesinin
+gerekçesiyle aynı.
+
+**Veri taşıma neden migration içinde:** `benchmark_points` append-only ve
+uygulama kodundan UPDATE yazılmaz. Append-only'nin amacı bir **ölçümün**
+sessizce revize edilmemesi; burada FPS değeri değişmiyor, ayarın kaydedilme
+biçimi düzeliyor. Migration'da yapılması değişikliği kayıt altına alıyor ve
+tekrarlanabilir kılıyor.
+
+**Grup anahtarı genişledi:** `(game_id, resolution, preset, upscaling,
+render_mode)`. Aynı oyunun raster ve raytracing ölçümleri aynı orana giremez —
+aralarındaki fark kartın gücü değil ayarın maliyetidir.
+
+### K112 — `games.release_year` opsiyonel, değeri PC çıkışıdır
+
+Migration: `20260820142939_games_release_year_opsiyonel`.
+
+**Neden opsiyonel:** K56 ölçütü — hiçbir kural ve arayüz bu alanı kullanmıyor.
+Ve her oyun Steam'de bulunmuyor: **Alan Wake 2 Epic'e özel çıktı**, Steam'de
+satırı yok, yılı doğrulanamadı. Zorunluluk, doğrulanamayan bir yılı uydurmaya
+zorlardı. Alan boş bırakıldı.
+
+**Tanım: PC (Steam) çıkış yılı.** Konsolda daha önce çıkan oyunlarda PC
+sürümünün yılı yazılır. Burası PC toplama sitesi ve ölçümler PC sürümünde
+yapılıyor.
+
+Doğrulama iki satırı düzeltti — ikisi de konsol/PC farkıydı:
+
+| Oyun | Önce | Sonra | Sebep |
+|---|---|---|---|
+| Death Stranding 2 | 2025 | **2026** | PS5 2025, PC 2026 |
+| Marvel's Spider-Man 2 | 2023 | **2025** | PS5 2023, PC 2025 |
+| Alan Wake 2 | 2023 | **(boş)** | Steam'de yok (Epic'e özel) |
+
+32 oyunun 31'i artık Steam'i kaynak gösteriyor (K109 tutarsızlığı kapandı);
+Alan Wake 2 doğrulanamadığı için kaynağı ComputerBase kaldı.

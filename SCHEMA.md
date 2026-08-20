@@ -354,11 +354,21 @@ Append-only olduğu için `updated_at` sütunu **yoktur** (bölüm 1.2).
 |---|---|---|
 | `id` | text | Slug: `cyberpunk-2077` |
 | `name` | text | |
-| `release_year` | int | |
+| `release_year` | int? | **PC (Steam) çıkış yılı.** Doğrulanamıyorsa boş |
 | `gpu_weight` | float | 0–1, oyunun GPU'ya bağımlılığı |
 | `cpu_weight` | float | 0–1 |
 
 Olgusal iddia taşır: `source`, `source_url`, `confidence`, `collected_at` bulunur (bölüm 1.3).
+`source_url` **oyunun kendi olgularının** (ad, çıkış yılı) kaynağını gösterir —
+benchmark'ın kaynağı `benchmark_points.source_url` içinde ayrıca durur (K109).
+
+`release_year` **opsiyoneldir** (K112): hiçbir kural ve arayüz kullanmıyor
+(K56 ölçütü) ve her oyun Steam'de bulunmuyor — Alan Wake 2 Epic'e özel çıktı,
+Steam'de satırı yok. Zorunluluk, doğrulanamayan bir yılı uydurmaya zorlardı.
+
+**Tanım: PC çıkışı.** Konsolda daha önce çıkan oyunlarda PC sürümünün yılı
+yazılır (Death Stranding 2: PS5 2025, PC 2026 → **2026**). Burası PC toplama
+sitesi; ölçümler PC sürümünde yapılıyor.
 
 ### `benchmark_points` — **append-only**
 
@@ -373,12 +383,27 @@ Elle toplanan gerçek ölçümler. Motorun kalibrasyon verisi.
 | `workload` | enum | `gaming`, `ai_inference`, `video_encode`, `productivity` |
 | `resolution` | enum | `1080p`, `1440p`, `2160p` |
 | `preset` | enum | `low`, `medium`, `high`, `ultra` |
-| `upscaling` | text? | `none`, `DLSS-Q`, `FSR-Q` |
+| `upscaling` | text? | `none`, `DLSS-Q`, `FSR-Q` — **yalnızca upscaling** |
+| `render_mode` | enum | `raster`, `raytracing`, `pathtracing` |
 | `avg_fps` | float | |
 | `one_percent_low_fps` | float? | |
 | `source_type` | enum | `review`, `user_submission`, `own_test` |
 | `source`, `confidence`, `collected_at` | — | Bölüm 1.3 |
 | `source_url` | text | **Burada zorunlu** (bölüm 1.3'te opsiyonel). Kaynak defteri budur. |
+
+**Neden `render_mode` ayrı bir alan** (K111): raytracing FPS'i %30-50 değiştirir,
+yani `upscaling` kadar belirleyici bir ayardır. Bir süre `upscaling` alanına
+`DLSS/FSR Native + Raytracing` biçiminde yazıldı; bu, alanı sorgulanamaz hale
+getiriyordu — "hangi satırlar DLSS Quality kullandı" sorusu metin eşleştirmesi
+gerektiriyordu. Dört oyunken düzeltmek ucuz, kırk oyunken pahalı olurdu.
+
+Varsayılanı **`raster`**: kaynakların büyük çoğunluğu raster ölçüyor ve mevcut
+satırların hepsi öyleydi. `pathtracing` bugün hiçbir satırda kullanılmıyor ama
+şemaya şimdi girdi — sonradan eklenirse bugünkü satırların hangi modda olduğu
+geriye dönük tahmin edilmek zorunda kalırdı (`workload` ile aynı gerekçe).
+
+İki ölçüm ancak **aynı** `(game_id, resolution, preset, upscaling, render_mode)`
+beşlisindeyse karşılaştırılabilir; motorun grup anahtarı budur (K101).
 
 > Tek bir kaynaktan toplu veri alınmaz. Her satır ayrı ayrı, kaynağı yazılarak girilir.
 

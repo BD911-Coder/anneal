@@ -26,6 +26,7 @@ Güncelleme: 20 Ağustos 2026 — **fazlar ürüne göre yeniden sıralandı.**
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
 | Performans indeksi | 14 GPU + 12 CPU |
 | Benchmark ölçümü | **298 nokta**, tek kaynak (ComputerBase) |
+| Hata payı | **script yazıyor**, eskiyince `kural:kontrol` duruyor |
 | Oyun bazlı FPS | **23 oyun, 60 ekran kartı** — çalışıyor |
 | Fiyat | 22 parçada gerçek fiyat (USD, Newegg) |
 | Kullanıcı | 0 |
@@ -131,10 +132,15 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
 **Markanın kendisi bu madde.** Tahminini denetleyen ve hata payını yayınlayan
 site, tahmin veren siteden farklı bir şeydir.
 
-- [ ] Birini-dışarıda-bırak doğrulaması script'e dönsün, her veri turunda çalışsın
-- [ ] Hata payı arayüzde yayınlansın
+- [x] **Birini-dışarıda-bırak doğrulaması script oldu** *(20 Ağustos)* —
+      `npm run fps:sapma`, `lib/fps-margin.ts`'i kendisi yazıyor. İkiz komut
+      `npm run indeks:sapma` da `lib/perf-margin.ts`'i yazıyor (K110).
+- [x] **Eskime kontrolü** — `npm run kural:kontrol`, hata payının kaç ölçümle
+      hesaplandığını güncel sayıyla karşılaştırıyor ve farklıysa **duruyor**.
+      Sayı bu tur iki kez elle güncellendi; üçüncüde unutulacaktı.
+- [x] Hata payı arayüzde yayınlansın — A.1'de yapıldı
+- [x] `docs/KARARLAR.md`'ye ölçülen hata payı ve ölçüm yöntemi yazılsın
 - [ ] Kapsam dışı ve düşük güvenli hücreler işaretlensin
-- [ ] `docs/KARARLAR.md`'ye ölçülen hata payı ve ölçüm yöntemi yazılsın
 
 **Son ölçüm** (birini-dışarıda-bırak, **184 nokta**, 20 Ağustos):
 ortalama mutlak hata **%6.6**, medyan %5.4, %90 dilim %13.7, en kötü %35.3.

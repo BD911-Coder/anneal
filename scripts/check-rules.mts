@@ -35,6 +35,8 @@ import {
   toEngineRam,
 } from "../data/to-engine.ts";
 import { resolveGpuSelection } from "../engine/gpu-selection.ts";
+import { FPS_MARGIN } from "../lib/fps-margin.ts";
+import { PERF_MARGIN } from "../lib/perf-margin.ts";
 
 for (const file of [".env.local", ".env"]) {
   if (existsSync(file)) loadEnvFile(file);
@@ -231,7 +233,36 @@ for (const probe of probes) {
   console.log();
 }
 
+// --- Hata payi eskidi mi? (K110) -------------------------------------------
+//
+// Arayuz iki hata payi gosteriyor ve ikisi de bir olcume dayaniyor. Olcumden
+// sonra benchmark_points'a satir eklenirse sayilar sessizce eskir ve arayuz
+// artik dogru olmayan bir kesinlik vaat eder. Bu tam olarak kacinilan hata
+// sinifi: bir tur icinde iki kez elle guncellendi, ucuncude unutulacakti.
+//
+// Kontrol burada duruyor cunku veritabanina zaten bagli olan ve her is
+// biriminden sonra calistirilan script bu.
+const guncelNokta = await prisma.benchmarkPoint.count({ where: real });
+const eskiyen: string[] = [];
+for (const [ad, m, komut] of [
+  ["lib/perf-margin.ts", PERF_MARGIN, "npm run indeks:sapma"],
+  ["lib/fps-margin.ts", FPS_MARGIN, "npm run fps:sapma"],
+] as const) {
+  if (m.measuredAtPoints !== guncelNokta) {
+    eskiyen.push(
+      `  ${ad}: hata payi ${m.measuredAtPoints} olcumle hesaplanmis (${m.measuredAt}),` +
+        ` su an ${guncelNokta} olcum var. Yeniden olc: ${komut}`,
+    );
+  }
+}
+
 await prisma.$disconnect();
+
+if (eskiyen.length > 0) {
+  console.error(`\nHATA: yayinlanan hata payi eskimis.\n${eskiyen.join("\n")}`);
+  process.exit(1);
+}
+console.log(`Hata payi guncel: ${guncelNokta} olcumle hesaplanmis.`);
 
 if (failed > 0) {
   console.error(`${failed} kural gercek veriyle tetiklenemiyor.`);

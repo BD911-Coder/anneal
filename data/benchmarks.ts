@@ -20,16 +20,25 @@ import { visibleParts, visibleRows } from "./visibility.ts";
  */
 const MIN_DISTINCT_GPUS = 3;
 
-/** Kullanıcıya gösterilecek ayar etiketi. Upscaling gizlenmez. */
-function settingLabel(resolution: string, preset: string, upscaling: string | null): string {
+/** Kullanıcıya gösterilecek ayar etiketi. Upscaling ve render modu gizlenmez. */
+function settingLabel(
+  resolution: string,
+  preset: string,
+  upscaling: string | null,
+  renderMode: string,
+): string {
   // Prisma enum üyesi `R1440p`; veritabanındaki gerçek değer bu (K7 deseni).
   const cozunurluk = resolution.replace(/^R/, "");
   const temel = `${cozunurluk} ${preset}`;
 
   // "1440p ultra" deyip DLSS'i söylememek yanlış olurdu: ölçüm upscaling
   // açıkken yapıldı ve bu sayıyı belirgin şekilde yükseltiyor.
-  if (!upscaling || upscaling === "none") return `${temel}, yerel`;
-  return `${temel}, ${upscaling}`;
+  const ayar = !upscaling || upscaling === "none" ? `${temel}, yerel` : `${temel}, ${upscaling}`;
+
+  // Aynı gerekçe render modu için: raytracing FPS'i %30-50 değiştiriyor (K111).
+  // `raster` yazılmıyor çünkü varsayılan hal o; ayırt edici olan diğer ikisi.
+  if (renderMode === "raster") return ayar;
+  return `${ayar}, ${renderMode === "pathtracing" ? "Path Tracing" : "Raytracing"}`;
 }
 
 /**
@@ -37,7 +46,9 @@ function settingLabel(resolution: string, preset: string, upscaling: string | nu
  *
  * **Neden ayar da gruplama anahtarı:** 1080p medium ölçümüyle 1440p ultra
  * ölçümü aynı orana giremez. Bugün veritabanında tam olarak bu iki ayar var
- * ve karıştırılsalardı oran anlamsız çıkardı.
+ * ve karıştırılsalardı oran anlamsız çıkardı. Render modu da anahtarın
+ * parçası (K111): aynı oyunun raster ve raytracing ölçümleri aynı orana
+ * giremez, aralarındaki fark kartın gücü değil ayarın maliyetidir.
  *
  * **Neden aynı GPU iki kez geçen grup düşüyor:** o durumda "bu kartın bu
  * oyundaki FPS'i" sorusunun iki cevabı olur ve hangisinin gösterileceği bir
@@ -65,6 +76,7 @@ export async function getFpsGameGroups(modelVersion: string): Promise<FpsGameGro
         resolution: true,
         preset: true,
         upscaling: true,
+        render_mode: true,
         avg_fps: true,
         game: { select: { name: true } },
       },
@@ -87,7 +99,7 @@ export async function getFpsGameGroups(modelVersion: string): Promise<FpsGameGro
   const buckets = new Map<string, Bucket>();
 
   for (const row of rows) {
-    const label = settingLabel(row.resolution, row.preset, row.upscaling);
+    const label = settingLabel(row.resolution, row.preset, row.upscaling, row.render_mode);
     const key = `${row.game_id}|${label}`;
 
     let bucket = buckets.get(key);

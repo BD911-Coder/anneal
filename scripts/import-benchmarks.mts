@@ -6,7 +6,8 @@
 // ham haliyle yazilir, sonra normalize edilir.
 //
 // benchmark_points APPEND-ONLY (K1): UPDATE yazilmaz. Ayni satir ikinci kez
-// gelirse eklenmez — tekillik (game, gpu/cpu, resolution, preset, source_url)
+// gelirse eklenmez — tekillik (game, gpu/cpu, resolution, preset, render_mode,
+// source_url)
 // uzerinden kontrol edilir. Yoksa her calistirma veriyi ikiye katlardi.
 
 import { existsSync, readFileSync } from "node:fs";
@@ -67,7 +68,10 @@ for (const row of oyunlar) {
   try {
     const data = {
       name: row.name,
-      release_year: Number(row.release_year),
+      // Bos birakilabilir (K112): Alan Wake 2 Epic'e ozel cikti, Steam'de
+      // satiri yok ve yili dogrulanamadi. Number("") 0 verir; 0 bir cikis
+      // yili degil, "bilinmiyor"un yanlis yazilmis halidir.
+      release_year: row.release_year ? Number(row.release_year) : null,
       gpu_weight: Number(row.gpu_weight),
       cpu_weight: Number(row.cpu_weight),
       // Agirliklar ve ad/yil elle girildi: source 'manual', confidence 'low'.
@@ -103,6 +107,7 @@ type Nokta = {
   resolution: "R1080p" | "R1440p" | "R2160p";
   preset: "low" | "medium" | "high" | "ultra";
   upscaling: string | null;
+  render_mode: "raster" | "raytracing" | "pathtracing";
   avg_fps: number;
   source_url: string;
 };
@@ -134,9 +139,21 @@ for (const [file, tip] of KAYNAKLAR) {
       resolution: RES[row.resolution as keyof typeof RES],
       preset: row.preset as Nokta["preset"],
       upscaling: row.upscaling || null,
+      // CSV'de sutun yoksa raster: CPU dosyalarinda render modu yazmiyor ve
+      // o olcumlerin hepsi raster. Bilinmeyen bir deger gelirse ASAGIDA
+      // patliyor — sessizce raster sayilmiyor.
+      render_mode: (row.render_mode || "raster") as Nokta["render_mode"],
       avg_fps: Number(row.avg_fps),
       source_url: row.source_url,
     });
+  }
+}
+
+const GECERLI_MOD = new Set(["raster", "raytracing", "pathtracing"]);
+for (const n of noktalar) {
+  if (!GECERLI_MOD.has(n.render_mode)) {
+    console.error(`[HATA] ${n.file} / ${n.game_id}: bilinmeyen render_mode "${n.render_mode}"`);
+    process.exit(1);
   }
 }
 
@@ -154,6 +171,7 @@ for (const n of noktalar) {
         cpu_part_id: n.cpu_part_id,
         resolution: n.resolution,
         preset: n.preset,
+        render_mode: n.render_mode,
         source_url: n.source_url,
       },
     });
@@ -174,6 +192,7 @@ for (const n of noktalar) {
         resolution: n.resolution,
         preset: n.preset,
         upscaling: n.upscaling,
+        render_mode: n.render_mode,
         avg_fps: n.avg_fps,
         source_type: "review",
         source: "manual",
