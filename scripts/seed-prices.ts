@@ -10,7 +10,7 @@
  * Parça id'si -> güncel fiyat, **kuruş** cinsinden integer.
  * `749900` = 1.499,00 değil, 7.499,00 TL (SCHEMA.md bölüm 0, kural 4).
  */
-// PRICES_MINOR ve PRICE_DATES kaldırıldı (K89).
+// PRICES_MINOR ve PRICE_DATES kaldırıldı (K115).
 //
 // Seed artık fiyat yazmıyor. Gerçek fiyatlar data/prices/*.csv'den geliyor;
 // elle yazılmış TRY sayıları USD gerçek fiyatlarla aynı tabloda durunca

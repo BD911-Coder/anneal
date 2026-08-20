@@ -306,17 +306,31 @@ check("K25 data/client disaridan ice aktarilmiyor", ihlalEdenler.length === 0, i
 // Bu bir UYARI'dir, hata degil: kullanilmayan zorunlu alan bir tasarim
 // kokusudur, kirik kod degil. Cikis kodunu etkilemez.
 //
-// Kapsam: yedi kategori spec tablosu. Kimlik ve koken alanlari (part_id,
-// source, collected_at...) haric — onlar kural icin degil kayit icin var.
+// Kapsam: yedi kategori spec tablosu + games. games 2026-08-20 denetiminde
+// eklendi; disarida kaldigi surece gpu_weight/cpu_weight gibi kullanilmayan
+// zorunlu alanlar kontrolun kor noktasindaydi.
+//
+// benchmark_points ve perf_index KAPSAM DISI ve bu bilincli: o tablolarin
+// alanlari /data icinde tuketiliyor, ama tarama kaynagi engine/ + app/ ile
+// sinirli. /data eklenirse to-engine.ts butun spec alanlarini "kullanilmis"
+// gosterir ve kontrol islevini kaybeder. Bkz. SORULAR.md S44.
+//
+// Kimlik ve koken alanlari (part_id, source, collected_at...) haric — onlar
+// kural icin degil kayit icin var.
 console.log("\n--- Zorunlu alan kullanimi (K56) ---");
 const KOKEN = ["part_id", "id", "source", "source_url", "confidence",
-               "collected_at", "created_at", "updated_at"];
+               "collected_at", "created_at", "updated_at",
+               // Insan tarafindan okunan kimlik. Arayuzde gorunur ama alan
+               // adiyla degil (games.name -> game_name); alan adi arandiginda
+               // bulunamiyor ve yanlis pozitif uretiyor. parts.brand/model de
+               // ayni rolde ve zaten kapsam disi.
+               "name"];
 const kullanimKaynagi = [...walk("engine"), ...walk("app")]
   .map((f) => readFileSync(f, "utf8"))
   .join("\n");
 
 const kullanilmayan = [];
-for (const table of SPEC) {
+for (const table of [...SPEC, "games"]) {
   const body = prRaw.get(table) ?? "";
   for (const line of body.split("\n")) {
     const m = line.match(/^\s{2,}(\w+)\s+(\w+)(\?|\[\])?/);
@@ -331,7 +345,7 @@ for (const table of SPEC) {
   }
 }
 if (kullanilmayan.length === 0) {
-  console.log("  [OK  ] her zorunlu spec alani engine/ ya da app/ icinde kullaniliyor");
+  console.log("  [OK  ] her zorunlu alan engine/ ya da app/ icinde kullaniliyor");
 } else {
   console.log(`  [UYARI] ${kullanilmayan.length} zorunlu alan hicbir kural ya da arayuzde kullanilmiyor:`);
   for (const alan of kullanilmayan) console.log(`          ${alan}`);
@@ -366,6 +380,33 @@ for (const file of readdirSync(csvDir).filter((f) => f.startsWith("gpu") && f.en
 if (k57Sorun === 0) console.log("  (tum gpu CSV'lerinde tutarli)");
 
 // ---------------------------------------------------------------------------
+// KARARLAR.md numara butunlugu
+//
+// Neden burada: karar numarasi koda ve yorumlara atif olarak giriyor
+// ("K90 geregi..."). Ayni numara iki karara verilirse atif hangisini
+// gosterdigini soyleyemez hale gelir ve bu SESSIZ olur. Uc kez yasandi:
+// K91 (2026-08-20), K89 ve K90 (ayni gun, denetimde bulundu).
+// ---------------------------------------------------------------------------
+console.log("\n--- KARARLAR.md numaralari ---");
+{
+  const kararMd = readFileSync("docs/KARARLAR.md", "utf8");
+  // Yalnizca "### K<sayi> —" bicimi bir KARAR basligidir. "### K95 ile K91:"
+  // gibi karsilastirma basliklari sayilmaz.
+  const numaralar = [...kararMd.matchAll(/^### (K\d+[a-z]?) —/gm)].map((m) => m[1]);
+  const gorulen = new Map();
+  const cift = [];
+  for (const n of numaralar) {
+    if (gorulen.has(n)) cift.push(n);
+    gorulen.set(n, true);
+  }
+  check(
+    "Karar numaralari tekil",
+    cift.length === 0,
+    cift.length ? `cift numara: ${[...new Set(cift)].join(", ")}` : "",
+  );
+  console.log(`  (${numaralar.length} karar okundu)`);
+}
+
 console.log("");
 if (problems.length > 0) {
   console.log(`SONUC: ${problems.length} SORUN (${checks} kontrol calisti)`);

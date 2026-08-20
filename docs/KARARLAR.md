@@ -1911,7 +1911,11 @@ soğutucu ölçülerinde K59/K60 aynen yürürlükte.
 
 ## 2026-08-20 — Elle fiyat girişi (Faz 1.1)
 
-### K89 — Seed fiyat yazmaz
+### K115 — Seed fiyat yazmaz
+
+> **Numaralandırma düzeltmesi (2026-08-20).** Bu karar 2026-08-20'de yanlışlıkla
+> K89 numarasıyla yazıldı; K89 zaten "kategori listesi çipleri gösterir" kararına aitti.
+> İçerik değişmedi, yalnızca numara düzeltildi. Eski raporlarda K89 diye geçebilir.
 
 `scripts/seed.mts` artık `price_snapshots`'a yazmıyor. `PRICES_MINOR` ve
 `PRICE_DATES` kaldırıldı; script başta ve sonda satır sayısını karşılaştırıyor
@@ -1924,7 +1928,11 @@ fiyatlarla yapılıyor. Gerçek fiyatlar USD gelince TRY satırları zarar verme
 başladı: aynı sistemde iki para birimi bir araya gelince toplam anlamsız
 oluyor ve arayüz toplamı hiç gösteremiyor.
 
-### K90 — Çip satırının fiyatı, kaydı sıkı bir kartından okunur
+### K116 — Çip satırının fiyatı, kaydı sıkı bir kartından okunur
+
+> **Numaralandırma düzeltmesi (2026-08-20).** Bu karar 2026-08-20'de yanlışlıkla
+> K90 numarasıyla yazıldı; K90 zaten "çip/kart çözümlemesi /engine içinde" kararına aitti.
+> İçerik değişmedi, yalnızca numara düzeltildi. Eski raporlarda K90 diye geçebilir.
 
 `gpu_specs` satırı üreticinin referans tasarımıdır; mağazada öyle bir ürün
 yoktur (K86). Çipin fiyatı şöyle belirlenir:
@@ -2139,7 +2147,7 @@ sabitlerini kurala yazmak, ölçüm olmadan kural yazmak olur.
 North 155). Kuralın iki ucu da tek satır olmaktan çıktı — asıl kırılganlık
 buydu.
 
-### K95 ile K91: aynı mantık, aynı işlem değil
+### Karşılaştırma — K95 ile K91: aynı mantık, aynı işlem değil
 
 K91 "etiketsiz ölçü üçlüsünde **en büyük değer** uzunluktur" diyor ve bu
 ekran kartı için doğru. **K91'in harfi PSU'da yanlış sonuç verir:**
@@ -2180,7 +2188,7 @@ Oyun listesinde ölçülmüş FPS'e küçük bir işaret (`● ölçüldü`), t�
 `○ tahmin ±%12.8` konur. İkisi aynı listede durur ama ayırt edilir.
 
 **Gerekçe (proje sahibinin ifadesi):** *"Bu sitenin tüm duruşu — kullanıcı
-sayının nereden geldiğini görmeli."* K90'ın çip fiyatında ve K74'ün kart
+sayının nereden geldiğini görmeli."* K116'nın çip fiyatında ve K74'ün kart
 indeksinde kurduğu desenin aynısı: yaklaşıklığın damgası sayının yanında
 durur, dipnotta değil.
 
@@ -2591,3 +2599,71 @@ güncelledi.
 **Kart tarafında alınacak kalmadı:** 1440p'de her oyunda 14 karttan 8'i
 alınmış ve K75'in 3. maddesi kombinasyon başına 8'i tavan yapıyor. Mevcut
 gruplara kart eklenemez.
+
+## 2026-08-20 — Kendi kendini denetleme turu
+
+### K117 — Karar numaralarının tekilliği kontrole bağlandı
+
+`npm run sema:kontrol` artık `docs/KARARLAR.md`'deki karar numaralarının
+tekil olduğunu doğruluyor.
+
+**Neden gerekliydi — üç kez yaşandı.** Karar numarası koda ve yorumlara atıf
+olarak giriyor (`// K90: cip satirinin fiyati bir kartindan okunur`). Aynı
+numara iki karara verilirse atıf hangisini gösterdiğini söyleyemez hale gelir
+ve bu **sessiz** olur: kod çalışır, testler geçer, yalnızca okuyan insan yanlış
+kararı okur.
+
+Bu turda bulunan çakışmalar (K91 önceki turda düzeltilmişti):
+
+| Numara | Çakışan kararlar | Çözüm |
+|---|---|---|
+| K89 | "kategori listesi çipleri gösterir" ↔ "seed fiyat yazmaz" | fiyat kararı → **K115** |
+| K90 | "çözümleme `/engine` içinde" ↔ "çip fiyatı karttan okunur" | fiyat kararı → **K116** |
+
+Her ikisinin de **canlı kod atfı** vardı: `scripts/seed.mts` (4 yer),
+`scripts/seed-prices.ts`, `scripts/import-prices.mts`, `engine/fps-estimate.ts`,
+`docs/faz-a1-plani.md`. Hepsi güncellendi.
+
+**Kontrol yalnızca `### K<sayı> —` biçimini karar sayar.** "K95 ile K91:
+aynı mantık, aynı işlem değil" gibi karşılaştırma başlıkları numara değildir;
+o başlık da `### Karşılaştırma — ...` olarak yeniden yazıldı.
+
+### K118 — K56 kontrolünün kapsamı `games`'i içerir
+
+Kullanılmayan-zorunlu-alan kontrolü yalnızca yedi spec tablosuna bakıyordu.
+`games` eklendi ve iki alan ortaya çıktı: **`gpu_weight`, `cpu_weight`** —
+32 oyunun hepsinde `0.5` yer tutucu, ölçülmemiş, hiçbir yerde okunmuyor.
+
+`games.name` **kimlik alanı** sayılıp kapsam dışına alındı: arayüzde görünüyor
+ama alan adıyla değil (`games.name` → `game_name`), yani ad araması yanlış
+pozitif üretiyordu. `parts.brand`/`model` de aynı rolde ve zaten kapsam dışı.
+
+`benchmark_points` ve `perf_index` **bilinçli olarak kapsam dışı** — gerekçesi
+ve doğru çözümü `SORULAR.md` S44'te.
+
+### K119 — Envanterde bulunan üç arayüz hatası düzeltildi
+
+Beta kapısı envanteri (bölüm 4) üç kod hatası buldu; üçü de burada düzeltildi.
+
+**1. Para birimi yanlış gösteriliyordu.** `formatPriceMinor`'ın varsayılanı
+`TRY` ve dört çağrı yerinde para birimi geçilmiyordu: USD fiyatlar açılır
+listede `389,00 ₺` diye görünüyordu. Aynı ekranda toplam satırı `USD`
+diyordu — **iki farklı para birimi yan yana**.
+
+Bu bir görünüm kusuru değil yanlış bilgiydi. Düzeltildi:
+`app/builder.tsx` 266, 295, 326, 547.
+
+**2. Mobilde yatay taşma.** 375 px ekranda sayfa 660 px çiziliyordu. Kök
+sebep: uzun bellek adları `<select>`in içsel genişliğini şişiriyor ve
+grid/flex çocukları `min-w-0` olmadan içeriklerinden küçülemiyor. `select`lere
+`w-full min-w-0`, grid'e `[&>*]:min-w-0` eklendi. Ölçüldü: 375 px ekranda
+sayfa artık 375 px.
+
+**3. Ana sayfa "31 oyunda" diyordu, 23 oyun vardı.** `fpsGroups.length`
+**grup** sayısını veriyordu; 4K ekseni açılınca (K114) 23 oyun 31 grup oldu.
+Ayrı `game_id` sayısına çevrildi.
+
+**Üçünün ortak dersi:** ikisi (para birimi, oyun sayısı) veriden okunan
+doğru sayıyı **yanlış biçimde** gösteriyordu. Sayının doğru olması yeterli
+değil; nasıl gösterildiği de ölçülmeli. Envanter olmasa üçü de fark
+edilmeden yabancıya gösterilirdi.

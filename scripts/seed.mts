@@ -339,7 +339,7 @@ await upsertAll(storages, prisma.storageSpecs as any);
 // Fiyatlar — price_snapshots
 // ---------------------------------------------------------------------------
 //
-// Bu script artık fiyat YAZMIYOR (K89).
+// Bu script artık fiyat YAZMIYOR (K115).
 //
 // Eskiden her parçaya üç TRY snapshot üretiyordu. Gerçek fiyatlar USD olarak
 // gelmeye başlayınca bu satırlar zarar vermeye başladı: aynı sistemde TRY ve
@@ -388,19 +388,19 @@ if (atlanan > 0) {
   console.log(`${atlanan} parça atlandı: aynı slug gerçek veriyle dolu, üzerine yazılmadı.`);
 }
 
-// K89 bekçisi: bu script price_snapshots'a yazmaz. Yazan bir satır eklenirse
+// K115 bekçisi: bu script price_snapshots'a yazmaz. Yazan bir satır eklenirse
 // burada durur.
 const fiyatSonra = await prisma.priceSnapshot.count();
 if (fiyatSonra !== fiyatOnce) {
   console.error(
     `\nHATA: seed price_snapshots'a dokundu (${fiyatOnce} -> ${fiyatSonra}).\n` +
-      "Fiyatlar data/prices/*.csv'den gelir (npm run fiyat:aktar). Seed yazamaz (K89).",
+      "Fiyatlar data/prices/*.csv'den gelir (npm run fiyat:aktar). Seed yazamaz (K115).",
   );
   await prisma.$disconnect();
   process.exit(1);
 }
 const fiyatliParca = (await prisma.priceSnapshot.groupBy({ by: ["part_id"] })).length;
-console.log(`Fiyat: seed yazmadı, tabloda ${fiyatSonra} snapshot / ${fiyatliParca} parça (K89).`);
+console.log(`Fiyat: seed yazmadı, tabloda ${fiyatSonra} snapshot / ${fiyatliParca} parça (K115).`);
 
 // K71 bekçisi: bu script perf_index'e yazmaz. Yazan bir satır eklenirse
 // (ya da bir upsert yan etkiyle satır üretirse) burada durur.

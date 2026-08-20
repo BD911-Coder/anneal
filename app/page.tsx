@@ -33,7 +33,10 @@ export default async function HomePage() {
   // türetme indeks gerektiriyor, kartlar da indeksi çiplerinden miras alıyor
   // (K86). Yalnızca ölçülmüş çipler sayılsaydı 46 kart görünmez ve rakam
   // gerçekte gösterilenin çok altında kalırdı.
-  const fpsGames = fpsGroups.length;
+  // DİKKAT: `fpsGroups.length` GRUP sayısıdır, oyun sayısı değil. Aynı oyun
+  // birden fazla çözünürlükte ölçülmüşse birden fazla grup üretir; 4K ekseni
+  // açılınca (K114) 23 oyun 31 grup oldu ve başlık "31 oyunda" demeye başladı.
+  const fpsGames = new Set(fpsGroups.map((group) => group.game_id)).size;
   const fpsCoveredGpus =
     catalog.gpu.filter((chip) => perfIndexes[chip.id] !== undefined).length +
     catalog.gpu_variant.filter((card) => perfIndexes[card.chip_part_id] !== undefined).length;

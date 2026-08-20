@@ -51,7 +51,7 @@ export type FpsGameGroup = {
  *
  * Bu alan arayüz süsü değil, dosyanın varlık sebebi. Ölçülmüş bir sayı ile
  * orandan türetilmiş bir sayı aynı listede duruyorsa ayırt edilebilmek
- * zorunda — K90'ın çip fiyatında ve K74'ün kart indeksinde kurduğu desenin
+ * zorunda — K116'nın çip fiyatında ve K74'ün kart indeksinde kurduğu desenin
  * aynısı.
  */
 export type FpsOrigin = "measured" | "derived";

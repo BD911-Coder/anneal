@@ -1,7 +1,10 @@
 # Beta kapısı envanteri — sitenin bir yabancıya gösterilebilir olması için ne eksik?
 
-**Tarih:** 20 Ağustos 2026. Ölçüldü, düzeltilmedi (kritik olanlar ayrı bir iş
-biriminde ele alındı — bkz. bölüm 6).
+**Tarih:** 20 Ağustos 2026. Ölçüldü, sonra kritik olanlar düzeltildi.
+
+> **Güncelleme (aynı gün, denetim turu):** 2, 3 ve 4 numaralı maddeler
+> **düzeltildi** (K119). Aşağıdaki metin bulundukları andaki hâllerini
+> anlatıyor; durumları özet tablosunda güncel.
 
 Her madde tek soruya göre sıralandı: **bu olmadan yabancıya gösterilebilir mi?**
 
@@ -112,15 +115,17 @@ Listenin başında kalıcı not var (K99). Ölçüldü ve kaynak bulunamadı (K1
 
 | # | Madde | Engelleyici mi? | Kim |
 |---|---|---|---|
-| 1 | Beş kategoriye fiyat | 🔴 evet | veri işi — kaynak kararı bekliyor |
-| 2 | Para birimi hatası | 🔴 evet | **kod, küçük** |
-| 3 | Mobil taşma | 🔴 evet | **kod, küçük** |
-| 4 | "31 oyunda" sayısı | 🟡 | **kod, tek satır** |
+| 1 | Beş kategoriye fiyat | 🔴 evet | **AÇIK** — veri işi, kaynak kararı bekliyor |
+| 2 | Para birimi hatası | 🔴 evet | ✅ **düzeltildi** (K119) |
+| 3 | Mobil taşma | 🔴 evet | ✅ **düzeltildi** (K119) |
+| 4 | "31 oyunda" sayısı | 🟡 | ✅ **düzeltildi** (K119) |
 | 5-7 | Kapsam boşlukları | 🟢 hayır | dürüstçe söyleniyor |
 
-**2, 3 ve 4 kod işi ve küçük.** 1 ise veri işi ve bu turda çözülemez —
-fiyat kaynağı kararı hâlâ açık (eBay başvurusu, Amazon kapalı, Newegg
-pazaryeri elendi).
+**2, 3 ve 4 düzeltildi ve tarayıcıda doğrulandı:** 375 px ekranda sayfa
+375 px (taşma yok), açılır listede `499,99 USD`, başlıkta `23 oyunda`.
 
-Yani: **kod tarafında beta kapısına üç küçük düzeltme kaldı; kalan tek
-gerçek engel fiyat verisi.**
+**Geriye tek engel kaldı: fiyat verisi.** Bu bir veri işi ve bu turda
+çözülemez — kaynak kararı hâlâ açık (eBay başvurusu bekliyor, Amazon konum
+engelli, Newegg pazaryeri K96 tavanıyla elendi).
+
+Yani: **kod tarafında beta kapısı temiz. Kalan tek gerçek engel fiyat.**

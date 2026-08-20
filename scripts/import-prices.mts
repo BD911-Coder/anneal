@@ -96,7 +96,7 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".csv")).sort()) {
       const part = await prisma.part.findUnique({ where: { id: row.part_id } });
       if (!part) throw new Error(`katalogda yok: ${row.part_id}`);
 
-      // K90: cip satirinin fiyati bir kartindan okunur ve o kart kayitli olur.
+      // K116: cip satirinin fiyati bir kartindan okunur ve o kart kayitli olur.
       if (row.reference_part_id) {
         const ref = await prisma.gpuVariantSpecs.findUnique({
           where: { part_id: row.reference_part_id },

@@ -235,8 +235,11 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
     return catalog.gpu_variant.find((variant) => variant.id === id)?.label ?? id;
   }
 
+  // [&>*]:min-w-0 — grid çocukları varsayılan olarak içeriklerinden küçülemez.
+  // Uzun bellek adları <select>in içsel genişliğini şişiriyordu ve 375 px
+  // ekranda sayfa 660 px çiziliyordu (beta kapısı envanteri, madde 3).
   return (
-    <div className="grid gap-8 md:grid-cols-2">
+    <div className="grid gap-8 md:grid-cols-2 [&>*]:min-w-0">
       {/* --- Seçim --- */}
       <section>
         <h2 className="mb-3 text-lg font-semibold">Parça seç</h2>
@@ -247,7 +250,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium">{CATEGORY_LABEL[category]}</span>
                 <select
-                  className="rounded border px-2 py-1"
+                  className="w-full min-w-0 rounded border px-2 py-1"
                   value={selection[category] ?? ""}
                   onChange={(event) => {
                     forgetShareLink();
@@ -263,7 +266,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                   {catalog[category].map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.label}
-                      {prices[item.id] ? ` — ${formatPriceMinor(prices[item.id].price_minor)}` : ""}
+                      {prices[item.id] ? ` — ${formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}` : ""}
                     </option>
                   ))}
                 </select>
@@ -280,7 +283,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                     Kart modeli <span className="font-normal opacity-60">(opsiyonel)</span>
                   </span>
                   <select
-                    className="rounded border px-2 py-1"
+                    className="w-full min-w-0 rounded border px-2 py-1"
                     value={gpuVariantId ?? ""}
                     onChange={(event) => {
                       forgetShareLink();
@@ -292,7 +295,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                       <option key={variant.id} value={variant.id}>
                         {variant.label}
                         {prices[variant.id]
-                          ? ` — ${formatPriceMinor(prices[variant.id].price_minor)}`
+                          ? ` — ${formatPriceMinor(prices[variant.id].price_minor, prices[variant.id].currency)}`
                           : ""}
                       </option>
                     ))}
@@ -323,7 +326,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                   {prices[item.id] && (
                     <span className="opacity-60">
                       {" "}
-                      — {formatPriceMinor(prices[item.id].price_minor)}
+                      — {formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}
                     </span>
                   )}
                 </span>
@@ -544,7 +547,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                     </div>
                     <div className="text-xs opacity-70">
                       Fark: {upgrade.price_delta_minor >= 0 ? "+" : ""}
-                      {formatPriceMinor(upgrade.price_delta_minor)} · İndeks{" "}
+                      {formatPriceMinor(upgrade.price_delta_minor, priceSummary.currency ?? "USD")} · İndeks{" "}
                       {upgrade.index_before} → {upgrade.index_after} (+{upgrade.index_delta}){" "}
                       <span className="opacity-80">tahmini</span>
                       {index === 0 && upgrades.length > 1 && " · en çok kazandıran"}

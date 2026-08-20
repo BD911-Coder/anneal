@@ -228,7 +228,7 @@ girdi : gpu_index, oyun başına [(index, avg_fps)] listesi
 ```
 
 `kaynak` alanı arayüz için değil, **dürüstlük için** var: ölçülmüş sayı ile
-türetilmiş sayı aynı yerde gösterilecekse ayırt edilebilmeli. Bu, K90'ın çip
+türetilmiş sayı aynı yerde gösterilecekse ayırt edilebilmeli. Bu, K116'nın çip
 fiyatında ve K74'ün kart indeksinde kurduğu desenin aynısı.
 
 ### 5.3 Testler — `/engine` kuralı gereği zorunlu

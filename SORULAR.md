@@ -42,19 +42,32 @@ Tetikleyici olay: **"PSU'nun kartın istediği konnektörü var mı" kuralı**. 
 kural `psu_specs`'te de konnektör sayıları gerektirir ve beta kapsamı dışıdır.
 Kural yazılmadan yapılandırmaya gerek yok.
 
-### S22 — 14 zorunlu spec alanı hiçbir kural ya da arayüzde kullanılmıyor
+### S22 — 14 zorunlu alan hiçbir kural ya da arayüzde kullanılmıyor
 
-K56 ile eklenen kontrol ilk çalıştırmada 14 alan buldu:
+> **Güncellendi (2026-08-20 denetimi).** Liste ilk yazıldığında 14 alandı;
+> ikisi çözüldü, kontrolün kapsamı genişleyince ikisi eklendi. Sayı yine 14
+> ama **içerik değişti**.
+
+Bugünkü hâli (`npm run sema:kontrol` çıktısı):
 
 ```
 gpu_specs.chipset, vram_gb, vram_type
 cpu_specs.cores, threads, base_clock_mhz, boost_clock_mhz
 motherboard_specs.chipset, m2_slots
 ram_specs.cas_latency
-psu_specs.efficiency_rating, modularity
+psu_specs.modularity
 storage_specs.interface
-case_specs.max_cpu_cooler_height_mm
+games.gpu_weight, games.cpu_weight          <- YENI (kapsam genisledi)
 ```
+
+**Çözülenler:** `psu_specs.efficiency_rating` opsiyonel oldu (K61),
+`case_specs.max_cpu_cooler_height_mm` opsiyonel oldu (K62/K68).
+
+**Yeni girenler kapsam genişlemesinden:** kontrol yalnızca yedi spec
+tablosuna bakıyordu; `games` 2026-08-20 denetiminde eklendi.
+`gpu_weight`/`cpu_weight` 32 oyunun hepsinde **0.5 yer tutucu** — ölçülmemiş
+ve hiçbir yerde okunmuyor. A.1 planı bunlarla harmanlamayı zaten reddetmişti
+("ölçülmemiş bir ağırlıkla harmanlamak, uydurmayı formüle gizlemek olur").
 
 Bunların hepsi şu an **zorunlu**. K56'nın ölçütüne göre olmamaları gerekir:
 hiçbir uyumluluk kuralı ve hiçbir arayüz bu alanlara bakmıyor.
@@ -165,6 +178,23 @@ Spider-Man 2 (2023→2025) konsol/PC farkıydı; **Alan Wake 2 Steam'de yok**
 (Epic'e özel) ve yılı boş bırakıldı — bunun için `release_year` opsiyonel
 oldu (K112).
 → `docs/KARARLAR.md` K109, K112
+
+---
+
+### S44 — K56 kontrolü `benchmark_points` ve `perf_index`'i göremiyor 🆕 (2026-08-20)
+
+Kullanılmayan-zorunlu-alan kontrolü `engine/` ve `app/` içinde alan adı
+arıyor. `benchmark_points` alanları ise `/data` içinde tüketiliyor, yani
+kapsama alınsalardı hepsi "kullanılmıyor" diye işaretlenirdi — yanlış pozitif.
+
+Tarama kaynağına `/data` eklemek de çözüm değil: `to-engine.ts` bütün spec
+alanlarını eşliyor ve o zaman **hiçbir alan** kullanılmıyor görünmezdi —
+kontrol işlevini tümden kaybederdi.
+
+Doğru çözüm muhtemelen katman başına ayrı ölçüt: spec alanları için
+"bir kural okuyor mu", ölçüm alanları için "bir okuma yolu okuyor mu".
+Bugün hiçbir şeyi bozmuyor; kontrolün kör noktası olarak yazıldı.
+→ `scripts/check-schema.mjs`, K56 bölümü
 
 ---
 
