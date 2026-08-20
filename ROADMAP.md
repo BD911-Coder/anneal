@@ -230,6 +230,17 @@ gerçek bilinmeyeni bu ve kod değil kullanıcı cevaplıyor.
 - [x] **Mobil taşma** — 375 px ekranda sayfa 660 px çiziliyordu. Artık 375 px.
 - [x] **"31 oyunda" yanlış sayısı** — grup sayısı gösteriliyordu, 23 oyun var.
 
+### ✅ Arayüz iki turda elden geçti *(20 Ağustos)*
+
+- [x] **Birinci tur — sunum** *(K130–K137)*: tipografi hiyerarşisi, kontrast,
+      ölçüldü/tahmin ayrımının renge bağlı olmaması, sonuç bölümlerinin
+      önceliğe göre sıralanması.
+- [x] **İkinci tur — görsel kimlik ve hareket** *(K138–K143)*: litografi
+      maskesi arka planı, giriş hareketi ("tavlama" — ısı **yalnızca hareket
+      süresince**, kalıcı hiçbir durumda değil), sayarak gelen sayılar, dolan
+      indeks çubuğu, `prefers-reduced-motion` desteği. Kontrast taraması üç
+      genişlik × iki temada tekrarlandı: **0 AA ihlali korundu**.
+
 ### 🟢 Eksik ama dürüstçe söyleniyor — engel değil
 
 - 126/213 ekran kartında FPS yok · 1080p'de ölçüm yok · FPS işlemciyi hesaba

@@ -19,6 +19,8 @@ import { RESOLUTION_LABEL } from "@/lib/format";
 import { FPS_BAND_NOTE, bandFor } from "@/lib/fps-bands";
 import { FPS_MARGIN } from "@/lib/fps-margin";
 
+import { CountUp } from "./count-up";
+
 type GameFpsListProps = {
   rows: GameFpsEstimate[];
   /** Sistemde ekran kartı var mı? Yoksa bileşen hiçbir şey çizmez. */
@@ -48,6 +50,15 @@ type GameFpsListProps = {
   cpuLabel?: string;
   /** Sistem indeksinin darboğaz sonucu (K83). Listeye de bağlanıyor. */
   bottleneck?: Bottleneck | null;
+  /**
+   * FPS sayıları sayarak mı gelsin?
+   *
+   * Sistem oluşturucuda evet: liste kullanıcı ekran kartını seçince ekrana
+   * girer, sayma o girişin parçası. Kaydedilmiş sistem sayfasında hayır:
+   * orada sayı sunucudan geliyor ve zaten boyanmış oluyor — sıfırlayıp
+   * saymak titreme olurdu.
+   */
+  animateNumbers?: boolean;
 };
 
 /** İşlemci indeksinin referansı — K73'teki sabit referans parça = 100. */
@@ -61,6 +72,7 @@ export function GameFpsList({
   cpuIndex,
   cpuLabel,
   bottleneck,
+  animateNumbers = true,
 }: GameFpsListProps) {
   if (!gpuSelected) return null;
 
@@ -156,7 +168,9 @@ export function GameFpsList({
 
               {/* Sayı ile birimi arasında belirgin hiyerarşi. */}
               <span className="flex shrink-0 items-baseline gap-1">
-                <output className="num text-xl font-semibold tracking-tight">{row.fps}</output>
+                <output className="num text-xl font-semibold tracking-tight">
+                  <CountUp value={row.fps} animate={animateNumbers} />
+                </output>
                 <span className="text-[11px] text-muted">FPS</span>
               </span>
 

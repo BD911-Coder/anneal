@@ -21,7 +21,9 @@ import { formatIsoDate, formatPriceMinor } from "@/lib/format";
 import { PERF_MARGIN } from "@/lib/perf-margin";
 
 import { saveBuildAction } from "./actions";
+import { CountUp } from "./count-up";
 import { GameFpsList } from "./game-fps";
+import { IndexBar } from "./index-bar";
 
 // Motora giden kategoriler. Depolama burada yok: hiçbir uyumluluk kuralı
 // depolamayı kullanmıyor (S12), ama kullanıcı yine de birden fazla disk seçebilir.
@@ -355,7 +357,9 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
       </section>
 
       {/* ---------------- Sonuçlar ---------------- */}
-      <div className="flex flex-col gap-10">
+      {/* `sonuclar`: bölümler sırayla belirir (app/globals.css). Gecikme
+          merdiveni CSS'te; burada tek sınıf duruyor. */}
+      <div className="sonuclar flex flex-col gap-10">
         {hicSecimYok ? (
           /*
             Boş durum: yedi kategori + yedi sonuç bölümü aynı anda gelince
@@ -365,7 +369,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
           */
           <section
             aria-labelledby="bos-durum"
-            className="rounded-lg border border-border bg-surface p-6"
+            className="cam rounded-lg border border-border p-6"
           >
             <h2 id="bos-durum" className="text-lg font-semibold tracking-tight">
               Soldan parça seçin
@@ -517,7 +521,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                   {/* Sayı ile etiketi arasında belirgin hiyerarşi. */}
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <output className="num text-4xl font-semibold tracking-tight">
-                      {performance.system_index}
+                      <CountUp value={performance.system_index} />
                     </output>
                     {/* K73: 100 tavan değil, sabit referans sistemin değeri. */}
                     <span className="text-sm text-muted">
@@ -525,6 +529,8 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                       <span className="num">100</span>
                     </span>
                   </div>
+
+                  <IndexBar value={performance.system_index} />
 
                   <p className="mt-2 text-sm">
                     {performance.band} <span className="text-xs text-muted">(tahmini)</span>
@@ -777,7 +783,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
             {/* ---- Seçilen sistem + kaydet ---- */}
             <section
               aria-labelledby="sistem-basligi"
-              className="rounded-lg border border-border bg-surface p-4 sm:p-5"
+              className="cam rounded-lg border border-border p-4 sm:p-5"
             >
               <SectionTitle id="sistem-basligi">Seçilen sistem</SectionTitle>
 

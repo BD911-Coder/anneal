@@ -12,6 +12,7 @@ import { RESOLUTION_LABEL, formatIsoDate, formatPriceMinor } from "@/lib/format"
 
 import { FeedbackForm } from "../../feedback-form";
 import { GameFpsList } from "../../game-fps";
+import { IndexBar } from "../../index-bar";
 
 // Kayıt dondurulmuş olsa da güncel fiyat her açılışta yeniden okunuyor.
 export const dynamic = "force-dynamic";
@@ -91,8 +92,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
     build.total_price_minor === null ? null : currentTotalMinor - build.total_price_minor;
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
-      <header>
+    // `sonuclar`: bölümler sırayla belirir (app/globals.css).
+    <main className="sonuclar mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
+      <header className="giris">
         <h1 className="text-3xl font-semibold tracking-tight">{build.title ?? "Kaydedilmiş sistem"}</h1>
         {/* Sayfada artık üç kutu var ve hepsi aynı ana ait değil: dondurulmuş
             değerler o günün, bugünkü fiyat ve oyun bazlı FPS bugünün. Tek
@@ -104,7 +106,7 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
       </header>
 
       {/* Dondurulmuş değerler */}
-      <section className="mt-8 rounded-lg border border-border p-4 sm:p-5">
+      <section className="cam mt-8 rounded-lg border border-border p-4 sm:p-5">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Kayıt anındaki değerler</h2>
 
         <div className="flex flex-col gap-3 text-sm">
@@ -143,7 +145,8 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                   tahmini sistem indeksi — referans sistem <span className="num">100</span>
                 </span>
               </p>
-              <p className="text-sm text-muted">
+              <IndexBar value={build.perf_index_snapshot} />
+              <p className="mt-2 text-sm text-muted">
                 {bandFor(build.perf_index_snapshot)}{" "}
                 <span className="text-xs text-muted">(tahmini)</span>
               </p>
@@ -234,6 +237,8 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             resolution={build.resolution}
             hasDataForResolution={fpsGroupsForRes.length > 0}
             cpuIndex={cpuPartId ? perfIndexes[cpuPartId] : undefined}
+            // Sayılar sunucudan geliyor ve zaten boyanmış: sayma titreme olurdu.
+            animateNumbers={false}
           />
         </section>
       )}

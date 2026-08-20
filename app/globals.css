@@ -20,6 +20,13 @@
   --surface: #f6f7f9;
   /* Tek vurgu. #1f5fa8 beyaz üzerinde 6.6:1. */
   --accent: #1f5fa8;
+  /* Arka plan motifi (litografi maskesi). Çizgiler 1px ve seyrek; bu
+     opaklıkta gövde metninin kontrastı 6.4:1'den 5.9:1'e iner, AA üstünde
+     kalır. Motif okunabilirliği bozarsa opaklık düşer, motif kalkar. */
+  --motif: rgba(31, 95, 168, 0.07);
+  /* Cam yüzey: `--surface` ile aynı renk, saydam. Arkasındaki motif hafifçe
+     görünsün diye. */
+  --surface-glass: rgba(246, 247, 249, 0.72);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +39,8 @@
     --surface: #161a1f;
     /* #7fb3ec koyu zeminde 7.8:1. */
     --accent: #7fb3ec;
+    --motif: rgba(127, 179, 236, 0.12);
+    --surface-glass: rgba(22, 26, 31, 0.66);
   }
 }
 
@@ -46,10 +55,133 @@
   --font-mono: var(--font-geist-mono);
 }
 
-body {
+/*
+  Zemin rengi `body`den `html`e taşındı. Sebebi teknik: arka plan motifi
+  `z-index: -1` ile duruyor ve `body`nin kendi arka planı onu örterdi.
+  Kök elemanın arka planı tarayıcı tuvaline geçer, yani her şeyin altında
+  kalır — motif de araya girebilir.
+*/
+html {
   background: var(--background);
+}
+
+body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/*
+  Arka plan motifi: litografi maskesi (app/backdrop.tsx). Ekrana sabit,
+  kaydırmayla hareket etmiyor ve hiçbir animasyonu yok — 375px telefonda
+  sürekli çalışan efekt olmasın diye.
+*/
+.motif-katmani {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/*
+  Cam yüzey. Yalnızca birkaç panelde: saydamlık her yerde kullanılırsa
+  hem okunabilirliği hem de bu efektin anlamını bitirir.
+*/
+.cam {
+  background: var(--surface-glass);
+  backdrop-filter: blur(8px);
+}
+
+/* ==========================================================================
+   Giriş hareketi — "tavlama"
+   ==========================================================================
+
+   İki katman, ikisi de BİR KEZ çalışır:
+
+     anneal-belir  öğe aşağıdan yukarı belirir
+     anneal-isi    öğenin çevresinde akkor bir hâle görünür ve söner
+
+   Turuncu YALNIZCA bu hâlenin içinde geçiyor; kalıcı hiçbir durumda
+   kullanılmıyor. Sebebi: turuncu/kehribar bu sitede "uyarı" demek.
+   Kullanıcı turuncu gördüğünde "bir şey var" diye düşünmeli, "sayfa
+   yüklendi" diye değil. Hâle 0.9 saniyede sıfıra iner ve geride hiçbir renk
+   bırakmaz.
+
+   Veri okunurken hareket yok: bu animasyonlar öğe ekrana GİRERKEN çalışır.
+   Seçim değiştiğinde bölümler yerinde durduğu için yeniden tetiklenmez.
+*/
+@keyframes anneal-belir {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes anneal-isi {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+:where(.giris, .sonuclar > section) {
+  position: relative;
+  animation: anneal-belir 0.5s ease-out both;
+}
+
+:where(.giris, .sonuclar > section)::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgba(255, 138, 60, 0.45),
+    0 0 26px rgba(255, 108, 30, 0.26);
+  /* Hâlenin gecikmesi öğenin kendi gecikmesini izler: sıcaklık, parça
+     geldiği anda görünmeli. */
+  animation: anneal-isi 0.9s ease-out both;
+  animation-delay: inherit;
+}
+
+/* Sıralı geliş. Bölümler koşullu çiziliyor, bu yüzden gecikme sıraya göre
+   veriliyor — hangi bölümün çizildiğini CSS bilmek zorunda kalmıyor. */
+.sonuclar > section:nth-of-type(2) { animation-delay: 0.08s; }
+.sonuclar > section:nth-of-type(3) { animation-delay: 0.16s; }
+.sonuclar > section:nth-of-type(4) { animation-delay: 0.24s; }
+.sonuclar > section:nth-of-type(5) { animation-delay: 0.32s; }
+.sonuclar > section:nth-of-type(6) { animation-delay: 0.4s; }
+
+/*
+  Dolan çubuk. Genişlik satır içinde yüzde olarak veriliyor; animasyon
+  `scaleX` ile çalışıyor, yani JavaScript kapalıyken de çubuk doğru
+  uzunlukta duruyor — hareket sadece üstüne biniyor.
+*/
+@keyframes anneal-dol {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.dolan {
+  transform-origin: left center;
+  animation: anneal-dol 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/*
+  Hareket azaltma açıksa: ısı HİÇ görünmez, öğeler doğrudan son hâlinde
+  gelir. Sayı sayma da kapanır (app/count-up.tsx aynı sorgu ile bakıyor).
+*/
+@media (prefers-reduced-motion: reduce) {
+  :where(.giris, .sonuclar > section),
+  .dolan {
+    animation: none;
+  }
+
+  :where(.giris, .sonuclar > section)::before {
+    display: none;
+  }
 }
 
 /*

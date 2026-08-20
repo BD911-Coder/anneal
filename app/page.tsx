@@ -40,7 +40,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
-      <header className="border-b border-border pb-6">
+      <header className="giris border-b border-border pb-6">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Anneal</h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
           Donanım seç, ne performans alacağını gör. Her sayının nereden geldiği yanında

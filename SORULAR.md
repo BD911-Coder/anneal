@@ -18,6 +18,27 @@ Son güncelleme: 2026-08-20
 
 ## Açık sorular
 
+### S46 — Görsel kimlik gözle onaylanmadı (2026-08-20)
+
+İkinci UI turu (K138–K143) doğrulandı ama **ekran görüntüsüyle değil**: bu
+oturumda tarayıcı paneli görüntülenmediği için `screenshot` çalışmadı.
+Kontrast, taşma, animasyon bağlantıları ve `prefers-reduced-motion` davranışı
+DOM ve hesaplanmış CSS değerleri üzerinden ölçüldü — hepsi geçti.
+
+Ölçülmeyen tek şey **hareketin hissi**: akkor hâlenin ne kadar güçlü
+göründüğü, gecikme merdiveninin hızı, motifin ne kadar fark edildiği.
+
+**Yapılacak:** siteyi aç, bir ekran kartı seç, bak. Fazla geliyorsa tek
+yerden kısılır:
+
+- hâlenin gücü → `app/globals.css`, `anneal-isi` kuralındaki iki rgba değeri
+- motifin görünürlüğü → `--motif` opaklığı
+- sıralı gelişin hızı → `.sonuclar > section:nth-of-type(n)` gecikmeleri
+
+Ayrıca 375px telefonda **akıcılık** ölçülmedi, yalnızca taşma ölçüldü.
+Sürekli çalışan animasyon olmadığı için risk düşük ama sınanmadı.
+
+
 ### S38 — Güç konnektörü serbest metin, yapılandırılmadı ⏸️ ERTELENDİ (2026-08-19)
 
 **Proje sahibinin kararı:** Şimdilik tek serbest metin alanı

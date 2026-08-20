@@ -2939,3 +2939,102 @@ Doğrulanamayan bir iyileştirme yerine çalışan sayfa: yükleme iskeleti
 kozmetik, kırık sayfa değil. Sebep bu kurulumda (Next 16 + `force-dynamic` +
 önizleme vekili) tam olarak tespit edilemedi; tekrar denenecekse önce bu
 ayrıştırılmalı. → `SORULAR.md` S45
+
+
+### K138 — Görsel yön: litografi maskesi, ısı yalnızca harekette
+
+**2026-08-20.** İkinci UI turunda üç yön çizildi ve karşılaştırıldı: (A)
+tavlama fırını — die ızgarası + akkor turuncu kalıcı vurgu; (B) litografi
+maskesi — devre izleri, mavi vurgu korunur; (C) ölçüm masası — ince ızgara,
+ısı yalnızca FPS sayısının renginde.
+
+**Seçilen: B'nin zemini + A'nın hareketi.** Arka plan litografi maskesi
+(`app/backdrop.tsx`), kalıcı vurgu bugünkü mavi (`--accent`), ısı yalnızca
+giriş animasyonunun içinde geçer.
+
+**Gerekçe:** A'nın turuncusu kalıcı vurgu olsaydı, bu sitede kehribarın
+taşıdığı **"uyarı"** anlamını (K130, K132) tüketirdi. Kullanıcı turuncu
+gördüğünde "bir şey var" diye düşünmeli, "sayfa yüklendi" diye değil. Isı
+metaforu 0.9 saniye süren bir hâle olarak kaldı; geride hiçbir renk
+bırakmıyor ve hiçbir kalıcı durumda kullanılmıyor.
+
+### K139 — Arka plan motifi çizim, fotoğraf değil; animasyonsuz
+
+Motif tek bir satır içi SVG: dik açılı devre izleri, via kareleri, köşelerde
+hizalama artıları. Tek renk (`--motif`) kullanıyor, iki temada kendi tonunu
+alıyor.
+
+**Gerekçe (fotoğraf değil):** fotoğraf hem ağır hem de içeriğin önüne geçer.
+Bu SVG birkaç yüz bayt ve dosya isteği bile üretmiyor.
+
+**Gerekçe (animasyonsuz):** sürekli çalışan bir arka plan efekti 375px
+telefonda pili ve kaydırma akıcılığını yer. Hareket yalnızca giriş anında ve
+yalnızca içerikte.
+
+Opaklık ölçüldü, seçilmedi: açık temada `rgba(31,95,168,.07)`, koyu temada
+`rgba(127,179,236,.12)`. Bu değerlerde gövde metninin kontrastı en kötü
+durumda (çizginin tam üstündeki piksel) açık temada 6.4:1'den 5.9:1'e,
+koyu temada 7.1:1'den 5.9:1'e iner — ikisi de AA eşiğinin (4.5:1) üstünde.
+
+### K140 — Hareket öğe ekrana GİRERKEN çalışır, veri değişince değil
+
+Üç hareket var ve üçü de bir kez çalışır: bölüm belirme (`anneal-belir`),
+ısı hâlesi (`anneal-isi`), çubuk dolumu (`anneal-dol`). Sayı sayma
+(`app/count-up.tsx`) yalnızca ilk girişte.
+
+**Gerekçe:** FPS listesine bakan biri sabit bir tablo görmeli. Kullanıcı
+çözünürlüğü ya da parçayı değiştirdiğinde bölümler yerinde durduğu için CSS
+animasyonu yeniden tetiklenmiyor; `CountUp` de `sayildi` bayrağıyla ikinci
+kez saymıyor, yeni değeri anında yazıyor.
+
+`prefers-reduced-motion: reduce` açıksa: bölümler doğrudan son hâlinde
+gelir, çubuk dolmaz, sayı saymaz ve **ısı hâlesi hiç çizilmez**
+(`display: none`) — yani turuncu o kullanıcıya hiçbir zaman görünmez.
+
+### K141 — Sayarak gelen sayı, ekrandaki gerçek sayının üstüne biner
+
+`CountUp` React durumu tutmuyor; `value`'yu normal şekilde çiziyor ve sayma
+sırasında `textContent`'i doğrudan yazıyor.
+
+**İki gerekçe:**
+
+1. **Dürüstlük.** JavaScript çalışmazsa, animasyon yarıda kalırsa ya da
+   hareket azaltma açıksa ekranda gerçek sayı durur. Hiçbir koşulda 0
+   görünmez. Animasyon her zaman `value` ile biter.
+2. **Maliyet.** Saniyede 60 kez `setState` bütün ağacı yeniden çizerdi;
+   değişen tek şey bir metin düğümü.
+
+Ara değerler hedefle aynı basamakta yazılıyor (`toFixed`): 164.4'e sayarken
+tam sayı gösterip sonda `.4` eklemek, sayının son anda zıplaması olurdu.
+
+Sunucudan gelen sayılarda sayma **kapalı** (`animate={false}`): kaydedilmiş
+sistem sayfasında gerçek sayı zaten boyanmış oluyor, sıfırlayıp saymak
+"118 → 0 → 118" titremesi yaratırdı.
+
+### K142 — İndeks çubuğunun ölçeği 0–200, referans 100 çentikli
+
+Çubuk (`app/index-bar.tsx`) keyfi bir tavana göre değil, **sabit referans
+sisteme** göre çiziliyor: 100 referansın değeri (K73), ölçeğin ucu onun iki
+katı. 200'ü geçen indeks çubuğun sonuna dayanır.
+
+**Gerekçe:** tavanı belirsiz bir çubuk, sayıyı olduğundan büyük ya da küçük
+gösterir. Ölçek sabit olduğu için iki sistemin çubuğu karşılaştırılabilir.
+Sayı her zaman çubuğun yanında yazılı — çubuk okuma yardımcısı, kaynak değil.
+`aria-hidden`: sayıyı `<output>` zaten okutuyor.
+
+**Oyun başına FPS çubuğu YAPILMADI.** K98 listeyi bilerek alfabetik
+tutuyor; satır başına çubuk, kullanıcıyı tam da kaçınılan yöne — "en uzun
+çubuğa bak" — koşullandırırdı.
+
+### K143 — `-webkit-backdrop-filter` satırı standart özelliği DÜŞÜRÜYOR
+
+`.cam` kuralına önce `backdrop-filter`, sonra `-webkit-backdrop-filter`
+yazıldığında Tailwind v4'ün CSS işleyicisi (Lightning CSS) **ikisini de
+düşürdü**: tarayıcıya giden kuralda yalnızca `background` kaldı ve
+`getComputedStyle(...).backdropFilter` `none` döndü. Ön ekli satır silinince
+standart özellik kurala geri geldi.
+
+Ders: bu projede ön ek elle yazılmaz — CSS işleyicisi gerekeni kendisi
+üretiyor, elle eklenen ön ek onu bozuyor. Bulunma yolu: kuralın **tarayıcıya
+giden** hâlini `document.styleSheets` üzerinden okumak. Yazdığın CSS ile
+servis edilen CSS aynı olmayabilir.
