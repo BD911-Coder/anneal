@@ -143,6 +143,32 @@ Acil değil, karar iş yükü genişletildiğinde verilir.
 
 ---
 
+### S42 — Render modu için ayrı alan gerekli mi? 🆕 (2026-08-20)
+
+Şemada raytracing için alan yok. Yalnızca RT grafiği yayınlanan dört oyunda
+(Crimson Desert, Doom: The Dark Ages, Indiana Jones, Star Wars Outlaws) mod
+`upscaling` alanına yazıldı: `DLSS/FSR Quality + Raytracing` (K108).
+
+Bedeli: alan artık iki ayrı ayarı taşıyor ve sorgulanamıyor. Doğrusu ayrı bir
+`render_mode` alanı. Bugün hiçbir kural bu alanı okumuyor, o yüzden acil değil
+— ama ikinci bir kaynak RT'li ve RT'siz ölçümü aynı oyunda verirse gerekli
+olur. Şema değişikliği, sorulmadan yapılmaz.
+→ `docs/KARARLAR.md` K108
+
+---
+
+### S43 — Mevcut 17 oyunun `source_url`'i düzeltilsin mi? 🆕 (2026-08-20)
+
+Yeni 15 oyun satırında `source_url` Steam mağaza sayfası: oyunun adı ve çıkış
+yılı oradan doğrulandı (K109). Mevcut 17 satır ise ComputerBase incelemesini
+gösteriyor, oysa çıkış yılları oradan gelmiyor.
+
+Geriye dönük düzeltmek 17 satırın yılını Steam'den doğrulamayı gerektirir.
+Sormadan yapılmadı.
+→ `docs/KARARLAR.md` K109
+
+---
+
 ## Kapanmış sorular
 
 ### S39 — Ölçülmüş ve türetilmiş FPS aynı listede yan yana mı dursun? ✅ CEVAPLANDI (2026-08-20)

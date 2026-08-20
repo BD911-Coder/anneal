@@ -25,8 +25,8 @@ Güncelleme: 20 Ağustos 2026 — **fazlar ürüne göre yeniden sıralandı.**
 | Katalog | 237 gerçek parça |
 | Uyumluluk motoru | 11 kural, hepsi gerçek veriyle tetikleniyor |
 | Performans indeksi | 14 GPU + 12 CPU |
-| Benchmark ölçümü | 178 nokta, tek kaynak (ComputerBase) |
-| Oyun bazlı FPS | **veri var, özellik yok** — Faz A bunu açıyor |
+| Benchmark ölçümü | **298 nokta**, tek kaynak (ComputerBase) |
+| Oyun bazlı FPS | **23 oyun, 60 ekran kartı** — çalışıyor |
 | Fiyat | 22 parçada gerçek fiyat (USD, Newegg) |
 | Kullanıcı | 0 |
 
@@ -73,9 +73,9 @@ Paylaşım linki (`/sistem/s62dqq`, 4K'da kaydedilmiş) listeyi gösteriyor ve
 `docs/log/2026-08-20-a1-oyun-bazli-fps.md` ·
 `docs/log/2026-08-20-a1-paylasim-ve-metin.md`
 
-**Bugünkü kapsam ölçüldü:** 8 oyun × 14 çip = 112 hücre; **64'ü ölçülmüş**,
-48'i türetilebilir. Kart tarafında 46 kart çipinden miras alıyor —
-**118 seçilebilir GPU'nun 60'ında** FPS gösterilebiliyor.
+**Kapsam (20 Ağustos, A.2 sonrası):** **23 oyun** × 14 çip = 322 hücre;
+**184'ü ölçülmüş**, 138'i türetilebilir. Kart tarafında 46 kart çipinden
+miras alıyor — **118 seçilebilir GPU'nun 60'ında** FPS gösterilebiliyor.
 
 **Tek ayar var:** 1440p / ultra / DLSS-FSR Quality. Başka çözünürlük, başka
 preset ve yerel (upscaling kapalı) çıktı **yok** — uydurulmayacak.
@@ -104,19 +104,27 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
             PCGamesHardware, Igor's Lab, TechSpot, Guru3D, GamersNexus:
             hepsinde FPS **grafik görselinde**, metinde sıfır. İzin sorun
             değil, biçim sorun. `docs/faz-a2-oyun-hedefi.md` bölüm 4
-      - [ ] **CPU 12 → 34?** 16 Temmuz 2026 CPU testinde 34 işlemci var.
-            Önce kontrol: oyun başına değer mi, yoksa yalnızca toplu rating mi?
+      - [x] **CPU 12 → 34 denendi, olmadı.** 16 Temmuz 2026 testinde 34
+            işlemci var ama sayfa yalnızca toplu 720p rating yayınlıyor;
+            oyun başına FPS yok. Rangliste'nin oyun başına sayfaları da
+            içerik duvarının arkasına geçmiş. CPU 12'de kalıyor.
 - [ ] **Kart varyantı 58 → 150** *(kalan çipler; her kart çipinden miras
       aldığı için kapsamı doğrudan büyütüyor)*
-- [ ] **Oyun sayısı 8 → 23** — plan hazır: `docs/faz-a2-oyun-hedefi.md`
-      Ölçüldü: 15 oyun **mevcut incelemede zaten var**, alınmamış. Yeni kaynak
-      da köprü de gerekmiyor. Kaynağın %2,6'sı alınmış, 23 oyunda %7,5 olur
-      (K75 tavanı %10).
-- [ ] **Grup 2 (rekabetçi oyunlar) — KAYNAK YOK, açık.** CS2, Valorant,
-      Fortnite, Apex, LoL, Dota 2: doğrulanmış kaynakta **0/6** kapsam.
-      Metin olarak FPS yayınlayan aday kaynakların hepsi elendi (grafikler
-      görsel). Tek bulunan Tom's Hardware ve o bizim K80 aynamız — kaynak
-      yapılırsa hata payı ölçümü çöker. Takas ayrıca sorulacak.
+- [x] **Oyun sayısı 8 → 23** *(20 Ağustos)* — yapıldı. 15 oyun mevcut
+      incelemeden alındı: aynı sürücü, aynı 14 kart, köprü yok, yeni kaynak
+      yok. **120 yeni ölçüm, toplam 184.** Kaynağın oranı %2,6 → **%7,5**
+      (K75 tavanı %10; payda toplamadan önce yeniden sayıldı: 2.448).
+      Çıkarıcı mevcut 64 satırı **birebir** yeniden üretti.
+      `docs/log/2026-08-20-a2-oyun-kapsami.md`
+- [x] **Grup 2 (rekabetçi oyunlar) — KAPALI, kaynak yokluğundan** *(K105)*.
+      CS2, Valorant, Fortnite, Apex, LoL, Dota 2: doğrulanmış kaynakta **0/6**.
+      Tom's Hardware **kaynak yapılmayacak**, K80 aynası olarak kalıyor:
+      tek bağımsız aynayı kaynağa çevirmek sapma ölçümünü kendi kendini
+      ölçmeye dönüştürür. Yeniden açılma koşulu K105'te.
+- [x] **CPU kapsamı büyütülemedi — ölçüldü** *(20 Ağustos)*. 16 Temmuz 2026
+      CPU testinde 34 işlemci var ama sayfa yalnızca **toplu 720p rating**
+      yayınlıyor, oyun başına FPS yok. Rangliste'nin oyun başına sayfaları
+      içerik duvarının arkasına geçmiş. CPU 12'de kalıyor.
 
 ## A.3 — Doğruluk ölçümü ve yayınlanan hata payı
 
@@ -128,9 +136,18 @@ site, tahmin veren siteden farklı bir şeydir.
 - [ ] Kapsam dışı ve düşük güvenli hücreler işaretlensin
 - [ ] `docs/KARARLAR.md`'ye ölçülen hata payı ve ölçüm yöntemi yazılsın
 
-**A.1 için ilk ölçüm yapıldı** (birini-dışarıda-bırak, 64 nokta):
-ortalama mutlak hata **%6.1**, medyan %4.9, %90 dilim %12.8, en kötü %27.8.
-Noktaların %83'ü ±%10 içinde.
+**Son ölçüm** (birini-dışarıda-bırak, **184 nokta**, 20 Ağustos):
+ortalama mutlak hata **%6.6**, medyan %5.4, %90 dilim %13.7, en kötü %35.3.
+Noktaların %79'u ±%10 içinde.
+
+Oyun paketi 8'den 23'e çıkınca sayı **kötüleşti** (%6.1 → %6.6). Gerileme
+değil, örneklemin genişlemesi: yeni oyunlar arasında raytracing zorunlu
+başlıklar var ve orada kartların sırası indeks sırasından ayrılıyor. Eski
+sayı daha iyi görünüyordu çünkü daha dar bir kümeyi ölçüyordu.
+
+**İndeks sapması** (`npm run indeks:sapma`, K80): ortalama **%5.2**, en büyük
+**%11.5** — eşik %25, geçti. GPU tarafı belirgin İYİLEŞTİ (%4.9 → %3.6),
+CPU tarafı değişmedi.
 
 ---
 
@@ -251,7 +268,14 @@ yayınlayabiliyor ve tahmin tutuyor.
 
 **Bitiş ölçütü yok** — buradan sonrası sürekli.
 
-- [ ] **Kullanıcı FPS gönderimi** — satın alınamayan, kopyalanamayan veri seti
+- [ ] **Kullanıcı FPS gönderimi** — satın alınamayan, kopyalanamayan veri seti.
+      ⚠️ **Öne çekilmesi değerlendirilecek (K106).** Bu yalnızca bir büyüme
+      özelliği değil; kapsamın **yapısal sınırının tek çıkışı**. Ölçüldü:
+      23 oyunluk pakette Steam'in en çok oynanan ilk 100'ünden yalnızca
+      **4 oyun** var. Sebep kaynak seçimi — inceleme siteleri paketlerini
+      grafik olarak zorlayan yeni çıkışlara göre seçiyor, insanların ne
+      oynadığına göre değil. İnceleme sitelerinden ne kadar veri alınırsa
+      alınsın bu fark kapanmaz.
       - [ ] Gönderim formu *(hesap gerektirmeden)*
       - [ ] Doğrulama akışı — ekran görüntüsü, aykırı değer kontrolü
       - [ ] Ödül sistemi *(aylık bütçe ile hediye çeki)*

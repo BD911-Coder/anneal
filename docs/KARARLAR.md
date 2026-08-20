@@ -2311,3 +2311,102 @@ yani çağıran taraf yanlışlıkla FPS'e göre sıralayamaz.
 
 Aynı turda `RESOLUTION_LABEL` de `lib/format.ts`'e taşındı: aynı sayfada bir
 kutu "4K", başka bir kutu "2160p" diyordu ve ikisi aynı şeydi.
+
+## 2026-08-20 — Faz A.2: oyun kapsamı
+
+### K105 — Tom's Hardware kaynak yapılmaz, ayna olarak kalır
+
+**Proje sahibinin kararı.** Tom's Hardware `benchmark_points`'a veri kaynağı
+olamaz. K80'in bağımsız aynası olarak kalır.
+
+**Sonucu kabul edilmiştir:** Grup 2 — CS2, Valorant, Fortnite, Apex, LoL,
+Dota 2 — bugün kataloğa **eklenemiyor**. Ölçüldü: doğrulanmış kaynağımızda
+(ComputerBase) bu altı oyunun kapsamı **0/6** ve bu yapısal; hem Rangliste'de
+hem 16 Temmuz 2026 tarihli yeni CPU testinde geçiş sayısı sıfır. Metin olarak
+FPS yayınlayan başka ölçüm kaynağı bulunamadı (bkz. `docs/faz-a2-oyun-hedefi.md`
+bölüm 4). Tom's Hardware bu oyunları ölçen tek itibarlı kaynaktı.
+
+**Gerekçe (proje sahibinin ifadesi):** Tek bağımsız aynayı kaynağa çevirmek,
+sapma ölçümünü **kendi kendini ölçmeye** dönüştürür. K80'in tek koşulu
+sapmanın *görülebilir* olmasıdır; ayna kaynak olursa o koşul çöker ve geriye
+ölçülemeyen bir hata payı kalır.
+
+> **"Her sayının hata payı ölçülmüştür" iddiası, birkaç popüler oyundan
+> değerlidir.**
+
+Bu, K80'in "iki zayıf kaynağı ortalamak, bir iyi kaynağı ölçülü kullanmaktan
+iyi değil" mantığının aynısı, bir adım ötesi: ölçüm aracını veri kaynağına
+karıştırmamak.
+
+**Yeniden açılma koşulu:** rekabetçi oyun FPS'ini **metin olarak** yayınlayan,
+aynamız olmayan bir ölçüm kaynağı bulunursa Grup 2 yeniden değerlendirilir.
+Tahmin hesaplayıcıları (howmanyfps, pc-builds, bottleneckcheck) bu koşulu
+karşılamaz: ölçmüyorlar, donanımdan türetiyorlar.
+
+### K106 — "Oyun sayısı" ile "tanıdık oyun" ayrı hedeflerdir
+
+Ölçüldü: kaynağın 23 oyunluk paketinden Steam'in en çok oynanan ilk 100'ünde
+olan **yalnızca 4** oyun var (CPU paketinin 9 oyunundan 1). Kapsam 8'den 23'e
+çıktığında bile kullanıcının tanıdığı oyun sayısı 1'den 4'e çıkıyor.
+
+**Sebep kaynak seçiminden geliyor, emek eksikliğinden değil.** Donanım
+incelemeleri paketlerini *grafik olarak zorlayan yeni çıkışlara* göre seçer;
+Steam'in en çok oynananları ise eski, rekabetçi ve düşük sistem gereksinimli
+başlıklarla doludur. İki liste yapısal olarak farklı şeyleri optimize ediyor.
+
+**Bunun tek çözümü kullanıcı katkısıdır.** İnceleme sitelerinden ne kadar veri
+alınırsa alınsın bu fark kapanmaz. `ROADMAP.md` Faz F'deki "Kullanıcı FPS
+gönderimi" maddesi bu yüzden yalnızca bir büyüme özelliği değil, **kapsamın
+yapısal sınırının tek çıkışı** — öne çekilmesi ayrıca değerlendirilecek.
+
+### K107 — Kart seçimi dengelenir, her grupta indeks aralığı çapalanır
+
+Bir oyun grubundan 8 kart alınırken (K75 madde 3 tavanı) seçim şöyle yapılır:
+
+1. O oyunda ölçülmüş **en düşük ve en yüksek indeksli** kart her zaman alınır.
+2. Kalan 6 yer, **o ana kadar en az ölçülmüş** kartlara verilir.
+
+**Gerekçe (1):** Her grubun oranı yalnızca o gruptaki noktalardan hesaplanıyor
+(`ratioFor`). Aralık dar olursa oran gürültülü çıkar ve o oyunun bütün
+türetilmiş FPS'leri kayar. Uçlar çapa görevi görüyor.
+
+**Gerekçe (2):** Ölçümler 14 karta dengeli dağılırsa arayüzde **türetme değil
+ölçüm** artar. Rastgele ya da sabit bir sekizli seçilseydi bazı kartlar 23
+oyunun hepsinde ölçülü, bazıları hiçbirinde olmazdı.
+
+Sonuç ölçüldü: 184 ölçüm 14 karta 12–19 aralığında dağıldı.
+
+### K108 — Yalnızca raytracing grafiği olan oyunda render modu `upscaling` alanına yazılır
+
+ComputerBase bazı oyunlarda yalnızca raytracing grafiği yayınlıyor (Crimson
+Desert, Doom: The Dark Ages, Indiana Jones, Star Wars Outlaws). Bu satırlarda
+`upscaling` alanına `DLSS/FSR Quality + Raytracing` biçiminde yazılır.
+
+**Gerekçe:** Şemada render modu için alan yok. Yazılmasaydı arayüz "1440p
+ultra, DLSS/FSR Native" derdi ve raytracing'in açık olduğunu **gizlemiş**
+olurdu — FPS'i %30-50 değiştiren bir ayarı. Alanı boş bırakmak burada K60'ın
+koruduğu şeyi korumuyor; tersine, var olan bir bilgiyi siliyor.
+
+**Bilinen bedel:** `upscaling` alanı artık iki ayrı ayarı taşıyor ve
+sorgulanamaz hale geldi ("hangi satırlar DLSS Quality kullandı" sorusu metin
+eşleştirmesi gerektirir). Bugün hiçbir kural bu alanı okumuyor, yalnızca
+arayüz gösteriyor; bedel bu yüzden kabul edildi. Doğrusu ayrı bir
+`render_mode` alanıdır — `SORULAR.md` S42.
+
+**Karşılaştırmayı bozmuyor:** her oyun kendi grubu olduğu için (K101), bir
+oyunun RT'li ölçümleri yalnızca kendi aralarında oranlanıyor.
+
+### K109 — `games.source_url` oyunun kendi olgularının kaynağıdır
+
+Yeni 15 oyun satırında `source_url` **Steam mağaza sayfasıdır**, benchmark
+incelemesi değil. `games` tablosu oyunun adını ve çıkış yılını taşıyor; o iki
+olgunun kaynağı Steam. Benchmark'ın kaynağı zaten `benchmark_points.source_url`
+içinde ayrıca duruyor.
+
+**Bilinen tutarsızlık:** mevcut 17 oyun satırı ComputerBase incelemesini
+gösteriyor, oysa çıkış yılları oradan gelmiyor. Sormadan geriye dönük
+düzeltilmedi. → `SORULAR.md` S43
+
+**Not:** `release_year` hiçbir kural ve arayüz tarafından kullanılmıyor, yani
+K56 ölçütüne göre zorunlu olmamalı; şemada zorunlu. S22'nin kapsamındaki
+alanlardan biri.
