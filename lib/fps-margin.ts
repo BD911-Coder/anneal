@@ -23,7 +23,7 @@ export const FPS_MARGIN = {
   points: 250,
   /** Ölçüm anındaki `benchmark_points` satır sayısı — eskime kontrolü (K110). */
   measuredAtPoints: 381,
-  measuredAt: "2026-08-20",
+  measuredAt: "2026-08-21",
   // === ÖLÇÜM BİTİŞ ===
 
   method:
