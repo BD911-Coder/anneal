@@ -1,9 +1,12 @@
+import { getTranslations } from "next-intl/server";
+
 import { getFpsGameGroups } from "@/data/benchmarks";
 import { getPerfIndexes } from "@/data/perf";
 import { getBuilderCatalog } from "@/data/parts";
 import { getCurrentPrices } from "@/data/prices";
 import { pickDefaultBuild } from "@/engine/default-build";
 import { MODEL_VERSION } from "@/engine/performance";
+import { DISPLAY_CURRENCY, SOURCE_CURRENCY } from "@/lib/currency";
 
 import { Builder } from "./builder";
 import { FeedbackForm } from "./feedback-form";
@@ -13,6 +16,13 @@ import { FeedbackForm } from "./feedback-form";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  // Sunucu bileşeni: çeviri ve dil `next-intl/server`den okunuyor.
+  const [t, tParts, tPricing] = await Promise.all([
+    getTranslations("common"),
+    getTranslations("parts.coverage"),
+    getTranslations("pricing"),
+  ]);
+
   // Fiyat ve indeks, katalogla aynı anda okunuyor: üçü de bağımsız sorgu.
   const [catalog, prices, perfIndexes, fpsGroups] = await Promise.all([
     getBuilderCatalog(),
@@ -64,11 +74,8 @@ export default async function HomePage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
       <header className="giris border-b border-border pb-6">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Anneal</h1>
-        <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
-          Donanım seç, ne performans alacağını gör. Her sayının nereden geldiği yanında
-          yazılı — ölçüm mü, hesap mı.
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("siteName")}</h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">{t("tagline")}</p>
 
         {/*
           Üç ayrı durum var ve tek cümlede toplanamazlar: oyun bazlı FPS
@@ -77,43 +84,48 @@ export default async function HomePage() {
         */}
         <dl className="mt-5 grid gap-x-6 gap-y-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="font-semibold">Ölçümü olan oyun</dt>
+            <dt className="font-semibold">{tParts("gamesTitle")}</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              <span className="num font-medium text-foreground">{fpsGames}</span> oyunda FPS
-              listesi çıkıyor. Bir oyun, en az üç farklı ekran kartıyla ölçüldüğünde listeye
-              giriyor.
+              {tParts.rich("games", {
+                count: fpsGames,
+                b: (chunks) => <span className="num font-medium text-foreground">{chunks}</span>,
+              })}
             </dd>
           </div>
           <div>
-            <dt className="font-semibold">Ölçümü olan ekran kartı</dt>
+            <dt className="font-semibold">{tParts("gpusTitle")}</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              <span className="num font-medium text-foreground">{olcumluCip}</span> çip
-              ölçüldü; kartlar çiplerinin ölçümünü kullandığı için{" "}
-              <span className="num font-medium text-foreground">{fpsGosterilebilen}</span>{" "}
-              seçenekte FPS görünüyor —{" "}
-              <span className="num">{toplamEkranKarti}</span> ekran kartının içinden.
+              {tParts.rich("gpus", {
+                chips: olcumluCip,
+                options: fpsGosterilebilen,
+                total: toplamEkranKarti,
+                b: (chunks) => <span className="num font-medium text-foreground">{chunks}</span>,
+              })}
             </dd>
           </div>
           <div>
-            <dt className="font-semibold">Ölçümü olan işlemci</dt>
+            <dt className="font-semibold">{tParts("cpusTitle")}</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              <span className="num font-medium text-foreground">{olcumluCpu}</span> işlemci
-              ölçüldü, <span className="num">{catalog.cpu.length}</span> işlemcinin içinden.
-              Sistem indeksi ikisinde de ölçüm istiyor.
+              {tParts.rich("cpus", {
+                measured: olcumluCpu,
+                total: catalog.cpu.length,
+                b: (chunks) => <span className="num font-medium text-foreground">{chunks}</span>,
+              })}
             </dd>
           </div>
           <div>
-            <dt className="font-semibold">Fiyat</dt>
+            <dt className="font-semibold">{tPricing("coverageTitle")}</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              Yalnızca bir bölüm parçada ve tek kaynaktan. Kaynak USD yayınlıyor; ekranda
-              elle girilen kurla ₺ gösteriliyor
+              {tPricing("coverageNote", { source: SOURCE_CURRENCY, target: DISPLAY_CURRENCY })}
             </dd>
           </div>
         </dl>
 
         <p className="mt-4 text-xs text-muted">
-          Katalog: <span className="num">{toplamParca}</span> parça, bilgiler üretici
-          sayfalarından.
+          {t.rich("catalogNote", {
+            count: toplamParca,
+            b: (chunks) => <span className="num">{chunks}</span>,
+          })}
         </p>
       </header>
 

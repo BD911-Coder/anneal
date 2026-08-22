@@ -26,7 +26,8 @@
     "fps:sapma": "node scripts/measure-fps-margin.mts",
     "sapma:tumu": "npm run indeks:sapma && npm run fps:sapma",
     "kural:kontrol": "node scripts/check-rules.mts",
-    "varyant:kontrol": "node scripts/check-gpu-variant.mts"
+    "varyant:kontrol": "node scripts/check-gpu-variant.mts",
+    "dil:kontrol": "node scripts/check-messages.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

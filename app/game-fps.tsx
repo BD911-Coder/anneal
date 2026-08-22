@@ -1,3 +1,5 @@
+"use client";
+
 // Oyun bazlı FPS listesi — Faz A.1'in arayüzü.
 //
 // İki sayfada kullanılıyor: sistem oluşturucu (app/builder.tsx) ve kaydedilmiş
@@ -8,15 +10,17 @@
 //   K98 — FPS'e göre sıralanmaz, alfabetik
 //   K99 — tek skorla çeliştiği gizlenmez, listenin başında not
 //
-// Bu üçü metin olarak burada duruyor. İki kopya olsaydı biri güncellenip
-// diğeri unutulurdu ve iki sayfa aynı veri hakkında farklı şey söylerdi.
+// Bu üçü artık METİN olarak burada DEĞİL, `messages/<dil>/performance.json`
+// içinde (K150). Kural yine tek yerde: iki sayfa aynı mesaj anahtarlarını
+// çağırıyor.
+
+import { useLocale, useTranslations } from "next-intl";
 
 import { countByOrigin } from "@/engine/fps-estimate";
 import type { GameFpsEstimate } from "@/engine/fps-estimate";
-import type { Resolution } from "@/engine/types";
-import type { Bottleneck } from "@/engine/types";
-import { RESOLUTION_LABEL } from "@/lib/format";
-import { FPS_BAND_NOTE, bandFor } from "@/lib/fps-bands";
+import type { Bottleneck, Resolution } from "@/engine/types";
+import { formatNumber } from "@/lib/format";
+import { bandFor } from "@/lib/fps-bands";
 import { FPS_MARGIN } from "@/lib/fps-margin";
 
 import { CountUp } from "./count-up";
@@ -74,13 +78,19 @@ export function GameFpsList({
   bottleneck,
   animateNumbers = true,
 }: GameFpsListProps) {
+  const t = useTranslations("performance");
+  const locale = useLocale();
+
   if (!gpuSelected) return null;
+
+  const sayi = (value: number) => formatNumber(value, locale);
 
   if (!hasDataForResolution) {
     return (
       <p className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-muted">
-        {resolution ? <>Bu çözünürlükte ({RESOLUTION_LABEL[resolution]}) </> : "Bu çözünürlükte "}
-        henüz ölçüm yok. Ölçüm verisi olan çözünürlüğü seçerseniz liste görünür.
+        {t("fps.noDataForResolution", {
+          resolution: resolution ? t(`resolution.${resolution}`) : "",
+        })}
       </p>
     );
   }
@@ -88,8 +98,7 @@ export function GameFpsList({
   if (rows.length === 0) {
     return (
       <p className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-muted">
-        Bu kart için ölçüm yok. Oyun bazlı FPS yalnızca ölçüm verisi toplanmış kartlarda
-        gösterilebiliyor; uydurma bir sayı göstermektense hiç göstermiyoruz.
+        {t("fps.noDataForCard")}
       </p>
     );
   }
@@ -97,7 +106,11 @@ export function GameFpsList({
   // K98: FPS'e göre SIRALANMAZ. FPS'e göre dizmek kullanıcıyı "en yüksek sayıyı
   // gör" yönünde koşullandırır; oysa kullanıcı belirli bir oyunu arıyor.
   // Sıralama motorda değil burada: bir sunum kararıdır.
-  const sorted = [...rows].sort((a, b) => a.game_name.localeCompare(b.game_name, "tr"));
+  //
+  // Karşılaştırma DİLE göre: `localeCompare` Türkçede ç/ğ/ı/ö/ş/ü'yü doğru
+  // yerleştiriyor, İngilizcede farklı bir sıra doğru. Sabit "tr" yazılsaydı
+  // İngilizce liste Türkçe alfabeye göre sıralanırdı.
+  const sorted = [...rows].sort((a, b) => a.game_name.localeCompare(b.game_name, locale));
   const counts = countByOrigin(rows);
 
   // Bütün satırlar aynı ayardaysa etiket bir kez başta yazılır; farklıysa satır
@@ -113,40 +126,35 @@ export function GameFpsList({
           DEĞİL (cpu_part_id boş), o yüzden hangi işlemci olduğu yazılmıyor. */}
       <div className="rounded-md border border-amber-600/35 bg-amber-500/[0.07] p-3 text-xs leading-relaxed">
         <p>
-          <strong className="font-semibold">Bu sayılar yalnızca ekran kartına göredir.</strong>{" "}
-          İşlemcinin sınırlamadığı bir test sisteminde ölçülmüştür; seçtiğiniz işlemci bu
-          sayılara girmiyor. İşlemciye yüklenen oyunlarda gerçek sonuç bunun altında
-          kalabilir.
+          <strong className="font-semibold">{t("fps.gpuOnlyTitle")}</strong>{" "}
+          {t("fps.gpuOnlyBody")}
         </p>
         {cpuIndex !== undefined && (
           <p className="mt-2">
-            Seçtiğiniz işlemci{cpuLabel ? ` (${cpuLabel})` : ""}: indeks{" "}
-            <span className="num font-semibold">{cpuIndex}</span>, referans{" "}
-            <span className="num">{REFERANS_CPU_INDEKS}</span>.{" "}
+            {t("fps.cpuStanding", {
+              label: cpuLabel ? ` (${cpuLabel})` : "",
+              index: sayi(cpuIndex),
+              reference: sayi(REFERANS_CPU_INDEKS),
+            })}{" "}
             {cpuIndex < REFERANS_CPU_INDEKS
-              ? "Referansın altında; işlemciye yüklenen oyunlarda fark daha belirgin olur."
+              ? t("fps.cpuBelow")
               : cpuIndex > REFERANS_CPU_INDEKS
-                ? "Referansın üstünde."
-                : "Referans işlemcinin kendisi."}
+                ? t("fps.cpuAbove")
+                : t("fps.cpuEqual")}
           </p>
         )}
         {bottleneck === "cpu_limited" && (
-          <p className="mt-2 font-semibold">
-            Sistem indeksi bu kurulumda işlemciyi sınırlayıcı buluyor — aşağıdaki sayılar
-            bu yüzden iyimser olabilir.
-          </p>
+          <p className="mt-2 font-semibold">{t("fps.cpuLimitedWarning")}</p>
         )}
-        {cpuIndex === undefined && (
-          <p className="mt-2">
-            Henüz ölçümü olan bir işlemci seçmediniz. Liste yalnızca ekran kartına baktığı
-            için yine de görünüyor.
-          </p>
-        )}
+        {cpuIndex === undefined && <p className="mt-2">{t("fps.noCpuMeasured")}</p>}
       </div>
 
       {singleSetting && (
         <p className="text-xs text-muted">
-          Ayar: <span className="font-medium text-foreground">{singleSetting}</span>
+          {t.rich("fps.setting", {
+            setting: singleSetting,
+            b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+          })}
         </p>
       )}
 
@@ -164,6 +172,7 @@ export function GameFpsList({
               key={row.game_id}
               className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5 sm:flex-nowrap"
             >
+              {/* Oyun adı ÇEVRİLMEZ: eser adı, marka gibi. */}
               <span className="min-w-0 flex-1 truncate text-sm">{row.game_name}</span>
 
               {/* Sayı ile birimi arasında belirgin hiyerarşi. */}
@@ -171,10 +180,12 @@ export function GameFpsList({
                 <output className="num text-xl font-semibold tracking-tight">
                   <CountUp value={row.fps} animate={animateNumbers} />
                 </output>
-                <span className="text-[11px] text-muted">FPS</span>
+                <span className="text-[11px] text-muted">{t("fps.unit")}</span>
               </span>
 
-              <span className={`w-32 shrink-0 text-xs ${band.tone}`}>{band.label}</span>
+              <span className={`w-32 shrink-0 text-xs ${band.tone}`}>
+                {t(`fpsBand.${band.key}`)}
+              </span>
 
               <span
                 className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${
@@ -184,12 +195,14 @@ export function GameFpsList({
                 }`}
                 title={
                   olculdu
-                    ? "Bu sayı ölçüldü, hesaplanmadı."
-                    : `Ölçüm yok; bu kartın indeksinden hesaplandı. Ortalama hata %${FPS_MARGIN.meanPercent}.`
+                    ? t("fps.measuredTitle")
+                    : t("fps.estimateTitle", { mean: sayi(FPS_MARGIN.meanPercent) })
                 }
               >
                 <span aria-hidden="true">{olculdu ? "■" : "□"}</span>{" "}
-                {olculdu ? "ölçüldü" : <>tahmin ±%<span className="num">{FPS_MARGIN.p90Percent}</span></>}
+                {olculdu
+                  ? t("fps.measured")
+                  : t("fps.estimate", { margin: sayi(FPS_MARGIN.p90Percent) })}
               </span>
 
               {!singleSetting && (
@@ -202,19 +215,24 @@ export function GameFpsList({
 
       <div className="space-y-1 text-xs leading-relaxed text-muted">
         <p>
-          <span className="num font-medium text-foreground">{counts.measured}</span> oyunda
-          sayı doğrudan ölçüm,{" "}
-          <span className="num font-medium text-foreground">{counts.derived}</span> oyunda bu
-          kartın ölçümü yok ve indeksinden hesaplandı.
+          {t.rich("fps.counts", {
+            measured: counts.measured,
+            derived: counts.derived,
+            b: (chunks) => <span className="num font-medium text-foreground">{chunks}</span>,
+          })}
         </p>
         <p>
-          Hesaplananın ölçülen hata payı: ortalama %
-          <span className="num">{FPS_MARGIN.meanPercent}</span>, tahminlerin %90&apos;ı %
-          <span className="num">{FPS_MARGIN.p90Percent}</span> altında, en kötü %
-          <span className="num">{FPS_MARGIN.maxPercent}</span>. {FPS_MARGIN.method} (
-          {FPS_MARGIN.measuredAt})
+          {t("fps.marginNote", {
+            mean: sayi(FPS_MARGIN.meanPercent),
+            p90: sayi(FPS_MARGIN.p90Percent),
+            max: sayi(FPS_MARGIN.maxPercent),
+            // `FPS_MARGIN.method` TÜRKÇE bir cümle ve o dosyaya
+            // dokunulmuyor; yöntemin adı çeviri dosyasından okunuyor.
+            method: t("fps.method"),
+            measuredAt: FPS_MARGIN.measuredAt,
+          })}
         </p>
-        <p>{FPS_BAND_NOTE}</p>
+        <p>{t("fps.bandNote")}</p>
       </div>
     </div>
   );

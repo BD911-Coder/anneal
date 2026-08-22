@@ -1,0 +1,60 @@
+{
+  "heading": "Pick parts",
+  "category": {
+    "cpu": "Processor",
+    "gpu": "Graphics card",
+    "motherboard": "Motherboard",
+    "ram": "Memory",
+    "psu": "Power supply",
+    "case": "Case",
+    "storage": "Storage"
+  },
+  "notSelected": "— not selected —",
+  "coverageGroup": {
+    "measured": "Measured — FPS estimate available",
+    "unmeasured": "No measurement — compatibility check only"
+  },
+  "unmeasuredMarker": "no measurement",
+  "unmeasuredNote": "There is no measurement for this {category}: the compatibility check still runs, but FPS and the system index cannot be calculated. Parts listed under \"Measured\" show both.",
+  "variant": {
+    "label": "Card model",
+    "optional": "optional",
+    "unspecified": "— unspecified, reference values —",
+    "hint": "Cards built on the same chip differ in length and power limit. If you do not pick a card, the manufacturer's reference values are used."
+  },
+  "storage": {
+    "label": "Storage",
+    "multipleHint": "multiple allowed",
+    "howTo": "Hold Ctrl (⌘ on Mac) to select more than one.",
+    "clear": "Clear selection",
+    "detail": "{type}, {capacity} GB"
+  },
+  "coverage": {
+    "gamesTitle": "Games with measurements",
+    "games": "<b>{count}</b> games produce an FPS list. A game enters the list once it has been measured on at least three different graphics cards.",
+    "gpusTitle": "Graphics cards with measurements",
+    "gpus": "<b>{chips}</b> chips measured; because cards inherit their chip's measurement, <b>{options}</b> options show FPS — out of <b>{total}</b> graphics cards.",
+    "cpusTitle": "Processors with measurements",
+    "cpus": "<b>{measured}</b> processors measured, out of <b>{total}</b>. The system index requires a measurement on both sides."
+  },
+  "empty": {
+    "heading": "Pick parts on the left",
+    "intro": "Choose a graphics card and the per-game FPS list appears. Add a processor and the system index and bottleneck analysis join it. The compatibility check runs from the first part onward.",
+    "willSeeTitle": "What you will see",
+    "willSee": "Estimated FPS per game, the system index, compatibility errors and an upgrade suggestion.",
+    "willNotSeeTitle": "What you will not see",
+    "willNotSee": "Invented numbers for parts without measurements. Where there is no data, the reason is printed in its place.",
+    "coveredGamesTitle": "Games with measurements",
+    "coveredGames": "<b>{count}</b> games at {resolution}: <muted>{list}</muted>",
+    "noneAtResolution": "There is no measurement at this resolution yet; pick another one."
+  },
+  "selected": {
+    "heading": "Selected build",
+    "chip": "chip: {name}",
+    "save": "Save this build",
+    "saving": "Saving…",
+    "saveNote": "No account needed. The price and index are frozen at the moment you save and do not change afterwards. The index is calculated at the resolution currently selected ({resolution}). If the index cannot be calculated — because a part is missing, or because there is no measurement data — the build is still saved and the reason is shown in place of the number.",
+    "shareLabel": "This address opens the build",
+    "openSaved": "Open the saved build →"
+  }
+}

@@ -66,7 +66,7 @@ export type DisplayCurrency = (typeof DISPLAY_CURRENCIES)[number];
 export const DISPLAY_CURRENCY: DisplayCurrency = DEFAULT_DISPLAY_CURRENCY;
 
 /**
- * Kaynağın para birimindeki kuruşu, ekranda gösterilecek TRY kuruşuna çevirir.
+ * Kaynağın para birimindeki kuruşu, ekranda gösterilecek para birimine çevirir.
  *
  * Çevrilemeyen para birimi için `null` döner — 1:1 varsaymak, kullanıcıya
  * sessizce yanlış bir sayı göstermek olurdu. Çağıran taraf `null` gördüğünde
@@ -92,25 +92,14 @@ export function toDisplayMinor(
   return null;
 }
 
-/** Çevrim yapıldı mı? Kur notu yalnızca yapıldıysa gösterilir. */
+/**
+ * Çevrim yapıldı mı? Kur notu yalnızca yapıldıysa gösterilir — olmayan bir
+ * işlemi anlatmak kafa karıştırır (K157).
+ */
 export function isConverted(currency: string, target: DisplayCurrency): boolean {
   return currency !== target;
 }
 
-/** Kur notunun metni — iki sayfada aynı cümle çıksın diye tek tanım. */
-export function rateNote(target: DisplayCurrency = DEFAULT_DISPLAY_CURRENCY): string {
-  // Çevrim yoksa kur cümlesi de yok: olmayan bir işlemi anlatmak kafa karıştırır.
-  if (target === SOURCE_CURRENCY) {
-    return `Fiyatlar kaynağın yayınladığı para biriminde (${SOURCE_CURRENCY}), çevrilmeden gösteriliyor.`;
-  }
-  return USD_TRY.manual
-    ? `Fiyatlar ${SOURCE_CURRENCY} kaynaktan elle girilen kurla çevrildi: 1 USD = ${formatRate()} ₺ (${USD_TRY.quotedAt}). Canlı kur değildir.`
-    : `1 USD = ${formatRate()} ₺ (${USD_TRY.quotedAt}).`;
-}
-
-/** `4100` -> `41,00` */
-function formatRate(): string {
-  const major = Math.trunc(USD_TRY.rateMinor / 100);
-  const cents = USD_TRY.rateMinor % 100;
-  return `${major},${String(cents).padStart(2, "0")}`;
-}
+// Kurun ekranda nasıl yazılacağı burada DEĞİL: sayı `USD_TRY.rateMinor`,
+// biçim `lib/format.ts`, cümle `messages/<dil>/pricing.json`. Üçü de kendi
+// yerinde duruyor.

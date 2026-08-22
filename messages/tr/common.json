@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "title": "Anneal",
+    "description": "PC toplama ve performans tahmini"
+  },
+  "siteName": "Anneal",
+  "tagline": "Donanım seç, ne performans alacağını gör. Her sayının nereden geldiği yanında yazılı — ölçüm mü, hesap mı.",
+  "catalogNote": "Katalog: <b>{count}</b> parça, bilgiler üretici sayfalarından.",
+  "estimated": "tahmini",
+  "backToBuilder": "← Yeni sistem oluştur",
+  "language": {
+    "label": "Dil",
+    "en": "English",
+    "tr": "Türkçe"
+  },
+  "feedback": {
+    "label": "Geri bildirim",
+    "placeholder": "Ne eksik, ne yanlış?",
+    "send": "Gönder",
+    "sending": "Gönderiliyor…",
+    "sent": "Teşekkürler, kaydedildi.",
+    "privacy": "E-posta veya kişisel bilgi yazmayın — sadece mesajınız kaydedilir."
+  },
+  "errors": {
+    "saveEmpty": "Kaydetmeden önce en az bir parça seçin.",
+    "saveUnknownPart": "Seçilen parçalardan biri artık kataloğda yok. Sayfayı yenileyip tekrar deneyin.",
+    "saveIdCollision": "Sistem kimliği üretilemedi. Lütfen tekrar deneyin.",
+    "saveFailed": "Sistem kaydedilemedi.",
+    "feedbackEmpty": "Önce bir şeyler yazın.",
+    "feedbackTooLong": "Mesaj çok uzun. Lütfen kısaltın."
+  }
+}
