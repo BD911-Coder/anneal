@@ -3851,3 +3851,38 @@ tanımlanmıştı. Veri kamuya açık olabilir; **otomatik erişim açık değil
 belirsiz) ve **Kaggle "GPUs FPS Benchmarks"** gibi kaynağı doğrulanamayan
 derlemeler kural gereği kapalı. Yani bu tur vekil skoru için **açık hiçbir
 otomatik kaynak kalmadı.**
+
+### K174 — Makullük denetimi: iki değerin birbirini kısıtladığı her yer
+
+**2026-08-22.** `npm run makul:kontrol`, `scripts/check-plausibility.mts`.
+K171'in bant genişliği kontrolü genelleştirildi ve tek script'te toplandı.
+
+**Fikir:** RTX 5060 Ti hatası tek bir alana bakarak görünmüyordu; iki alanın
+**birbiriyle çelişmesinden** çıktı. Katalogda aynı desende başka kısıtlar var
+ve hepsi tek yerde toplandı. **1136 kontrol çalışıyor.**
+
+Kurulan kısıtlar: bant genişliği ↔ veri yolu ↔ bellek tipi · VRAM ↔ veri yolu
+↔ yonga kapasitesi · TDP ↔ önerilen güç kaynağı · marka ↔ shader birimi tipi ·
+aile içi transistör/shader oranı · kart TBP ↔ çip TDP · kart saati ↔ çip saati
+· OC saati ↔ normal saat · çekirdek ↔ iş parçacığı · taban ↔ boost · çekirdek
+başına L3 · kit kapasitesi ↔ modül sayısı · bellek hızı ↔ kuşak · azami bellek
+↔ yuva sayısı · okuma hızı ↔ arayüz, ve fiziksel ölçü aralıkları.
+
+**`bant:kontrol` KALDIRILDI**, kuralı bu script'in içinde. Sebebi eşiklerin
+iki yerde yaşamaması: `GDDR7 26-33 Gbps` tablosu bir yerde durmalı.
+
+**İlk çalıştırma dört anakartı işaretledi ve dördü de DOĞRU çıktı.** MSI Z890
+kartları gerçekten "DDR5-9200+(OC)" yazıyor; ASUS H770 D4 gerçekten
+DDR4-5066 destekliyor. Eşik gevşetildi, **veri değil**. Ders kaydediliyor:
+üreticinin "azami desteklenen" alanı JEDEC değil aşırı hızlandırma rakamı
+taşıyor ve bellek kitinin kendi aralığından ayrı ele alınmalı.
+
+**Kapsamın nerede bittiği de basılıyor.** Üç kısıt kurulamıyor ve script bunu
+her çalıştırmada yazıyor: dolgu hızı ↔ saat ↔ ROP (fillrate ve ROP sütunu
+yok), çip alanı ↔ transistör yoğunluğu (`die_size` yok), güç konnektörü ↔ TBP
+(`power_connectors` serbest metin, S38). Kapsamı gizlememek, kapsamı
+büyütmek kadar önemli.
+
+**Bu bir doğruluk kontrolü değil.** Makul bir değer yanlış olabilir; imkânsız
+bir değer kesin yanlıştır. RTX 5060'ın eski 480 GB/s değeri (30 Gbps) bu
+denetimden **geçerdi** — onu dış kaynakla karşılaştırma yakalamıştı.

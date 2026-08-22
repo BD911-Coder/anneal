@@ -36,7 +36,7 @@
     "olcum:hedefler": "node scripts/plan-measurement-targets.mts",
     "wikipedia:aktar": "node scripts/import-wikipedia-specs.mts",
     "kaynak:kontrol": "node scripts/check-field-sources.mts",
-    "bant:kontrol": "node scripts/check-bandwidth-consistency.mts"
+    "makul:kontrol": "node scripts/check-plausibility.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
