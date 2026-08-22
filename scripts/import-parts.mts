@@ -182,6 +182,95 @@ function collectedAt(value: string): Date {
 
 type Sonuc = { islenen: number; guncellenen: number; atlanan: number; hatali: number };
 
+/**
+ * Dis kaynakli alanlarin damgalari (K170). Bir kez okunuyor: bu script dis
+ * kaynakli damga URETMIYOR, yalnizca onlara dokunmamak icin biliyor.
+ */
+const disKaynakli = new Set(
+  (
+    await prisma.specFieldSource.findMany({
+      where: { source: { notIn: ["manufacturer", "manual", "dev_seed"] } },
+      select: { part_id: true, field_name: true },
+    })
+  ).map((d) => `${d.part_id}|${d.field_name}`),
+);
+
+/**
+ * CSV'de BOS olan ve defterde DIS KAYNAKLI olan alanlari guncellemeden cikarir.
+ *
+ * Neden gerekli: `update: specData` bos hucreyi `null` olarak yaziyor. Ureticinin
+ * yayinlamadigi bir alan CSV'de bos kalir; o alani Wikipedia doldurmussa, bir
+ * sonraki `parca:aktar` cagrisi dis degeri SESSIZCE SILERDI.
+ *
+ * Kural bozulmuyor: uretici degeri hala dis degeri ezer. Ezen sey bir DEGER
+ * olmak zorunda — bos hucre bir deger degil, degerin YOKLUGU.
+ */
+function disKaynakliyiKoru<T extends Record<string, unknown>>(partId: string, specData: T): T {
+  const out: Record<string, unknown> = {};
+  for (const [alan, deger] of Object.entries(specData)) {
+    if (deger === null && disKaynakli.has(`${partId}|${alan}`)) continue;
+    out[alan] = deger;
+  }
+  return out as T;
+}
+
+/** Kategoriden spec satirina. Damga tazeleme yazilani DEGIL, YAZILMIS OLANI okuyor. */
+async function specSatiri(category: string, partId: string): Promise<Record<string, unknown> | null> {
+  const w = { where: { part_id: partId } };
+  switch (category) {
+    case "cpu": return prisma.cpuSpecs.findUnique(w);
+    case "gpu": return prisma.gpuSpecs.findUnique(w);
+    case "gpu_variant": return prisma.gpuVariantSpecs.findUnique(w);
+    case "motherboard": return prisma.motherboardSpecs.findUnique(w);
+    case "ram": return prisma.ramSpecs.findUnique(w);
+    case "psu": return prisma.psuSpecs.findUnique(w);
+    case "storage": return prisma.storageSpecs.findUnique(w);
+    case "case": return prisma.caseSpecs.findUnique(w);
+    default: return null;
+  }
+}
+
+/** Alan olmayan sutunlar: kayit tutma, damgalanmazlar. */
+const ALAN_OLMAYAN = new Set([
+  "part_id", "source", "source_url", "confidence", "collected_at", "created_at", "updated_at",
+]);
+
+/**
+ * Yazimdan SONRA defteri tazeler: dolu her alanin damgasi olur, bos alanin
+ * damgasi silinir.
+ *
+ * Yazilan nesne degil, VERITABANINDAKI SATIR okunuyor: defterin anlatmasi
+ * gereken sey satirda ne durdugu, script'in ne yazmayi amacladigi degil.
+ *
+ * Dis kaynakli alanlara DOKUNULMAZ. Onlarin degeri zaten korunuyor
+ * (disKaynakliyiKoru); damgasi da korunmali, yoksa deger Wikipedia'dan
+ * gelirken damga 'manufacturer' olur ve atif kaybolur.
+ *
+ * Olmasaydi defter ilk ice aktarmada eskirdi: yeni bir parca damgasiz dolu
+ * alanlarla girer ve `npm run kaynak:kontrol` durdururdu.
+ */
+async function damgalariTazele(
+  partId: string,
+  category: string,
+  provenance: { source: "manufacturer"; source_url: string; confidence: "high" | "medium" | "low"; collected_at: Date },
+): Promise<void> {
+  const satir = await specSatiri(category, partId);
+  if (!satir) return;
+  for (const [alan, deger] of Object.entries(satir)) {
+    if (ALAN_OLMAYAN.has(alan)) continue;
+    if (disKaynakli.has(`${partId}|${alan}`)) continue;
+    if (deger === null || deger === undefined) {
+      await prisma.specFieldSource.deleteMany({ where: { part_id: partId, field_name: alan } });
+      continue;
+    }
+    await prisma.specFieldSource.upsert({
+      where: { part_id_field_name: { part_id: partId, field_name: alan } },
+      create: { part_id: partId, field_name: alan, ...provenance },
+      update: { ...provenance, license: null, source_article: null, source_revision_id: null },
+    });
+  }
+}
+
 async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<void> {
   // Dosya adi deseni: <kategori>[-<kaynak>].csv  ->  gpu-nvidia.csv = gpu
   // Ayni kategoriyi birden fazla kaynaktan ayri dosyalarda tutabilmek icin.
@@ -302,10 +391,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.cpuSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else if (category === "gpu") {
         const oncekiSpec = mevcut
           ? await prisma.gpuSpecs.findUnique({ where: { part_id: row.id } })
@@ -347,10 +436,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.gpuSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else if (category === "gpu_variant") {
         // Kartin cipi katalogda olmali VE cip seviyesinde olmali. Iki seviyeli
         // hiyerarsi: kartin karti olmaz (SCHEMA.md bolum 2).
@@ -399,10 +488,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.gpuVariantSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else if (category === "motherboard") {
         const oncekiSpec = mevcut
           ? await prisma.motherboardSpecs.findUnique({ where: { part_id: row.id } })
@@ -423,10 +512,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.motherboardSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else if (category === "ram") {
         const oncekiSpec = mevcut
           ? await prisma.ramSpecs.findUnique({ where: { part_id: row.id } })
@@ -444,10 +533,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.ramSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else if (category === "psu") {
         const oncekiSpec = mevcut
           ? await prisma.psuSpecs.findUnique({ where: { part_id: row.id } })
@@ -465,10 +554,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.psuSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else if (category === "storage") {
         const oncekiSpec = mevcut
           ? await prisma.storageSpecs.findUnique({ where: { part_id: row.id } })
@@ -486,10 +575,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.storageSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       } else {
         const oncekiSpec = mevcut
           ? await prisma.caseSpecs.findUnique({ where: { part_id: row.id } })
@@ -506,11 +595,14 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           await tx.caseSpecs.upsert({
             where: { part_id: row.id },
             create: { part_id: row.id, ...specData },
-            update: specData,
+            update: disKaynakliyiKoru(row.id, specData),
           });
         });
-        if (oncekiSpec) for (const f of changedFields(oncekiSpec, specData)) degisen.add(f);
+        if (oncekiSpec) for (const f of changedFields(oncekiSpec, disKaynakliyiKoru(row.id, specData))) degisen.add(f);
       }
+
+      // Defter, yazilan spec ile ayni islemin ardindan tazeleniyor (K170).
+      await damgalariTazele(row.id, category, provenance);
 
       await prisma.rawImport.update({ where: { id: raw.id }, data: { status: "processed" } });
 
