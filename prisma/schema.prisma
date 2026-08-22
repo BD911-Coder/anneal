@@ -36,6 +36,10 @@ enum Source {
   affiliate
   user
   import
+  // Dis kaynak, LISANS YUKUMLULUGU olan (K170). Ayri deger olmasinin sebebi
+  // 'import'tan ayirt edilmesi gerekmesi: bu kaynaktan gelen her deger CC BY-SA
+  // atfi tasimak zorunda ve arayuz onu gosterdiginde krediyi de gostermeli.
+  wikipedia
 }
 
 enum Confidence {
@@ -203,6 +207,7 @@ model Part {
   storage_specs     StorageSpecs?
   case_specs        CaseSpecs?
   price_snapshots   PriceSnapshot[]
+  spec_field_sources SpecFieldSource[]
   perf_index        PerfIndex[]
   perf_index_estimated PerfIndexEstimated[]
   build_items       BuildItem[]
@@ -264,6 +269,53 @@ model GpuSpecs {
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   @@map("gpu_specs")
+}
+
+// Alan bazinda kaynak defteri — SCHEMA.md bolum 2.9, K170.
+//
+// NEDEN VAR: spec tablolarindaki source/source_url/confidence uclusu SATIR
+// basina. Bir gpu_specs satirinin bant genisligi Wikipedia'dan, geri kalan
+// her alani ureticiden gelebiliyor; satirin tamamini 'manufacturer'
+// damgalamak yalan, 'wikipedia' damgalamak daha buyuk bir yalan.
+//
+// NEDEN AYRI TABLO, 30 paralel sutun degil: sutun yolu her spec tablosuna
+// alan sayisi kadar sutun ekler (gpu_specs'te 14 alan x 3 sutun = 42 sutun),
+// her yeni alanda migration ister ve "hangi alanlar Wikipedia'dan geldi"
+// sorusunu 42 sutunu tarayarak cevaplatir. Yan tabloda ayni soru tek satirlik
+// bir WHERE. Bedeli: okurken ikinci bir sorgu, ve alan adlari veritabani
+// tarafindan dogrulanmiyor (metin sutunu). Ikincisi icin script kontrolu var:
+// npm run kaynak:kontrol bilinmeyen alan adi bulursa duruyor.
+//
+// SATIR YOKSA: alan degeri o spec satirinin kendi damgasini tasir. Yani bu
+// tablo bir ISTISNA DEFTERIDIR, zorunlu bir ikizleme degil -- ama gecise
+// hicbir alan damgasiz kalmasin diye mevcut butun dolu alanlar da yazildi.
+model SpecFieldSource {
+  part_id    String
+  // Spec tablosundaki sutun adi ("memory_bandwidth_gbs"). Parcanin kategorisi
+  // hangi tabloya bakilacagini soyledigi icin tablo adi ayrica tutulmuyor.
+  field_name String
+  part       Part   @relation(fields: [part_id], references: [id])
+
+  source       Source
+  source_url   String?
+  confidence   Confidence
+  collected_at DateTime @db.Timestamptz(6)
+
+  // Yalnizca lisans yukumlulugu olan kaynakta dolu. Wikipedia CC BY-SA:
+  // atif makale adi VE revizyon numarasi ister; revizyon olmadan "hangi
+  // haline atif veriyoruz" sorusu cevapsiz kalir (K165).
+  license            String?
+  source_article     String?
+  source_revision_id Int?
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@id([part_id, field_name])
+  // "Wikipedia'dan gelen butun alanlar" sorgusu: atif gosterimi ve dev-seed
+  // dagitim kontrolu bu yoldan gecer.
+  @@index([source])
+  @@map("spec_field_sources")
 }
 
 // Ekran karti varyanti (AIB karti) — SCHEMA.md bolum 2, K86.

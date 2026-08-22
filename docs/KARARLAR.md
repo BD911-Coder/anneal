@@ -3670,3 +3670,53 @@ kazancı ölçüldü: `blackwell` beş ölçümle ±%30.7 yerine ±%19.8, `rdna_
 `intel-arc-a750` (alchemist). Sıra ailenin taşıdığı çip sayısına göre.
 
 Rapor: `docs/log/2026-08-22-olcum-hedefleri.md`.
+
+### K170 — Provenance satır başından ALAN BAŞINA indi (S48 kapandı)
+
+**2026-08-22.** `spec_field_sources` tablosu, `npm run kaynak:kontrol`,
+`npm run wikipedia:aktar -- --apply`.
+
+**Sorun:** spec tablolarındaki `source`/`source_url`/`confidence` üçlüsü satır
+başınaydı. Bir `gpu_specs` satırının bant genişliği Wikipedia'dan, geri kalan
+her alanı üreticiden gelebiliyor. Satırın tamamını `manufacturer` damgalamak
+yalan; `wikipedia` damgalamak on üç alanı birden yalan yapıyor.
+
+**Yan tablo seçildi, 30 paralel sütun değil.** Sütun yolu her spec tablosuna
+alan sayısı kadar üçlü ekler (`gpu_specs`te 14 alan × 3 = 42 yeni sütun), her
+yeni alanda migration ister ve "hangi alanlar Wikipedia'dan geldi" sorusunu 42
+sütun taranarak cevaplatır. Yan tabloda aynı soru tek satırlık bir `WHERE`.
+
+**Bedeli açıkça yazıldı:** (1) okurken ikinci bir sorgu, (2) `field_name` metin
+sütunu, yani veritabanı "böyle bir alan var mı" diye soramıyor. İkincisinin
+karşılığı `npm run kaynak:kontrol`: bilinmeyen alan adı, damgasız dolu alan ya
+da atfı eksik lisanslı satır bulursa **duruyor**.
+
+**Satır damgası kaldırılmadı**, anlamı değişti: artık defterde satırı olmayan
+alanların **varsayılanı**. Geçiş bütün dolu alanları damgaladığı için bugün
+varsayılana düşen alan yok — **2457 alan** `manufacturer` olarak yazıldı ve
+damga değişmedi, yalnızca alan seviyesine indi.
+
+**Öncelik kuralı yazma anında zorlanıyor.** Dış kaynak yalnızca `null` alanı
+doldurabiliyor ve kontrol iki kere yapılıyor: script karar verirken, ve
+`UPDATE ... WHERE <alan> IS NULL` ile veritabanında. İkincisi olmasaydı kural
+script'in doğruluğuna bağlı kalırdı.
+
+**Gerçek aktarım yapıldı:** 50 alan yazıldı (22 bant genişliği + 28 transistör
+sayısı), **96 alana dokunulmadı** çünkü üretici değeri vardı. Bant genişliği
+kapsamı 38/60 → **60/60**, transistör 23/60 → **51/60**.
+
+**Atıf ALANI takip ediyor, satırı değil.** Arayüzde bant genişliği gösteriliyor;
+CC BY-SA kredisi yalnızca gösterilen değer Wikipedia'dan geldiğinde çıkıyor.
+Tarayıcıda doğrulandı: RTX 4090 → "(external source)" işareti + makale/revizyon
+kredisi; RX 9070 XT → aynı alan, kredi **yok** (üreticiden).
+
+**`varyant:kontrol` uyarlandı.** "Çip satırları kaynak CSV ile birebir aynı"
+kontrolü dış kaynaklı alanları **defterden okuyup atlıyor**. CSV artık
+`gpu_specs`in tek kaynağı değil; atlanan alan sayısı çıktıda yazıyor ki
+sessizce genişlemesin.
+
+**`raw_imports`a ne yazıldı:** makale başına bir satır — revizyon numarası,
+wikitext boyutu, lisans ve **ayrıştırılmış satırlar**. Wikitext'in kendisi
+yazılmadı: üç makale 834 KB ve revizyon numarası verildiğinde byte byte geri
+getirilebiliyor. Saklanması gereken şey "hangi metinden okuduk" sorusunun
+cevabı; revizyon numarası o cevabın kendisi.

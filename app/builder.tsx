@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { CurrentPrice } from "@/data/prices";
 import type { ResolvedIndex } from "@/data/perf";
 import type { BuilderCatalog } from "@/data/parts";
+import type { GpuChipFacts } from "@/data/spec-sources";
 import { checkCompatibility } from "@/engine/compatibility";
 import type { DefaultBuild } from "@/engine/default-build";
 import { estimateGameFps } from "@/engine/fps-estimate";
@@ -81,6 +82,14 @@ type BuilderProps = {
   perfIndexes: Record<string, ResolvedIndex>;
   fpsGroups: FpsGameGroup[];
   /**
+   * Gösterilen çip spec değerleri ve ALAN BAŞINA kaynakları (K170).
+   *
+   * Değerle kaynağı birlikte geliyor çünkü atıf kuralı böyle: CC BY-SA
+   * kredisi, değeri gösteren yerde görünmek zorunda. Ayrı geselerdi kredinin
+   * doğru yerde çıkması tesadüfe kalırdı.
+   */
+  chipFacts: Record<string, GpuChipFacts>;
+  /**
    * Sayfa ilk açıldığında dolu gelecek seçim (K144).
    *
    * Sunucuda `pickDefaultBuild` ile hesaplanıyor ve **yalnızca başlangıç
@@ -98,6 +107,7 @@ export function Builder({
   prices,
   perfIndexes,
   fpsGroups,
+  chipFacts,
   defaultSelection,
 }: BuilderProps) {
   // Ad alanları ayrı çağrılıyor: bir bileşenin hangi metin kümesini kullandığı
@@ -174,6 +184,14 @@ export function Builder({
   const resolvedGpu = gpuChip ? resolveGpuSelection(gpuChip.spec, gpuVariant?.spec) : undefined;
   // Satın alınan, fiyatı toplanan ve sisteme kaydedilen satır: kart seçiliyse kart.
   const gpuPartId = gpuVariant?.id ?? gpuChipId;
+
+  /**
+   * Seçili ÇİPİN bant genişliği ve o değerin kaynağı (K170).
+   *
+   * Kart (AIB) satırında bu alan tekrarlanmıyor, çipten okunuyor (K86) — bu
+   * yüzden kart seçili olsa da çipin kimliğine bakılıyor.
+   */
+  const bantGenisligi = gpuChipId ? chipFacts[gpuChipId]?.memory_bandwidth_gbs : undefined;
 
   // Seçilen id'lerden motorun beklediği girdiyi kur.
   //
@@ -995,6 +1013,20 @@ export function Builder({
                           {t("selected.chip", { name: gpuChip?.label ?? "" })}
                         </span>
                       )}
+                      {category === "gpu" && bantGenisligi && (
+                        <span className="text-xs text-muted">
+                          {" · "}
+                          {t("selected.bandwidth", { value: sayi(bantGenisligi.value) })}
+                          {/*
+                            Dış kaynaklı değerin yanında işaret var; kredi
+                            listenin altında. İşaret renge değil metne
+                            bağlı (K132): renk tek başına bilgi taşımaz.
+                          */}
+                          {bantGenisligi.source.source === "wikipedia" && (
+                            <span className="text-muted"> {t("selected.externalMark")}</span>
+                          )}
+                        </span>
+                      )}
                       <PriceTag price={item ? prices[item.id] : undefined} />
                     </li>
                   );
@@ -1006,6 +1038,33 @@ export function Builder({
                   </li>
                 ))}
               </ul>
+
+              {/*
+                CC BY-SA kredisi — YALNIZCA Wikipedia'dan gelen bir değer
+                yukarıda GÖSTERİLİYORSA (K170). Kredi satırın değil alanın
+                peşinde: seçili çipin bant genişliği üreticiden geliyorsa
+                burada hiçbir şey çıkmaz.
+              */}
+              {bantGenisligi?.source.source === "wikipedia" && (
+                <p className="mt-2 text-xs leading-relaxed text-muted">
+                  {t("selected.attribution", {
+                    field: t("selected.bandwidthName"),
+                    article: bantGenisligi.source.article ?? "",
+                    revision: String(bantGenisligi.source.revisionId ?? ""),
+                    license: bantGenisligi.source.license ?? "",
+                  })}{" "}
+                  {bantGenisligi.source.sourceUrl && (
+                    <a
+                      className="underline underline-offset-2"
+                      href={bantGenisligi.source.sourceUrl}
+                      rel="noreferrer nofollow"
+                      target="_blank"
+                    >
+                      {t("selected.attributionLink")}
+                    </a>
+                  )}
+                </p>
+              )}
 
               <div className="mt-5 border-t border-border pt-4">
                 <button

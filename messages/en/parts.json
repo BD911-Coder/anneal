@@ -49,6 +49,11 @@
     "saving": "Saving…",
     "saveNote": "No account needed. The price and index are frozen at the moment you save and do not change afterwards. The index is calculated at the resolution currently selected ({resolution}). If the index cannot be calculated — because a part is missing, or because there is no measurement data — the build is still saved and the reason is shown in place of the number.",
     "shareLabel": "This address opens the build",
-    "openSaved": "Open the saved build →"
+    "openSaved": "Open the saved build →",
+    "bandwidth": "memory bandwidth {value} GB/s",
+    "bandwidthName": "Memory bandwidth",
+    "externalMark": "(external source)",
+    "attribution": "{field} comes from Wikipedia: \"{article}\", revision {revision} — {license}.",
+    "attributionLink": "open the source"
   }
 }
