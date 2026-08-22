@@ -3886,3 +3886,53 @@ büyütmek kadar önemli.
 **Bu bir doğruluk kontrolü değil.** Makul bir değer yanlış olabilir; imkânsız
 bir değer kesin yanlıştır. RTX 5060'ın eski 480 GB/s değeri (30 Gbps) bu
 denetimden **geçerdi** — onu dış kaynakla karşılaştırma yakalamıştı.
+
+### K175 — Tahmin motoru regresyon koşumu ve tek komutlu kontrol paketi
+
+**2026-08-22.** `npm run tahmin:degerlendir`, `npm run kontrol:tumu`.
+
+**Sorun:** tahmin yolları çoğaldı (aile modeli, aileler arası model, aile
+ortalaması) ve bir değişikliğin hangisini iyileştirip hangisini bozduğunu
+söyleyecek hiçbir şey yoktu. Sapma script'leri (`indeks:sapma`, `fps:sapma`)
+tek bir sayı basıyor; hangi ailenin nerede bozulduğunu göstermiyor.
+
+**Değerlendirme kümesi DONDURULDU** — `data/eval/estimation-eval-set.json`.
+Script veritabanından değil oradan okuyor. Sebebi: ölçüm eklendikçe tablo
+kendiliğinden değişirse "model mi düzeldi, veri mi değişti" sorusu cevapsız
+kalır. Veritabanı yine okunuyor ama yalnızca kümenin kaç ölçüm geride
+kaldığını söylemek için; tazeleme (`--guncelle`) ve temel yenileme
+(`--kaydet`) bilinçli birer adım.
+
+**Temel:** `data/eval/estimation-baseline.json`, 34 satır. Bozulma toleransı
+0,1 puan (kayan nokta gürültüsü). Bozulma varsa çıkış kodu 1 ve hangi satırın
+ne kadar bozulduğu yazılıyor; iyileşme de raporlanıyor ama temeli otomatik
+yenilemiyor — yenileme insanın kararı.
+
+**Bugünkü temel (p90, birini-dışarıda-bırak):**
+
+```
+GPU motor TUMU     27.3   |  CPU motor TUMU     8.4
+GPU aileler-arasi  30.7   |  CPU aileler-arasi  8.4
+GPU aile-modeli    19.8   |  CPU aile-ortalamasi 20.4
+GPU aile-ortalamasi 93.8
+```
+
+**Tablonun gösterdiği üç şey:**
+
+1. **Motor, aileler arası modelden iyi** (27,3'e karşı 30,7) ve fark tam
+   olarak blackwell'den geliyor: orada kendi ailesinin modelini seçiyor.
+2. **Aile ortalaması çok kötü** (93,8). Model kurmanın değeri ölçülmüş oldu.
+3. **`xe2` tek ölçümle %69,1 hata veriyor** — tabloda en kötü satır ve
+   kullanıcının gördüğü yol o.
+
+**Yan bulgu — eşik LOO'da beşe çıkıyor.** `MIN_FAMILY_FOR_OWN_BAND = 4` ama
+birini-dışarıda-bırak değerlendirmede o nokta eğitimden çıkıyor; dört ölçümlü
+bir aile üçe düşüyor ve kendi modelini kuramıyor. Bu yüzden tabloda
+`aile-modeli` satırı yalnızca blackwell'de (n=5) görünüyor. **Dört ölçüm
+gerçek kullanımda yeter, değerlendirmede yetmez** — K172'nin sayıları bu
+yüzden alt kümelerle ölçülmüştü.
+
+**`npm run kontrol:tumu`** on bir adımı tek komutta çalıştırıyor ve
+**hiçbiri diğerini durdurmuyor**: ilk hatada durmak ikinci hatayı bir sonraki
+koşuma saklar. Veritabanı gerektiren adımlar `DATABASE_URL` yoksa ATLANDI
+olarak raporlanıyor — sessizce geçmiyor.

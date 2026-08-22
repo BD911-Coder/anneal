@@ -36,7 +36,9 @@
     "olcum:hedefler": "node scripts/plan-measurement-targets.mts",
     "wikipedia:aktar": "node scripts/import-wikipedia-specs.mts",
     "kaynak:kontrol": "node scripts/check-field-sources.mts",
-    "makul:kontrol": "node scripts/check-plausibility.mts"
+    "makul:kontrol": "node scripts/check-plausibility.mts",
+    "tahmin:degerlendir": "node scripts/eval-estimation.mts",
+    "kontrol:tumu": "node scripts/check-all.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
