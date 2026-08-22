@@ -276,3 +276,49 @@ export async function getVeriKalitesi(): Promise<VeriKalitesi> {
     olculenToplam: olcumler.length,
   };
 }
+
+/** Dürüstlük sayfasının (`/hakkinda`) okuduğu kapsam sayıları. */
+export type DurustlukSayilari = {
+  gpuChips: number;
+  gpuCards: number;
+  cpus: number;
+  measuredGpu: number;
+  measuredCpu: number;
+  points: number;
+  pricedParts: number;
+  wikiFields: number;
+};
+
+/**
+ * Sayfadaki kapsam sayıları metne gömülmüyor, veritabanından okunuyor (K103).
+ *
+ * Sebebi bu sayfada iki kat önemli: dürüstlük sayfasında eskimiş bir sayı,
+ * sayfanın kendi iddiasını çürütür.
+ */
+export async function getDurustlukSayilari(): Promise<DurustlukSayilari> {
+  const [gpuChips, gpuCards, cpus, olcumler, points, fiyatli, wiki] = await Promise.all([
+    prisma.gpuSpecs.count({ where: { part: visibleParts() } }),
+    prisma.gpuVariantSpecs.count({ where: { part: visibleParts() } }),
+    prisma.cpuSpecs.count({ where: { part: visibleParts() } }),
+    prisma.perfIndex.findMany({
+      where: { workload: "gaming", model_version: MODEL_VERSION },
+      select: { part_id: true },
+    }),
+    prisma.benchmarkPoint.count(),
+    prisma.priceSnapshot.groupBy({ by: ["part_id"] }),
+    prisma.specFieldSource.count({ where: { source: "wikipedia" } }),
+  ]);
+  const gpuIds = new Set(
+    (await prisma.gpuSpecs.findMany({ select: { part_id: true } })).map((r) => r.part_id),
+  );
+  return {
+    gpuChips,
+    gpuCards,
+    cpus,
+    measuredGpu: olcumler.filter((o) => gpuIds.has(o.part_id)).length,
+    measuredCpu: olcumler.filter((o) => !gpuIds.has(o.part_id)).length,
+    points,
+    pricedParts: fiyatli.length,
+    wikiFields: wiki,
+  };
+}

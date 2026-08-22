@@ -31,6 +31,10 @@ export const NAMESPACES = [
   "compatibility",
   "performance",
   "pricing",
+  // Dürüstlük sayfası (/hakkinda). Kendi ad alanı çünkü tek bir sayfaya ait
+  // ve o sayfa uzun: parts.json'a karışsaydı hangi metnin nerede kullanıldığı
+  // görünmez olurdu.
+  "about",
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];

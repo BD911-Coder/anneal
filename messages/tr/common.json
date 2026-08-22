@@ -28,5 +28,6 @@
     "saveFailed": "Sistem kaydedilemedi.",
     "feedbackEmpty": "Önce bir şeyler yazın.",
     "feedbackTooLong": "Mesaj çok uzun. Lütfen kısaltın."
-  }
+  },
+  "aboutLink": "Bu sayılar nasıl üretiliyor →"
 }

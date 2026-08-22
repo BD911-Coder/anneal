@@ -1,0 +1,43 @@
+{
+  "title": "How these numbers are made",
+  "intro": "Every site that estimates PC performance shows you a number. This page is about the part they leave out: how the number was produced, how far off it can be, and what we do not know.",
+  "measured": {
+    "heading": "What is measured",
+    "body": "A performance index is only written for a part when there are published benchmark measurements behind it. Today that is <b>{measuredGpu}</b> graphics chips and <b>{measuredCpu}</b> processors, out of {gpuChips} chips and {cpus} processors in the catalogue. The measurements come from <b>{points}</b> published data points.",
+    "games": "Game-level FPS comes from the same measurements: <b>{games1440}</b> games at 1440p and <b>{games2160}</b> at 4K. A game enters the list only when at least three different graphics cards were measured in it.",
+    "noBlend": "We do not blend measurements from different reviewers. Two outlets test on different systems, drivers and scene choices; averaging them would produce a number that nobody measured."
+  },
+  "estimated": {
+    "heading": "What is estimated",
+    "body": "Everything else. A part without measurements gets an index predicted from its specifications, and the interface marks it with <b>≈</b> and an error band. An estimated number never pretends to be a measured one.",
+    "how": "The model fits <code>index = k × x^b</code> inside an architecture family, where x is bus width × boost clock for graphics cards and boost clock × √L3 for processors. If a family has fewer than four measurements it cannot carry its own band, and the prediction falls back to a model trained on the other families — with that model's wider band.",
+    "cards": "Add-in board cards inherit the index of their chip. A factory-overclocked card is not measured separately, and we do not invent a number for it from its clock speed."
+  },
+  "bands": {
+    "heading": "What the error band means",
+    "body": "The band is a leave-one-out measurement, not a guess. Every measured point is predicted from the other points, without its own data, and the errors are collected. The published number is the <b>90th percentile</b>: nine out of ten predictions land inside it.",
+    "numbers": "Game FPS: mean error <b>{fpsMean}%</b>, 90th percentile <b>{fpsP90}%</b>, worst single point <b>{fpsMax}%</b>. Index prediction: from <b>±{bandBest}%</b> inside a well-measured family up to <b>±{bandWorst}%</b> when the family has no measurements at all.",
+    "worst": "The worst case is published on purpose. A band that hides its tail is a marketing number."
+  },
+  "specs": {
+    "heading": "Where the specifications come from",
+    "body": "The manufacturer's own product page is the primary source and is never overwritten. Where a manufacturer does not publish a value, an external source may fill the gap — but only into an empty field, and the source is recorded <b>per field</b>, not per row.",
+    "wikipedia": "Wikipedia currently supplies <b>{wikiFields}</b> values, mostly memory bandwidth and transistor counts that NVIDIA does not publish at all. Wherever such a value is displayed, the article title, revision number and CC BY-SA licence are displayed with it.",
+    "checks": "Stored values are checked against each other: memory bandwidth against bus width, VRAM against bus width and chip capacity, TDP against recommended power supply, and a dozen more. A value that is physically impossible is caught even when no external source disagrees. That check found and corrected an error of ours in the RTX 5060 Ti's memory bandwidth."
+  },
+  "unknown": {
+    "heading": "What this site does not know",
+    "cpu": "Game FPS numbers are graphics-card-limited. The processor measurements and the graphics-card measurements share no games, so the processor does not enter the FPS number at all. The interface says so where the list appears.",
+    "resolution": "There are no 1080p measurements in the game list. Only 1440p and 4K.",
+    "coverage": "Of {gpuCards} selectable graphics cards, only those descending from a measured chip can show game FPS. The rest show compatibility results and an estimated index.",
+    "price": "Prices exist for {pricedParts} parts, entered by hand, in USD. This is not a price comparison site.",
+    "platform": "Desktop only. Laptops and consoles are different hardware and are not covered.",
+    "proxy": "We considered anchoring unmeasured families to public synthetic benchmark scores. The source we would have used does not permit automated access, so the idea is untested — not disproved."
+  },
+  "audit": {
+    "heading": "How to check us",
+    "body": "Every permanent decision, including the ones that went badly, is written down with its reasoning and its date. Estimation quality is tracked against a frozen baseline, so a change that makes predictions worse fails a check rather than passing quietly.",
+    "note": "If a number on this site looks wrong, it is more useful to us than a compliment. The feedback box on the front page reaches the same person who wrote this page."
+  },
+  "updated": "Coverage numbers on this page are read from the database on every request, not typed into the text."
+}
