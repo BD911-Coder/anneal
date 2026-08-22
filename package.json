@@ -31,7 +31,8 @@
     "indeks:tahmin-sapma": "node scripts/measure-index-prediction.mts",
     "spec:kapsam": "node scripts/check-spec-coverage.mts",
     "indeks:tahmin": "node scripts/compute-index-estimates.mts",
-    "wikidata:deneme": "node scripts/import-wikidata-specs.mts"
+    "wikidata:deneme": "node scripts/import-wikidata-specs.mts",
+    "wikipedia:deneme": "node scripts/import-wikipedia-specs.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

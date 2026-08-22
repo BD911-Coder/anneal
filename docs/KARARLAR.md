@@ -3572,3 +3572,69 @@ sıfır döndü.
 
 `transistor_count_m` **kalıyor**: AMD yayınlıyor ve Wikipedia NVIDIA tablosunda
 6 geçiş var — az ama sıfır değil.
+
+### K168 — Wikipedia wikitext ayrıştırma kuralları
+
+**2026-08-22.** `scripts/import-wikipedia-specs.mts`, MediaWiki API,
+kuru çalışma. K165'in bıraktığı yerden: veri Wikipedia tablolarında.
+
+**1. Sütun eşlemesi indekse değil BAŞLIĞA bakar.** Sütun sırası nesilden
+nesile değişiyor — RTX 30 tablosunda TDP 23., RTX 50'de 25. sütun. Sabit
+indeks bir nesilde doğru, ötekinde sessizce yanlış olurdu.
+
+**2. Birim başlıktan okunur; birimsiz sütun KULLANILMAZ.** `transistors
+(billion)` ×1000 ile milyona çevriliyor, `(million)` ×1 ile. Birim yazmayan
+tablo atlanıyor — "muhtemelen milyondur" bir tahmindir ve K60'a girer.
+Bedeli ölçüldü ve kabul edildi: AMD'nin `TBP` sütunu birimsiz olduğu için
+AMD'den TDP okunmuyor. Kayıp yok, TDP zaten 60/60 dolu.
+
+**3. Belirsiz hücre tahmin edilmez, GEREKÇESİYLE kaydedilir.** `"System
+shared 64/128"` (tümleşik GPU), `"2x 128"` (çift çipli kart), `"128-256"`
+(aralık) — üçü de sayı içeriyor ama hiçbiri tek bir değer değil. Sessizce
+atlamak kapsamı olduğundan iyi gösterirdi; ölçmeye çalıştığımız şey kapsam.
+790 satırdan 120'si böyle kaydedildi.
+
+**4. Çözüm ALAN BAŞINA, satır başına değil.** Aynı model adı birden çok
+satırda geçebiliyor ve bu her zaman hata değil: NVIDIA "RTX 4060"ı iki farklı
+çiple yayınladı; satırlar bant genişliğinde AYNI, transistör sayısında
+FARKLI. Önce satırın tamamı atılıyordu ve bu, transistör çelişkisi yüzünden
+bant genişliğini de kaybettiriyordu. Artık adaylar bir alanda anlaşıyorsa o
+alan kullanılıyor, anlaşmıyorsa yalnızca O ALAN düşüyor.
+
+**5. Bölüm süzgeci güvenlik meselesi.** Yalnızca "Desktop" başlığı altındaki
+tablolar okunuyor. Aynı model adı dizüstü tablosunda da var ve değerleri
+farklı: "RTX 4090" dizüstünde 576 GB/s, masaüstünde 1008 GB/s. Süzgeç
+olmasaydı ayrıştırıcı yanlış satırı doğru sanardı.
+
+**6. Şablonla gelen tablolar kendi revizyonlarıyla atıf alır.** AMD'nin
+RX 7000/9000 ve Intel'in Arc tabloları makalenin wikitext'inde yok; ayrı
+şablon sayfalarında duruyor. O sayfalar ayrıca çekiliyor ve satır o sayfanın
+revizyon numarasını taşıyor — CC BY-SA atfı veriyi taşıyan sayfaya verilmek
+zorunda, çağıran makaleye değil.
+
+**7. Eşleştirme sınırı veriden okunur, kalıptan değil.** Katalog adındaki
+bellek eki (`...8GB`) düşürülürken kaç basamak kesileceği parçanın kendi
+`vram_gb` değerinden alınıyor. Kalıpla iki kez yanlış kesildi: `\d+gb$`
+"rtx30508gb"i "rtx" yaptı, `\d{1,2}gb$` "rtx305" yaptı — ikisi de model
+numarasını yuttu.
+
+**8. Uzlaştırma: üretici ezilmez, çelişki insana gider.** Bu tur üç çelişki
+buldu ve üçü de yayınlanmadı, düzeltilmedi:
+
+```
+nvidia-rtx-5060-ti-16gb  memory_bandwidth_gbs  bizde 576  wiki 448  %22.2
+nvidia-rtx-5060-ti-8gb   memory_bandwidth_gbs  bizde 576  wiki 448  %22.2
+nvidia-rtx-5060          memory_bandwidth_gbs  bizde 480  wiki 448   %6.7
+```
+
+**Kimin haklı olduğunu üçüncü bir sayı söylüyor.** CLAUDE.md'deki çapraz
+kontrol tersine çevrildi: `bellek hızı = bant genişliği × 8 ÷ veri yolu`.
+RTX 5060 Ti'da bizim değerimiz **36 Gbps** ima ediyor — öyle bir bellek yok.
+Wikipedia'nınki 28 Gbps veriyor, GDDR7'nin bu karttaki gerçek hızı.
+**Bizim satırımız yanlış.** Yine de dış kaynak üzerine yazmadı: kural bir
+çelişki bulunduğu için gevşetilmez, düzeltme üretici sayfasından yapılır.
+
+Bu kontrol script'e kalıcı olarak eklendi (`TUTARLILIK KONTROLU` bölümü).
+
+**9. `--apply` YOK.** Sebebi teknik değil, şema: dış değerin nereye yazılacağı
+kararsız (`SORULAR.md` S48).
