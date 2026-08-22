@@ -8,7 +8,7 @@
   "unconvertibleCount": "{count, plural, one {# part's currency} other {# parts' currencies}} could not be converted and did not enter the total.",
   "rateNoteManual": "Prices are converted from {source} using a manually entered rate: 1 {source} = {rate} ({date}). This is not a live rate.",
   "rateNoteAuto": "1 {source} = {rate} ({date}).",
-  "coverageNote": "Only on some parts and from a single source. The source publishes {source}; the screen shows {target} using a manually entered rate",
+  "coverageNote": "Only on some parts and from a single source, in the currency the source publishes ({source}).",
   "upgrade": {
     "heading": "Upgrade suggestion",
     "budgetLabel": "Extra budget",

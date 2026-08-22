@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import type { CurrentPrice } from "@/data/prices";
+import type { ResolvedIndex } from "@/data/perf";
 import type { BuilderCatalog } from "@/data/parts";
 import { checkCompatibility } from "@/engine/compatibility";
 import type { DefaultBuild } from "@/engine/default-build";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import type { FpsGameGroup } from "@/engine/fps-estimate";
 import { resolveGpuSelection, resolvePerfIndex } from "@/engine/gpu-selection";
+import { compoundBand } from "@/engine/index-prediction";
 import { bandKeyFor, computePerformance } from "@/engine/performance";
 import { suggestUpgrades } from "@/engine/upgrade";
 import type {
@@ -71,7 +73,12 @@ type Selection = Partial<Record<EngineCategory, string>>;
 type BuilderProps = {
   catalog: BuilderCatalog;
   prices: Record<string, CurrentPrice>;
-  perfIndexes: Record<string, number>;
+  /**
+   * Çözümlenmiş indeksler: ölçülen kazanır, tahmin boşluğu doldurur ve her
+   * kayıt hangisi olduğunu söylüyor (K160). Arayüz bu ayrımı GÖSTERMEK
+   * zorunda; düz sayı alsaydı tahmini ölçüm gibi çizerdi.
+   */
+  perfIndexes: Record<string, ResolvedIndex>;
   fpsGroups: FpsGameGroup[];
   /**
    * Sayfa ilk açıldığında dolu gelecek seçim (K144).
@@ -101,6 +108,14 @@ export function Builder({
   const tPrice = useTranslations("pricing");
   const tCommon = useTranslations("common");
   const locale = useLocale();
+  const tEst = useTranslations("performance.estimate");
+
+  /**
+   * Motorun beklediği düz harita. Motor "bu sayı ölçüldü mü" diye sormuyor:
+   * indeksi girdi olarak alıyor, kaynağını değil.
+   */
+  const indexValues: Record<string, number> = {};
+  for (const [id, r] of Object.entries(perfIndexes)) indexValues[id] = r.value;
 
   /** Sayı biçimi dile göre: binlik ve ondalık ayracı değişiyor. */
   const sayi = (value: number) => formatNumber(value, locale);
@@ -218,13 +233,23 @@ export function Builder({
   // İndeks iki seviyeli okunur: kartın kendi ölçümü varsa o, yoksa çipinki (K86).
   // Bugün kart indeksi hiç yok, o yüzden origin her zaman "chip" çıkıyor —
   // ama arayüz bunu söylemek zorunda, çipin sayısı kartın ölçümü değildir.
-  const gpuIndex = resolvePerfIndex(perfIndexes, gpuChipId, gpuVariantId);
+  const gpuIndex = resolvePerfIndex(indexValues, gpuChipId, gpuVariantId);
+
+  // Sistem indeksinin iki girdisi var; HANGISI TAHMINSE tureyen sayi da
+  // tahmindir (K163). Hangi id'nin indeksi kullanildiysa onun kaydi okunuyor:
+  // kartin kendi olcumu yoksa cipinki gecerli (K86).
+  const gpuIndexId = gpuIndex.origin === "variant" ? gpuVariantId : gpuChipId;
+  const gpuResolved = gpuIndexId ? perfIndexes[gpuIndexId] : undefined;
+  const cpuResolved = cpuId ? perfIndexes[cpuId] : undefined;
+  const bandOf = (r?: ResolvedIndex) => (r && r.origin === "estimated" ? r.bandPct : 0);
+  const tahminliGirdi =
+    gpuResolved?.origin === "estimated" || cpuResolved?.origin === "estimated";
 
   // Darboğaz göstergesi "bu parçayı katalogdaki en iyisiyle değiştirsem ne
   // kazanırım?" diye soruyor (K83). Motor katalogu tanımıyor; en iyileri
   // burada bulup girdi olarak veriyoruz.
   const bestIndex = (items: { id: string }[]) => {
-    const values = items.map((item) => perfIndexes[item.id]).filter((v) => v !== undefined);
+    const values = items.map((item) => indexValues[item.id]).filter((v) => v !== undefined);
     return values.length > 0 ? Math.max(...values) : undefined;
   };
   const bestGpuIndex = bestIndex(catalog.gpu);
@@ -249,7 +274,7 @@ export function Builder({
   const performance = computePerformance({
     resolution,
     gpu_index: gpuIndex.value,
-    cpu_index: cpuId ? perfIndexes[cpuId] : undefined,
+    cpu_index: cpuId ? indexValues[cpuId] : undefined,
     best_gpu_index: bestGpuIndex,
     best_cpu_index: bestCpuIndex,
   });
@@ -268,12 +293,12 @@ export function Builder({
     resolution,
     current: {
       gpu: toUpgradePart(gpuPartId, prices, gpuIndex.value),
-      cpu: toUpgradePart(cpuId, prices, cpuId ? perfIndexes[cpuId] : undefined),
+      cpu: toUpgradePart(cpuId, prices, cpuId ? indexValues[cpuId] : undefined),
     },
     budget_delta_minor: budgetMinor,
     candidates: {
-      gpu: toCandidates(catalog.gpu, prices, perfIndexes),
-      cpu: toCandidates(catalog.cpu, prices, perfIndexes),
+      gpu: toCandidates(catalog.gpu, prices, indexValues),
+      cpu: toCandidates(catalog.cpu, prices, indexValues),
     },
   });
 
@@ -318,26 +343,17 @@ export function Builder({
 
   const hicSecimYok = secilenSayisi === 0;
 
-  /**
-   * Bu parçanın FPS tahmini üretilebiliyor mu? (K145)
-   *
-   * Cevap `perf_index` tablosundan geliyor, gömülü bir listeden değil: ölçüm
-   * eklendiğinde ya da silindiğinde gruplar kendiliğinden değişir.
-   *
-   * Kartlar (AIB) çiplerinin durumunu miras alır — indeks zaten iki seviyeli
-   * okunuyor ve kartın kendi ölçümü yoksa çipinki kullanılıyor (K86, K87).
-   */
-  const olcumlu = (id: string) => perfIndexes[id] !== undefined;
-  const olcumluKart = (variant: { chip_part_id: string; id: string }) =>
-    olcumlu(variant.id) || olcumlu(variant.chip_part_id);
+  /*
+    K145'teki "Ölçümlü / Ölçüm yok" gruplaması KALDIRILDI (K162).
 
-  /** Ölçümlüler önce. Grup içindeki sıra katalogdan geldiği gibi kalıyor. */
-  function olcumeGoreAyir<T extends { id: string }>(items: readonly T[]) {
-    return {
-      olcumlu: items.filter((item) => olcumlu(item.id)),
-      olcumsuz: items.filter((item) => !olcumlu(item.id)),
-    };
-  }
+    O ayrım, katalogun bir bölümünde hiç sonuç çıkmadığı için vardı: kullanıcı
+    seçmeden önce boş panele düşeceğini bilmeliydi. Kapsam tamamlanınca
+    (60/60 çip, 42/42 işlemci bir değer döndürüyor) ayrımın anlattığı durum
+    ortadan kalktı. Bugün her seçim sonuç veriyor; fark sonucun ÖLÇÜLDÜ mü
+    TAHMİN mi olduğu ve o, sonucun yanında bandıyla birlikte yazıyor.
+
+    Listede tutmak, olmayan bir engeli varmış gibi göstermek olurdu.
+  */
 
   /** Seçenek metni: ad + (varsa) fiyat. Fiyat çevrilemiyorsa hiç yazılmıyor. */
   function secenekMetni(id: string, label: string): string {
@@ -380,67 +396,13 @@ export function Builder({
                   }}
                 >
                   <option value="">{t("notSelected")}</option>
-                  {/*
-                    Ekran kartı ve işlemci ÖLÇÜM DURUMUNA göre ikiye ayrılıyor
-                    (K145). Katalogda 331 parça var ama ölçümü olan 15 ekran
-                    kartı ve 12 işlemci; ayrım olmadan kullanıcı büyük
-                    ihtimalle ölçümsüz bir parça seçip üç boş panele bakıyordu.
-                    Sonucu SEÇMEDEN ÖNCE görsün diye ölçümsüz seçeneklerin
-                    metnine de kısa bir işaret ekleniyor.
-
-                    Diğer kategorilerde indeks kavramı yok; onlar düz liste.
-                  */}
-                  {category === "gpu" || category === "cpu" ? (
-                    (() => {
-                      // `catalog[category]` iki farklı spec tipinin birleşimi;
-                      // gruplama yalnızca `id` alanına bakıyor, spec tipini
-                      // hiç okumuyor. Daraltma bu yüzden güvenli.
-                      const gruplar = olcumeGoreAyir<{ id: string; label: string }>(
-                        catalog[category],
-                      );
-                      return (
-                        <>
-                          {gruplar.olcumlu.length > 0 && (
-                            <optgroup label={t("coverageGroup.measured")}>
-                              {gruplar.olcumlu.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {secenekMetni(item.id, item.label)}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )}
-                          {gruplar.olcumsuz.length > 0 && (
-                            <optgroup label={t("coverageGroup.unmeasured")}>
-                              {gruplar.olcumsuz.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {secenekMetni(item.id, item.label)} · {t("unmeasuredMarker")}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )}
-                        </>
-                      );
-                    })()
-                  ) : (
-                    catalog[category].map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {secenekMetni(item.id, item.label)}
-                      </option>
-                    ))
-                  )}
+                  {/* Düz liste: her seçim bir sonuç veriyor (K162). */}
+                  {catalog[category].map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {secenekMetni(item.id, item.label)}
+                    </option>
+                  ))}
                 </select>
-
-                {/* Seçim yapıldıktan sonra da görünsün: açılır liste kapanınca
-                    optgroup başlığı kaybolur, sonuç kaybolmamalı. */}
-                {(category === "gpu" || category === "cpu") &&
-                  selection[category] !== undefined &&
-                  !olcumlu(selection[category]!) && (
-                    <p className="text-xs leading-relaxed text-muted">
-                      {t("unmeasuredNote", {
-                        category: kategoriAdi(category).toLocaleLowerCase(locale),
-                      })}
-                    </p>
-                  )}
               </div>
 
               {/*
@@ -464,13 +426,12 @@ export function Builder({
                     }}
                   >
                     <option value="">{t("variant.unspecified")}</option>
-                    {/* Kart, çipinin ölçüm durumunu miras alır (K86, K87):
-                        kartın kendi indeksi yoksa çipinki kullanılıyor. Çipi
-                        ölçümsüzse kart da FPS üretemez ve bunu söylüyor. */}
+                    {/* Kart, çipinin indeksini miras alır (K86, K87). Çipin
+                        indeksi ölçüm de olabilir tahmin de; hangisi olduğu
+                        sonucun yanında yazıyor (K162). */}
                     {variantsForChip.map((variant) => (
                       <option key={variant.id} value={variant.id}>
                         {secenekMetni(variant.id, variant.label)}
-                        {olcumluKart(variant) ? "" : ` · ${t("unmeasuredMarker")}`}
                       </option>
                     ))}
                   </select>
@@ -673,8 +634,29 @@ export function Builder({
                   {/* Sayı ile etiketi arasında belirgin hiyerarşi. */}
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <output className="num text-4xl font-semibold tracking-tight">
+                      {tahminliGirdi && (
+                        <span aria-hidden="true" className="text-muted">
+                          {tEst("prefix")}
+                        </span>
+                      )}
                       <CountUp value={performance.system_index} />
                     </output>
+                    {tahminliGirdi && (
+                      <span className="inline-flex shrink-0 items-baseline gap-1 rounded border border-dashed border-border px-1.5 py-0.5 text-[11px] text-muted">
+                        <span className="num">
+                          {tEst("band", {
+                            band: sayi(
+                              compoundBand([
+                                { bandPct: bandOf(gpuResolved), weight: performance.weights.gpu },
+                                { bandPct: bandOf(cpuResolved), weight: performance.weights.cpu },
+                              ]),
+                            ),
+                          })}
+                        </span>
+                        <span>·</span>
+                        <span>{tEst("derivedEstimate")}</span>
+                      </span>
+                    )}
                     {/* K73: 100 tavan değil, sabit referans sistemin değeri. */}
                     <span className="text-sm text-muted">
                       {tPerf.rich("systemIndex.suffix", {
@@ -730,6 +712,15 @@ export function Builder({
                         {tPerf("systemIndex.chipMeasurement", { chip: gpuChip?.label ?? "" })}
                       </p>
                     )}
+                    {tahminliGirdi && <p>{tEst("derivedBandNote")}</p>}
+                    {/* Aile içinde doğrulanamamış tahmin: bant geniş ve bunu
+                        söylemek zorundayız (K156, kullanıcının kuralı). */}
+                    {(gpuResolved?.origin === "estimated" &&
+                      gpuResolved.bandSourceFamily === null) ||
+                    (cpuResolved?.origin === "estimated" &&
+                      cpuResolved.bandSourceFamily === null) ? (
+                      <p>{tEst("wideBandNote")}</p>
+                    ) : null}
                     {/* Hata payı ölçülür, tahmin edilmez (K79). */}
                     <p>
                       {tPerf("systemIndex.margin", {
@@ -808,7 +799,8 @@ export function Builder({
                     gpuSelected
                     resolution={resolution}
                     hasDataForResolution={fpsGroupsForRes.length > 0}
-                    cpuIndex={cpuId ? perfIndexes[cpuId] : undefined}
+                    gpuIndexOrigin={gpuResolved}
+                    cpuIndex={cpuId ? indexValues[cpuId] : undefined}
                     cpuLabel={cpuId ? catalog.cpu.find((c) => c.id === cpuId)?.label : undefined}
                     bottleneck={performance.ok ? performance.bottleneck : null}
                   />

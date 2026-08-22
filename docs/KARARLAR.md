@@ -3445,3 +3445,41 @@ arayüz bunun geniş olduğunu söylüyor.
 
 Sonuç kapsam: **60 ekran kartı çipi = 15 ölçülen + 45 tahmin**,
 **42 işlemci = 12 ölçülen + 30 tahmin**. Boş panel kalmadı.
+
+### K162 — "Ölçümlü / Ölçüm yok" gruplaması KALDIRILDI
+
+K145 açılır listeleri ölçüm durumuna göre ikiye ayırıyordu. O ayrım, katalogun
+bir bölümünde **hiç sonuç çıkmadığı** için vardı: kullanıcı seçmeden önce boş
+panele düşeceğini bilmeliydi.
+
+Kapsam tamamlanınca (60/60 çip, 42/42 işlemci bir değer döndürüyor) ayrımın
+anlattığı durum ortadan kalktı. Bugün her seçim sonuç veriyor; fark sonucun
+**ölçüldü mü tahmin mi** olduğu ve o, sonucun yanında bandıyla yazıyor.
+
+Listede tutmak, olmayan bir engeli varmış gibi göstermek olurdu.
+
+### K163 — Tahmin durumu türetilen sayılara TAŞINIR
+
+Sistem indeksinin iki girdisi var; **biri tahminse türeyen sayı da tahmindir**
+ve `≈` ile bandıyla gösteriliyor.
+
+Birleşik bant **ağırlıklı toplam**, karekök değil. Bağımsız hatalar için
+`√(a²+b²)` daha dar bir bant verirdi ama bu iki hata bağımsız değil: ikisi de
+aynı ölçüm kümesinden, aynı yöntemle türetildi ve aynı yönde sapabilirler.
+Toplamak geniş taraftan yanılmak demek — bir tahmin bandında doğru yön budur.
+
+Oyun bazlı FPS'te bant iki parçalı: indeksin kendi bandı **+** FPS
+türetmesinin ölçülmüş hata payı. Ölçülmüş bir oyun satırı bile, kartın
+indeksi tahminse "tahmin" sayılıyor: ölçüm başka bir kartta yapıldı, bu karta
+indeks üzerinden taşındı.
+
+Örnek (RX 6600, ailesinde hiç ölçüm yok): sistem indeksi `≈77.6 ±%23`,
+Alan Wake 2 `≈37 FPS ±%46.3` (30.7 + 15.6).
+
+### K164 — Varsayılan sistem yalnızca ÖLÇÜLMÜŞ parçalardan kurulur
+
+Kapsam tamamlandığı için tahmin edilmiş bir parça da sonuç verirdi. Yine de
+varsayılan seçim `getMeasuredPerfIndexes` ile kuruluyor.
+
+**Gerekçe:** kullanıcının gördüğü ilk ekran, sitenin neye dayandığını
+göstermeli. Önce ölçülmüş veri, sonra boşluğun nasıl doldurulduğu.

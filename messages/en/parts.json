@@ -10,12 +10,6 @@
     "storage": "Storage"
   },
   "notSelected": "— not selected —",
-  "coverageGroup": {
-    "measured": "Measured — FPS estimate available",
-    "unmeasured": "No measurement — compatibility check only"
-  },
-  "unmeasuredMarker": "no measurement",
-  "unmeasuredNote": "There is no measurement for this {category}: the compatibility check still runs, but FPS and the system index cannot be calculated. Parts listed under \"Measured\" show both.",
   "variant": {
     "label": "Card model",
     "optional": "optional",
@@ -32,10 +26,10 @@
   "coverage": {
     "gamesTitle": "Games with measurements",
     "games": "<b>{count}</b> games produce an FPS list. A game enters the list once it has been measured on at least three different graphics cards.",
-    "gpusTitle": "Graphics cards with measurements",
-    "gpus": "<b>{chips}</b> chips measured; because cards inherit their chip's measurement, <b>{options}</b> options show FPS — out of <b>{total}</b> graphics cards.",
-    "cpusTitle": "Processors with measurements",
-    "cpus": "<b>{measured}</b> processors measured, out of <b>{total}</b>. The system index requires a measurement on both sides."
+    "gpusTitle": "Graphics card coverage",
+    "gpus": "<b>{measured}</b> of <b>{total}</b> chips are measured; the rest carry a spec-derived estimate. Every card returns a value.",
+    "cpusTitle": "Processor coverage",
+    "cpus": "<b>{measured}</b> of <b>{total}</b> processors are measured; the rest carry a spec-derived estimate."
   },
   "empty": {
     "heading": "Pick parts on the left",

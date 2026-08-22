@@ -1,12 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
 import { getFpsGameGroups } from "@/data/benchmarks";
-import { getPerfIndexes } from "@/data/perf";
+import { getMeasuredPerfIndexes, getResolvedPerfIndexes } from "@/data/perf";
 import { getBuilderCatalog } from "@/data/parts";
 import { getCurrentPrices } from "@/data/prices";
 import { pickDefaultBuild } from "@/engine/default-build";
 import { MODEL_VERSION } from "@/engine/performance";
-import { DISPLAY_CURRENCY, SOURCE_CURRENCY } from "@/lib/currency";
+import { SOURCE_CURRENCY } from "@/lib/currency";
 
 import { Builder } from "./builder";
 import { FeedbackForm } from "./feedback-form";
@@ -28,7 +28,9 @@ export default async function HomePage() {
     getBuilderCatalog(),
     getCurrentPrices(),
     // Sayfanın okuduğu sürüm ile motorun ürettiği sürüm hep aynı olmalı.
-    getPerfIndexes(MODEL_VERSION),
+    // Çözümlenmiş indeks: ölçülen kazanır, tahmin boşluğu doldurur ve her
+    // kayıt hangisi olduğunu söylüyor (K160).
+    getResolvedPerfIndexes(MODEL_VERSION),
     // Oyun bazlı FPS ölçümleri (Faz A.1). Türetilen FPS hiçbir tabloya
     // yazılmaz; burada okunanlar ham ölçümler, hesap istemcide yapılıyor.
     getFpsGameGroups(MODEL_VERSION),
@@ -58,18 +60,25 @@ export default async function HomePage() {
   // ölçülmüş çip sayısı, `fpsGosterilebilen` ise kullanıcının seçebileceği
   // ve sonuç alabileceği SEÇENEK sayısı. Etiket hangisini saydığını
   // söylemezse, 94 sayısı katalogdaki 213 ekran kartıyla karıştırılıyor.
-  const olcumluCip = catalog.gpu.filter((chip) => perfIndexes[chip.id] !== undefined).length;
-  const olcumluKart = catalog.gpu_variant.filter(
-    (card) => perfIndexes[card.chip_part_id] !== undefined,
-  ).length;
-  const fpsGosterilebilen = olcumluCip + olcumluKart;
-  const toplamEkranKarti = catalog.gpu.length + catalog.gpu_variant.length;
-  const olcumluCpu = catalog.cpu.filter((cpu) => perfIndexes[cpu.id] !== undefined).length;
+  // Kapsam artık TAM (K161): her çip ve her işlemci bir değer döndürüyor.
+  // Anlamlı sayı "kaç tanesi ÖLÇÜLDÜ" — kalanı tahmin.
+  const olculen = (id: string) => perfIndexes[id]?.origin === "measured";
+  const olcumluCip = catalog.gpu.filter((chip) => olculen(chip.id)).length;
+  const olcumluCpu = catalog.cpu.filter((cpu) => olculen(cpu.id)).length;
 
   // Sayfa dolu açılsın: ölçümü olan bir ekran kartı + işlemci ve bunlarla
   // uyumlu bir sistem (K144). Sunucuda hesaplanıyor, istemciye yalnızca
   // seçilen id'ler gidiyor.
-  const defaultSelection = pickDefaultBuild(catalog, perfIndexes);
+  // Motor sayı bekliyor, kaynağını değil: düz haritaya indiriliyor.
+  const indexValues: Record<string, number> = {};
+  for (const [id, r] of Object.entries(perfIndexes)) indexValues[id] = r.value;
+
+  // Varsayılan sistem YALNIZCA ölçülmüş parçalardan kuruluyor (K164).
+  // Kapsam tamamlandığı için tahmin edilmiş bir parça da sonuç verirdi, ama
+  // kullanıcının gördüğü ilk ekran ölçülmüş veriyi göstermeli: site önce
+  // neye dayandığını göstersin, sonra boşluğu nasıl doldurduğunu.
+  const measuredOnly = await getMeasuredPerfIndexes(MODEL_VERSION);
+  const defaultSelection = pickDefaultBuild(catalog, measuredOnly);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
@@ -96,9 +105,8 @@ export default async function HomePage() {
             <dt className="font-semibold">{tParts("gpusTitle")}</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
               {tParts.rich("gpus", {
-                chips: olcumluCip,
-                options: fpsGosterilebilen,
-                total: toplamEkranKarti,
+                measured: olcumluCip,
+                total: catalog.gpu.length,
                 b: (chunks) => <span className="num font-medium text-foreground">{chunks}</span>,
               })}
             </dd>
@@ -116,7 +124,7 @@ export default async function HomePage() {
           <div>
             <dt className="font-semibold">{tPricing("coverageTitle")}</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              {tPricing("coverageNote", { source: SOURCE_CURRENCY, target: DISPLAY_CURRENCY })}
+              {tPricing("coverageNote", { source: SOURCE_CURRENCY })}
             </dd>
           </div>
         </dl>

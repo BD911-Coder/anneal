@@ -217,3 +217,33 @@ export function confidenceFor(bandPct: number): "high" | "medium" | "low" {
 function round1(v: number): number {
   return Math.round(v * 10) / 10;
 }
+
+/**
+ * İki tahminin bandını birleştirir.
+ *
+ * `ağırlıklı toplam`: sistem indeksi ekran kartı ve işlemci indekslerinin
+ * ağırlıklı bileşimi olduğu için bantları da aynı ağırlıklarla toplanıyor.
+ *
+ * **Toplanıyor, karekök alınmıyor.** Bağımsız hatalar için `√(a²+b²)` daha
+ * dar bir bant verirdi ama bu iki hata bağımsız değil: ikisi de aynı ölçüm
+ * kümesinden, aynı yöntemle türetildi ve aynı yönde sapabilirler. Toplamak
+ * geniş taraftan yanılmak demek — bir tahmin bandında doğru yön budur.
+ */
+export function compoundBand(
+  parts: readonly { bandPct: number; weight: number }[],
+): number {
+  const total = parts.reduce((s, p) => s + p.weight, 0);
+  if (total === 0) return 0;
+  const v = parts.reduce((s, p) => s + p.bandPct * p.weight, 0) / total;
+  return Math.round(v * 10) / 10;
+}
+
+/**
+ * Türetilen bir sayının bandı: girdinin bandı + türetmenin kendi hata payı.
+ *
+ * Oyun bazlı FPS böyle: kartın indeksi tahminse o bant taşınıyor, üstüne
+ * FPS türetmesinin ölçülmüş hata payı ekleniyor.
+ */
+export function deriveBand(inputBandPct: number, ownMarginPct: number): number {
+  return Math.round((inputBandPct + ownMarginPct) * 10) / 10;
+}
