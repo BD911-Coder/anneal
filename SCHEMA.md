@@ -140,10 +140,23 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `boost_clock_mhz` | int? |
 | `memory_bandwidth_gbs` | float? |
 | `bus_width_bits` | int? |
-| `architecture_family` | text? |
+| `architecture_family` | enum? (`ArchitectureFamily`) |
+| `process_node_nm` | int? |
+| `transistor_count_m` | int? (milyon adet) |
 
-`bus_width_bits` ve `architecture_family` **indeks tahmini için** eklendi
-(K154). İkisi de üç üreticinin de yayınladığı alanlar:
+`bus_width_bits`, `architecture_family`, `process_node_nm` ve
+`transistor_count_m` **indeks tahmini için** eklendi (K154, K158).
+
+Mimari ailesi alanı **kontrollü listedir**, serbest metin değil (K158).
+Tahmin "önce aile içinde" yapılıyor ve aile bir gruplama anahtarı; serbest
+metin olsaydı `RDNA 4` ile `RDNA4` iki ayrı aile sayılır, grup ikiye bölünür
+ve doğrulama sessizce anlamsızlaşırdı. Hem ekran kartında hem işlemcide var.
+
+`process_node_nm` ve `transistor_count_m` **seyrektir ve öyle kalacaktır**:
+üreticiler bunları tutarsız yayınlıyor. Doluluk `npm run spec:kapsam` ile
+ölçülüyor; tahmin ekseni seçilirken o rapora bakılır.
+
+İlk ikisi üç üreticinin de yayınladığı alanlar:
 
 - `bus_width_bits` — NVIDIA "Memory Interface Width", AMD "Memory Interface",
   Intel "Graphics Memory Interface". **Bant genişliğinin yerine geçiyor:**
@@ -252,8 +265,12 @@ yapılandırılır. Bkz. `SORULAR.md` S38.
 | `memory_type` | enum (`DDR4`, `DDR5`, `DDR4/DDR5`) |
 | `has_igpu` | bool |
 | `l3_cache_mb` | int? |
+| `architecture_family` | enum? (`ArchitectureFamily`) |
+| `process_node_nm` | int? |
 
 `l3_cache_mb` **indeks tahmini için** eklendi (K154) ve opsiyoneldir.
+`architecture_family` işlemcide de var (K158): soket yakın bir vekildi ama
+aynı şey değil — AM5 hem Zen 4 hem Zen 5 taşıyor.
 
 Neden bu alan: oyun yükünde işlemciler arasındaki farkı çekirdek sayısı ve
 saat hızı açıklamıyor. Ölçülen 12 işlemcide X3D parçaları **daha düşük**

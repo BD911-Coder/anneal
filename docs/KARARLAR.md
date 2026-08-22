@@ -3343,3 +3343,51 @@ Komşu ailenin bandını ödünç vermek ya da aradeğerlemek, ölçülmemiş bi
 
 `n` her bandın yanında taşınıyor: hangi sayının dört veri noktasına dayandığı
 görünmeden bant okunamaz.
+
+### K157 — Varsayılan gösterim para birimi USD; çevrim yalnızca seçilirse
+
+**2026-08-22.** Fiyat kaynağı USD yayınlıyor ve varsayılan gösterim artık
+odur. Eskiden her fiyat elle girilen bir kurdan geçiyordu (K148); artık
+varsayılan hâlde **çevrim yok** — kaynağın sayısı olduğu gibi görünüyor.
+
+Kur ve tarihi yerinde duruyor, yalnızca kullanıcı başka bir para birimi
+seçtiğinde devreye giriyor. **Para birimi seçimi dilden bağımsız:** `locale`
+sayının nasıl yazılacağını, `currency` hangi para birimi olduğunu söylüyor.
+İngilizce okuyan biri ₺, Türkçe okuyan biri $ görmek isteyebilir.
+
+Kur notu da duruma bağlı: çevrim yapıldıysa kur ve tarihi, yapılmadıysa
+"kaynağın para biriminde, çevrilmeden". Olmayan bir işlemi anlatmak kafa
+karıştırır.
+
+### K158 — Mimari ailesi kontrollü liste, serbest metin değil
+
+`ArchitectureFamily` enum'ı; hem `gpu_specs` hem `cpu_specs` üzerinde ve
+katalogdaki **her** parçada dolu (60/60 ekran kartı, 42/42 işlemci).
+
+**Gerekçe:** tahmin "önce aile içinde" yapılıyor ve aile bir **gruplama
+anahtarı**. Serbest metin olsaydı `RDNA 4` ile `RDNA4` iki ayrı aile sayılır,
+grup ikiye bölünür ve birini-dışarıda-bırak doğrulaması sessizce
+anlamsızlaşırdı — üstelik hata vermeden.
+
+İşlemcide soket bir vekildi ama aynı şey değil: **AM5 hem Zen 4 hem Zen 5
+taşıyor.** Ölçüm script'i önce sokete göre gruplandırıyordu; aile alanı
+geldikten sonra gerçek mimari sınırına geçti.
+
+### K159 — NVIDIA bant genişliğini yalnızca güncel serinin karşılaştırma
+sayfasında yayınlıyor
+
+Ürün sayfalarında yok (5080, 4090, 3080 ham HTML'den denetlendi: yalnızca
+"Memory Interface Width"). **Karşılaştırma sayfasında var** ama yalnızca o
+anki seri için: 50 serisinin yedi kartı geldi, 40 ve 30 serisinin tabloları
+istemci tarafında yükleniyor ve sunucudan gelmiyor.
+
+Sonuç: `memory_bandwidth_gbs` ölçümlü 15 karttan **12'sinde** dolu (%80).
+Eksik üçü RTX 4060, 4070 ve 4090 — NVIDIA bu değeri hiçbir yüzeyinde
+yayınlamıyor.
+
+Pratik etkisi yok: `bus_width_bits` %100 dolu ve aynı büyüklüğün yapısal
+yüzü. Tahmin ekseni o.
+
+`process_node_nm` **hiçbir üreticide yok** (0/60, 0/42) ve `transistor_count_m`
+yalnızca AMD'de (23/60). İkisi de şemada duruyor ama bugün tahmine
+giremezler; doldurma yolu Wikidata/Wikipedia tarafında (Görev 4).

@@ -28,7 +28,8 @@
     "kural:kontrol": "node scripts/check-rules.mts",
     "varyant:kontrol": "node scripts/check-gpu-variant.mts",
     "dil:kontrol": "node scripts/check-messages.mts",
-    "indeks:tahmin-sapma": "node scripts/measure-index-prediction.mts"
+    "indeks:tahmin-sapma": "node scripts/measure-index-prediction.mts",
+    "spec:kapsam": "node scripts/check-spec-coverage.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
