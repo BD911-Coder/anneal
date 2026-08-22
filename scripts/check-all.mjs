@@ -24,6 +24,9 @@ const veritabaniVar = Boolean(process.env.DATABASE_URL);
 
 /** [ad, komut, veritabanı gerekli mi] */
 const ADIMLAR = [
+  // EN BASTA: bayat Prisma istemcisi bundan sonraki her adimi yaniltir.
+  // Burada --duzelt YOK: paket "bayatti" durumunu GORMELI (K176).
+  ["prisma:kontrol", "npm run --silent prisma:kontrol", false],
   ["lint", "npm run --silent lint", false],
   ["tsc", "npx tsc --noEmit", false],
   ["test", "npm run --silent test", false],

@@ -370,9 +370,21 @@ gerekiyordu). Next derlemesi `.ts` uzantılı içe aktarmayı sorunsuz çözüyo
 
 ### Prisma
 
-`prisma migrate dev` istemciyi **her zaman yenilemiyor**. Migration'dan sonra
-`npx prisma generate` elle çalıştırılmalı; yenilenmemiş istemci yeni sütunu
-tanımaz ve içe aktarma yarım kayıt bırakabilir. Bu iki kez yaşandı.
+`prisma migrate dev` istemciyi **her zaman yenilemiyor**. Yenilenmemiş istemci
+yeni sütunu tanımaz ve içe aktarma yarım kayıt bırakabilir.
+
+**Bu artık elle hatırlanmıyor (K176).** `npm test`, `npm run build` ve
+`npm run typecheck` çalışmadan önce `scripts/check-prisma-client.mjs --duzelt`
+koşuyor: istemci şemadan farklı bir sürümdense **kendisi üretiyor**.
+`npm run kontrol:tumu` ise düzeltmesiz bakıyor, yani "bayattı" durumu görünür
+kalıyor.
+
+Ölçüt damga değil, istemcinin içinde taşıdığı şema metninin kendisi — damga
+unutulabilir, metin yalan söyleyemez.
+
+Not: **dev sunucusu ayrı**. Ayakta duran `next dev` eski istemciyi bellekte
+tutuyor; migration'dan sonra yeniden başlatılması gerekiyor. Bu kontrol onu
+kapsamıyor.
 
 ### Spec verisinde çapraz kontrol
 

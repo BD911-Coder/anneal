@@ -38,7 +38,12 @@
     "kaynak:kontrol": "node scripts/check-field-sources.mts",
     "makul:kontrol": "node scripts/check-plausibility.mts",
     "tahmin:degerlendir": "node scripts/eval-estimation.mts",
-    "kontrol:tumu": "node scripts/check-all.mjs"
+    "kontrol:tumu": "node scripts/check-all.mjs",
+    "prisma:kontrol": "node scripts/check-prisma-client.mjs",
+    "typecheck": "tsc --noEmit",
+    "pretest": "node scripts/check-prisma-client.mjs --duzelt",
+    "prebuild": "node scripts/check-prisma-client.mjs --duzelt",
+    "pretypecheck": "node scripts/check-prisma-client.mjs --duzelt"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

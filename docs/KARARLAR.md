@@ -3936,3 +3936,35 @@ yüzden alt kümelerle ölçülmüştü.
 **hiçbiri diğerini durdurmuyor**: ilk hatada durmak ikinci hatayı bir sonraki
 koşuma saklar. Veritabanı gerektiren adımlar `DATABASE_URL` yoksa ATLANDI
 olarak raporlanıyor — sessizce geçmiyor.
+
+### K176 — Bayat Prisma istemcisi: belge yerine yapı
+
+**2026-08-22.** `npm run prisma:kontrol`, `scripts/check-prisma-client.mjs`.
+
+Tuzak CLAUDE.md'de yazılıydı ve **üç kez** tetiklendi (en sonuncusu bu
+oturumda: GÖREV 1 birleştirmesinde `tsc` `architecture_family` enum'unda
+patladı). Belgelenmiş ve yine de üç kez tetiklenen bir tuzak, belge sorunu
+değildir.
+
+**Ölçüt damga değil, şemanın kendisi.** Üretilen istemci, üretildiği şemanın
+tam metnini içinde taşıyor (`internal/class.ts` → `inlineSchema`).
+Karşılaştırma o metinle `prisma/schema.prisma` arasında yapılıyor. Ayrı bir
+hash damgası dosyası bilerek tutulmadı: damga elle güncellenebilir ya da
+unutulabilir, yani yanlış "taze" cevabı verebilir.
+
+**Bir ayrıntı ölçülerek bulundu:** istemcinin içindeki metin `prisma format`
+geçmiş hâli ve sütun hizalamaları farklı — aynı şemada 780 satırın **43'ü**
+yalnızca hizalamadan farklı çıkıyor. Bu yüzden karşılaştırma satır içi boşluk
+dizilerini tek boşluğa indiriyor. Alan eklemek/çıkarmak yine yakalanıyor;
+sınandı: şemaya alan eklenince kontrol **durdu**, geri alınınca **geçti**.
+
+**İki kip, iki farklı iş:**
+
+- `pretest`, `prebuild`, `pretypecheck` → `--duzelt`. Test, derleme ve tip
+  kontrolü bayat istemciyle **çalışamaz**; bayatsa kendisi üretiyor.
+- `kontrol:tumu` → düzeltmesiz, ilk adım. Paketin "bayattı" durumunu
+  **görmesi** gerekiyor; sessizce düzeltilen bir şey ölçülemez.
+
+**Kapsamadığı yer yazıldı:** ayakta duran `next dev` sunucusu eski istemciyi
+bellekte tutuyor ve bu kontrol onu kapsamıyor — migration'dan sonra dev
+sunucusu yeniden başlatılmalı. Bu oturumda bir kez yaşandı.
