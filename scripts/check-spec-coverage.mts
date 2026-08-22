@@ -84,7 +84,6 @@ tablo("EKRAN KARTI", gpu, gpuOlculen, [
   "bus_width_bits",
   "architecture_family",
   "transistor_count_m",
-  "process_node_nm",
   "length_mm",
 ]);
 
@@ -96,7 +95,6 @@ tablo("İŞLEMCİ", cpu, cpuOlculen, [
   "tdp_watt",
   "l3_cache_mb",
   "architecture_family",
-  "process_node_nm",
 ]);
 
 // Aile dağılımı — tahmin gruplaması buradan çıkıyor.

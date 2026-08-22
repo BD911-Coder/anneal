@@ -3543,3 +3543,32 @@ Kapsam sınırı korunuyor: kur bir servisten çekilmiyor. Bu, yeni bir dış
 bağımlılık demek ve beta kapsamı dışında. Kur eskidiğinde tek yerden, iki
 satırla güncellenir — K157 ile birlikte okunur: varsayılan gösterim USD olduğu
 için kur yalnızca kullanıcı TRY seçtiğinde bir sayıya dokunuyor.
+
+### K167 — `process_node_nm` kaldırıldı: boş sütun, eksik sütundan kötüdür
+
+**2026-08-22.** Alan K154 ile indeks tahmini ekseni olmak üzere eklenmişti ve
+o gün de boştu — "seyrek ama ileride dolar" varsayımıyla bırakılmıştı.
+
+**Ölçüm:** katalogda `gpu_specs` 0/60, `cpu_specs` 0/42. CSV'lerin hiçbirinde
+tek bir dolu hücre yok. Wikidata kuru çalışmasında (K165) *fabrikasyon süreci*
+sütunu **0/82** geçiş verdi; Wikipedia'nın NVIDIA tablosunda da **0** geçiş
+var. Yani alanı dolduracak ne üretici sayfası ne dış kaynak var.
+
+**Karar: sütun düşürülüyor.** Gerekçe: boş bir sütun bedava değil. `spec:kapsam`
+çıktısında yer kaplayıp her seferinde "%0" satırı üretiyor, her yeni içe
+aktarma yolunda boş geçilmesi gereken bir alan oluyor ve şemayı okuyan birine
+"burada bir veri var" diye görünüyor. Eksik alan sorulabilir; boş alan
+cevaplanmış gibi durur.
+
+**Eski migration DÜZENLENMEDİ.** Sütunu ekleyen `20260822070000_mimari_ailesi_enum`
+aynı zamanda `ArchitectureFamily` enum'unu kuruyor; içeriğini değiştirmek hem
+o enum'u riske atardı hem de uygulanmış bir migration'ın checksum'ını bozup
+geliştirme veritabanının sıfırlanmasını gerektirirdi. Bunun yerine ileriye
+doğru düşüren bir migration yazıldı: `20260822190000_process_node_kaldirildi`.
+Tarih olduğu gibi kalır, sütun gider.
+
+**Veri kaybı yok** ve bu tahmin değil ölçüm: düşürülen iki sütunda `count(...)`
+sıfır döndü.
+
+`transistor_count_m` **kalıyor**: AMD yayınlıyor ve Wikipedia NVIDIA tablosunda
+6 geçiş var — az ama sıfır değil.
