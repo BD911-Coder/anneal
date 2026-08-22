@@ -3720,3 +3720,53 @@ wikitext boyutu, lisans ve **ayrıştırılmış satırlar**. Wikitext'in kendis
 yazılmadı: üç makale 834 KB ve revizyon numarası verildiğinde byte byte geri
 getirilebiliyor. Saklanması gereken şey "hangi metinden okuduk" sorusunun
 cevabı; revizyon numarası o cevabın kendisi.
+
+### K171 — RTX 5060 Ti bant genişliği: hata BİZDE. NVIDIA bu alanı hiç yayınlamıyor
+
+**2026-08-22.** K168'in bulduğu üç çelişki soruşturuldu.
+
+**Bulgu, beklenenden geniş çıktı.** NVIDIA'nın ürün sayfaları **hiçbir kartta**
+bant genişliği yayınlamıyor — ne RTX 5060 ailesinde ne RTX 5090'da. İkisi de
+yeniden okundu (`WebFetch`, aynı `source_url`): spec tablosunda "Memory
+Interface Width" ve "Standard Memory Config" var, **"Memory Bandwidth" satırı
+yok**.
+
+Yani sorun üç yanlış sayı değil, **sekiz yanlış kaynak iddiası**: RTX 50
+serisinin sekiz satırında bant genişliği `manufacturer` damgalıydı ve
+`source_url` o değeri içermeyen bir sayfayı gösteriyordu. Değerler bizde
+türetilmişti (`veri yolu × bellek hızı ÷ 8`), altısı doğru çıktı, ikisi yanlış.
+
+**Düzeltme üretici yolundan yapıldı:** CSV'deki sekiz hücre **boşaltıldı**
+(üretici yayınlamıyorsa üretici CSV'si de iddia etmez), `npm run parca:aktar`
+ile alanlar `null` oldu ve damgaları silindi. Ardından `wikipedia:aktar
+--apply` sekizini de doldurdu; artık `wikipedia` damgalı ve atfı var.
+
+**Dış kaynak üreticiyi ezmedi.** Ezilen bir şey yok: alan önce kaynaksız
+kaldığı için boşaldı, sonra boş alan dolduruldu. Kural yerinde duruyor.
+
+| parça | eski | yeni | örtük hız |
+|---|---|---|---|
+| `nvidia-rtx-5060-ti-16gb` | 576 | **448** | 36 → 28 Gbps |
+| `nvidia-rtx-5060-ti-8gb` | 576 | **448** | 36 → 28 Gbps |
+| `nvidia-rtx-5060` | 480 | **448** | 30 → 28 Gbps |
+| 5090 · 5080 · 5070 Ti · 5070 · 5050 | değer aynı | değer aynı | damga düzeldi |
+
+**`parca:aktar` bir kural kazandı: boş hücre bir değer değildir.** İçe aktarma
+`update: specData` ile boş hücreyi `null` yazıyordu; bu, Wikipedia'dan gelen
+22 alanı **sessizce silerdi**. Artık CSV'de boş olan ve defterde dış kaynaklı
+olan alanlar güncellemeden çıkarılıyor. Üretici değeri hâlâ dış değeri ezer —
+ezen şeyin bir DEĞER olması gerekiyor, yokluk değil.
+
+Ayrıca içe aktarma artık **defteri tazeliyor**: yazdığı her dolu alana damga
+koyuyor, `null` yaptığı alanın damgasını siliyor, dış kaynaklı alanlara
+dokunmuyor. Olmasaydı defter ilk aktarmada eskirdi.
+
+**`npm run bant:kontrol` — bütün katalog.** Örtük bellek hızı her çip için
+hesaplanıyor ve bellek tipinin makul aralığıyla karşılaştırılıyor. Aralıklar
+bir karar, ölçüm değil; geniş tutuldu. Sonuç: **60 çipin tamamı tutarlı.**
+
+**Kontrolün sınırı da ölçüldü ve yazılıyor:** RTX 5060'ın eski değeri (480 →
+30 Gbps) bu kontrolden **geçerdi**; 30 Gbps GDDR7 gerçekten var (RTX 5080
+kullanıyor). Onu yakalayan şey iç tutarlılık değil, **dış kaynakla
+karşılaştırma** oldu. İki kontrol birbirinin yerine geçmiyor:
+iç tutarlılık imkânsızı yakalar, dış karşılaştırma yanlışı.
