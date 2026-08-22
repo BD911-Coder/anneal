@@ -3391,3 +3391,57 @@ yüzü. Tahmin ekseni o.
 `process_node_nm` **hiçbir üreticide yok** (0/60, 0/42) ve `transistor_count_m`
 yalnızca AMD'de (23/60). İkisi de şemada duruyor ama bugün tahmine
 giremezler; doldurma yolu Wikidata/Wikipedia tarafında (Görev 4).
+
+### K160 — Tahmin ayrı tabloda; K71 gevşetilmedi
+
+`perf_index_estimated`, `perf_index`ten ayrı bir tablodur. **K71 aynen
+geçerli:** ölçüm tablosuna tahmin satırı yazılmaz — bayrakla da, istisnayla
+da, `source` sütunu eklenerek de.
+
+K71'in verdiği güvence *"o tabloda sahte satır olamaz"*. Ayrı tablo o
+güvenceyi bozmuyor; tersine, tahminlerin gidecek meşru bir yeri olduğu için
+ölçüm tablosuna sızma basıncını kaldırıyor.
+
+Çözümleme `/data` katmanında ve dönen kayıt `origin` alanını **her zaman**
+taşıyor: çağıran taraf "bu sayı ölçüldü mü" sorusunu sormayı unutamaz, çünkü
+cevabı almadan sayıya erişemiyor.
+
+Sıra: tahminler önce yazılır, ölçümler üzerine yazar. **Ölçülen her zaman
+kazanır** ve bu tek satırda görünür.
+
+Model eğitimi `getMeasuredPerfIndexes` ile yapılıyor — modelin kendi
+çıktısıyla eğitilmesi, kendi gürültüsünü veri sanması olurdu.
+
+### K161 — Tahmin eksenleri ve KAPI KARARI
+
+Ölçülen eksenler (`npm run indeks:tahmin-sapma`), seçilenler kalın:
+
+```
+GPU aile içi     bus_width × boost_clock   RDNA4 %3.3  Blackwell %8.8   <- SEÇİLDİ
+                 shader_units × boost      RDNA4 %7.8  Blackwell %11.9
+GPU aileler arası TDP                      %15.3 ort, p90 %35.4          <- SEÇİLDİ
+                 bus_width                 %19.3
+                 TDP × bus_width           %16.3
+CPU aile içi     boost × √l3               zen_5 %11.0   (taban %21.6)   <- SEÇİLDİ
+                 l3 tek başına             zen_5 %8.6
+CPU aileler arası boost × √l3              %4.2 ort, p90 %8.4 (taban %10.5)
+```
+
+**KAPI: CPU spec tahmini GEÇTİ ve yayınlanıyor.** Kural şuydu: *aile içi hata
+aile-ortalaması tabanının altına inerse spec tahmini yayınla.* zen_5 içinde
+`boost × √l3` %11.0 verdi, taban %21.6 — belirgin şekilde altında. L3
+eklenmeden önce en iyi eksen %13.6 veriyordu ve taban (%11.0) onu yeniyordu;
+yani **eksik olan model değil veriydi.**
+
+**Aile içi ile aileler arası arasında DAR BANT kazanıyor.** İkisi de
+birini-dışarıda-bırak ile ölçüldü; ölçülmüş iki seçenekten dar olanı almak
+kiraz toplamak değil, daha iyi doğrulanmış olanı seçmektir. Bugün işlemcide
+aileler arası model (12 noktayla eğitiliyor) zen_5'in kendi modelinden
+(4 nokta) dar çıkıyor ve bütün işlemciler onu alıyor.
+
+**GPU aileler arası bant %20'yi aşıyor** (ölçülen p90 %30.7). Kullanıcının
+kuralı gereği yayınlanıyor ama bant genişletilmiş hâliyle gösteriliyor ve
+arayüz bunun geniş olduğunu söylüyor.
+
+Sonuç kapsam: **60 ekran kartı çipi = 15 ölçülen + 45 tahmin**,
+**42 işlemci = 12 ölçülen + 30 tahmin**. Boş panel kalmadı.

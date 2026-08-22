@@ -286,7 +286,8 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           has_igpu: boolOrNull(row.has_igpu, "has_igpu")!,
           // Indeks tahmini icin (K154). Opsiyonel.
           l3_cache_mb: intOrNull(row.l3_cache_mb ?? "", "l3_cache_mb"),
-          architecture_family: (row.architecture_family ?? "").trim() || null,
+          architecture_family: ((row.architecture_family ?? "").trim() || null) as
+            | "zen_5" | "zen_4" | "arrow_lake" | "raptor_lake_refresh" | null,
           process_node_nm: intOrNull(row.process_node_nm ?? "", "process_node_nm"),
           ...provenance,
         };
@@ -330,7 +331,11 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           // kurali okumuyor, zorunluluk olcutunu (K56) karsilamiyorlar.
           bus_width_bits: intOrNull(row.bus_width_bits ?? "", "bus_width_bits"),
           // Kontrollu liste (K158): CSV'deki deger enum uyesi olmak zorunda.
-          architecture_family: (row.architecture_family ?? "").trim() || null,
+          // Prisma enum tipi; gecersiz deger ice aktarmada hata verir.
+          architecture_family: ((row.architecture_family ?? "").trim() || null) as
+            | "blackwell" | "ada_lovelace" | "ampere" | "rdna_4" | "rdna_3" | "rdna_2"
+            | "xe2" | "alchemist" | "zen_5" | "zen_4" | "arrow_lake"
+            | "raptor_lake_refresh" | null,
           process_node_nm: intOrNull(row.process_node_nm ?? "", "process_node_nm"),
           transistor_count_m: intOrNull(row.transistor_count_m ?? "", "transistor_count_m"),
           ...provenance,

@@ -793,6 +793,44 @@ Her kategori için, `mevcut_fiyat + fark` bütçesindeki alternatifler taranır,
 
 ---
 
+### `perf_index_estimated` — spec'ten TAHMİN EDİLEN indeks
+
+`perf_index`ten **ayrı bir tablodur** (K160) ve K71 aynen geçerlidir: ölçüm
+tablosuna tahmin satırı yazılmaz — bayrakla da, istisnayla da yazılmaz.
+K71'in verdiği güvence *"o tabloda sahte satır olamaz"* ve bu tablo o güvenceyi
+bozmuyor; tersine, tahminlerin gidecek bir yeri olduğu için oraya sızma
+basıncını kaldırıyor.
+
+| Alan | Tip |
+|---|---|
+| `id` | uuid |
+| `part_id` | FK |
+| `workload` | enum |
+| `index_value` | float |
+| `method` | enum (`spec-model`, `family-mean`) |
+| `confidence` | enum |
+| `error_band_pct` | float |
+| `error_band_source_family` | enum? (`ArchitectureFamily`) |
+| `n_used` | int |
+| `model_version` | text |
+| `computed_at` | timestamptz |
+
+`method` iki değeri ayırıyor ve arayüz ikisini **ayrı** etiketliyor:
+`spec-model` bir modele oturtulmuş tahmin, `family-mean` ailenin ölçülmüş
+ortalaması. Ortalama, model çıktısı gibi sunulmaz.
+
+`error_band_source_family` boşsa band **aileler arası** doğrulamadan geliyor
+demektir. Doğrulanamayan bir aile komşusunun bandını ödünç almaz (K156):
+doğrulanmamış hata küçük değil, **bilinmiyor**.
+
+`n_used` bandın kaç ölçüme dayandığını taşır. Dört veri noktasına dayanan bir
+band ile on ikiye dayanan aynı şey değildir ve bu fark okunabilir olmalıdır.
+
+**Çözümleme `/data` katmanında:** ölçülen her zaman kazanır, tahmin boşluğu
+doldurur, dönen kayıt `origin` alanıyla hangisi olduğunu her zaman söyler.
+
+---
+
 ## 9. URL yapısı
 
 Sonradan değiştirilmez.
@@ -840,6 +878,8 @@ burada sayılmaz.
 | `benchmark_points` | (`gpu_part_id`, `game_id`, `resolution`) | Motorun kalibrasyon verisini okuma yolu — belirli GPU + oyun + çözünürlük için ölçümler. |
 | `perf_index` | (`part_id`, `workload`, `model_version`) **UNIQUE** | Hem tekillik kısıtı (bölüm 4) hem de motorun indeks okuma yolu. |
 | `gpu_variant_specs` | (`chip_part_id`) | "Bu çipin kartları" — kart seçim listesi ve parça detay sayfası. Kartlar her zaman çipleriyle birlikte okunur, tek başına değil. |
+| `perf_index_estimated` | (`part_id`, `workload`, `model_version`) **UNIQUE** | Tekillik kısıtı ve çözümleme yolu — `perf_index` ile aynı desen. |
+| `perf_index_estimated` | (`model_version`) | Bütün tahminleri tek sürüm için okuma: katalog sayfası her istekte bunu yapıyor. |
 
 **Silinen indeks:** `raw_imports(status)` kaldırıldı — `raw_imports` yalnızca hata
 ayıklarken elle okunur, belgelenmiş bir sorgu yolu değildir.
