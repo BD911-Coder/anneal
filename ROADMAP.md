@@ -122,11 +122,23 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
             **Tek ölçüm bandı düşürmez** — eşik dört (K156); eşiğe ulaşmanın
             kazancı ölçüldü: blackwell ±%30,7 → ±%19,8.
             `docs/log/2026-08-22-olcum-hedefleri.md`
-      - [x] **Spec kapsamı için dış kaynak açıldı** *(22 Ağustos, K168)* —
-            Wikipedia wikitext ayrıştırıcı, `npm run wikipedia:deneme`.
-            60/60 çip eşleşiyor; bant genişliği 22 çipte, transistör sayısı
-            28 çipte boş alanı doldurabilir. **Yazma yolu bir şema kararı
-            bekliyor (S48).** `docs/log/2026-08-22-wikipedia-ayristirici.md`
+      - [x] **Spec kapsamı için dış kaynak açıldı ve AKTARILDI**
+            *(22 Ağustos, K168 + K170)* — Wikipedia wikitext ayrıştırıcı,
+            60/60 çip eşleşiyor. S48 kapandı: provenance alan bazına indi
+            (`spec_field_sources`), **50 alan yazıldı**, üretici değeri olan
+            96 alana dokunulmadı. Bant genişliği **60/60**, transistör
+            **51/60**. `docs/log/2026-08-22-alan-bazinda-kaynak.md`
+      - [x] **Bant genişliği hatası bulundu ve düzeltildi** *(22 Ağustos,
+            K171)* — NVIDIA bu alanı **hiç yayınlamıyor**; RTX 50 serisinin
+            sekiz satırında değer bizde türetilmişti ve `manufacturer`
+            damgalıydı. Üçü yanlıştı (5060 Ti 576 → **448**). `npm run
+            bant:kontrol` bütün katalogda çalışıyor: **60/60 tutarlı**.
+            `docs/log/2026-08-22-bant-genisligi-duzeltme.md`
+      - [x] **Dört ölçüm eşiği modellendi** *(22 Ağustos, K172)* — üç aile
+            dörder ölçüm alsa: aile bandı beklenen **±%16** (aralık ±%6 …
+            ±%26), aileler arası bant ±%30,7 → **~±%17** (ekstrapolasyon).
+            29 çip kendi ailesinin bandına geçer, 19 çip aileler arasında
+            kalır. `docs/log/2026-08-22-dort-olcum-modeli.md`
 - [x] **Kart varyantı 58 → 153** *(20 Ağustos)* — yapıldı. Aynı dört marka,
       yeni kaynak yok. **+95 kart**, kapsanan çip 20 → **47/60**,
       `length_mm` **%99 dolu**, C5 **125 → 245** kombinasyon.
