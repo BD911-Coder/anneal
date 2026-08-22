@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { CurrentPrice } from "@/data/prices";
 import type { BuilderCatalog } from "@/data/parts";
 import { checkCompatibility } from "@/engine/compatibility";
+import type { DefaultBuild } from "@/engine/default-build";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import type { FpsGameGroup } from "@/engine/fps-estimate";
 import { resolveGpuSelection, resolvePerfIndex } from "@/engine/gpu-selection";
@@ -17,7 +18,8 @@ import type {
   UpgradeCategory,
   UpgradePart,
 } from "@/engine/types";
-import { formatIsoDate, formatPriceMinor } from "@/lib/format";
+import { DISPLAY_CURRENCY, rateNote, toDisplayMinor } from "@/lib/currency";
+import { formatDisplayPrice, formatIsoDate, formatPriceMinor, stripSku } from "@/lib/format";
 import { PERF_MARGIN } from "@/lib/perf-margin";
 
 import { saveBuildAction } from "./actions";
@@ -53,10 +55,41 @@ type BuilderProps = {
   prices: Record<string, CurrentPrice>;
   perfIndexes: Record<string, number>;
   fpsGroups: FpsGameGroup[];
+  /**
+   * Sayfa ilk açıldığında dolu gelecek seçim (K144).
+   *
+   * Sunucuda `pickDefaultBuild` ile hesaplanıyor ve **yalnızca başlangıç
+   * değeri** olarak kullanılıyor. Paylaşılan bir linkten gelen seçim
+   * geri yüklendiğinde bu prop'a hiç bakılmaz: geri yüklenen seçim
+   * `useState`'in başlangıcına o zaman kendisi girer.
+   *
+   * `null`: ölçümlü parçalardan uyumlu bir sistem kurulamadı; form boş açılır.
+   */
+  defaultSelection: DefaultBuild | null;
 };
 
-export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProps) {
-  const [selection, setSelection] = useState<Selection>({});
+export function Builder({
+  catalog,
+  prices,
+  perfIndexes,
+  fpsGroups,
+  defaultSelection,
+}: BuilderProps) {
+  // Başlangıç değeri tembel: `pickDefaultBuild` sunucuda bir kez çalıştı,
+  // burada yalnızca kategori adlarına çevriliyor. Sonraki çizimlerde
+  // kullanıcının seçimi geçerli — varsayılan bir daha uygulanmaz.
+  const [selection, setSelection] = useState<Selection>(() =>
+    defaultSelection
+      ? {
+          cpu: defaultSelection.cpu,
+          gpu: defaultSelection.gpu,
+          motherboard: defaultSelection.motherboard,
+          ram: defaultSelection.ram,
+          psu: defaultSelection.psu,
+          case: defaultSelection.case,
+        }
+      : {},
+  );
   // Kart (AIB) seçimi çipten ayrı bir durum: opsiyonel ikinci katman (K86).
   // Çip değişince sıfırlanır — başka çipin kartı seçili kalamaz.
   const [gpuVariantId, setGpuVariantId] = useState<string | undefined>(undefined);
@@ -202,13 +235,6 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
     setSaveError(null);
   }
 
-  function toggleStorage(id: string) {
-    forgetShareLink();
-    setStorageIds((current) =>
-      current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
-    );
-  }
-
   async function save() {
     if (saving) return;
     setSaving(true);
@@ -242,6 +268,34 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
   }
 
   const hicSecimYok = secilenSayisi === 0;
+
+  /**
+   * Bu parçanın FPS tahmini üretilebiliyor mu? (K145)
+   *
+   * Cevap `perf_index` tablosundan geliyor, gömülü bir listeden değil: ölçüm
+   * eklendiğinde ya da silindiğinde gruplar kendiliğinden değişir.
+   *
+   * Kartlar (AIB) çiplerinin durumunu miras alır — indeks zaten iki seviyeli
+   * okunuyor ve kartın kendi ölçümü yoksa çipinki kullanılıyor (K86, K87).
+   */
+  const olcumlu = (id: string) => perfIndexes[id] !== undefined;
+  const olcumluKart = (variant: { chip_part_id: string; id: string }) =>
+    olcumlu(variant.id) || olcumlu(variant.chip_part_id);
+
+  /** Ölçümlüler önce. Grup içindeki sıra katalogdan geldiği gibi kalıyor. */
+  function olcumeGoreAyir<T extends { id: string }>(items: T[]) {
+    return {
+      olcumlu: items.filter((item) => olcumlu(item.id)),
+      olcumsuz: items.filter((item) => !olcumlu(item.id)),
+    };
+  }
+
+  /** Seçenek metni: ad + (varsa) fiyat. Fiyat çevrilemiyorsa hiç yazılmıyor. */
+  function secenekMetni(id: string, label: string): string {
+    const price = prices[id];
+    const tl = price ? formatDisplayPrice(price.price_minor, price.currency) : null;
+    return tl ? `${label} — ${tl}` : label;
+  }
 
   return (
     // Mobil önce: tek sütun. Geniş ekranda seçim solda YAPIŞIK kalıyor —
@@ -277,15 +331,63 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                   }}
                 >
                   <option value="">— seçilmedi —</option>
-                  {catalog[category].map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                      {prices[item.id]
-                        ? ` — ${formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}`
-                        : ""}
-                    </option>
-                  ))}
+                  {/*
+                    Ekran kartı ve işlemci ÖLÇÜM DURUMUNA göre ikiye ayrılıyor
+                    (K145). Katalogda 331 parça var ama ölçümü olan 15 ekran
+                    kartı ve 12 işlemci; ayrım olmadan kullanıcı büyük
+                    ihtimalle ölçümsüz bir parça seçip üç boş panele bakıyordu.
+                    Sonucu SEÇMEDEN ÖNCE görsün diye ölçümsüz seçeneklerin
+                    metnine de kısa bir işaret ekleniyor.
+
+                    Diğer kategorilerde indeks kavramı yok; onlar düz liste.
+                  */}
+                  {category === "gpu" || category === "cpu" ? (
+                    (() => {
+                      const gruplar = olcumeGoreAyir(catalog[category]);
+                      return (
+                        <>
+                          {gruplar.olcumlu.length > 0 && (
+                            <optgroup label="Ölçümlü — FPS tahmini verilebilir">
+                              {gruplar.olcumlu.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {secenekMetni(item.id, item.label)}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {gruplar.olcumsuz.length > 0 && (
+                            <optgroup label="Ölçüm yok — sadece uyumluluk kontrolü">
+                              {gruplar.olcumsuz.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {secenekMetni(item.id, item.label)} · ölçüm yok
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </>
+                      );
+                    })()
+                  ) : (
+                    catalog[category].map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {secenekMetni(item.id, item.label)}
+                      </option>
+                    ))
+                  )}
                 </select>
+
+                {/* Seçim yapıldıktan sonra da görünsün: açılır liste kapanınca
+                    optgroup başlığı kaybolur, sonuç kaybolmamalı. */}
+                {(category === "gpu" || category === "cpu") &&
+                  selection[category] !== undefined &&
+                  !olcumlu(selection[category]!) && (
+                    <p className="text-xs leading-relaxed text-muted">
+                      Bu {CATEGORY_LABEL[category].toLocaleLowerCase("tr")} için ölçüm yok:
+                      uyumluluk kontrolü çalışır, FPS ve sistem indeksi
+                      hesaplanamaz. Listede &ldquo;Ölçümlü&rdquo; başlığı altındaki
+                      parçalarda ikisi de görünür.
+                    </p>
+                  )}
               </div>
 
               {/*
@@ -308,12 +410,13 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                     }}
                   >
                     <option value="">— belirtilmedi, referans değerler —</option>
+                    {/* Kart, çipinin ölçüm durumunu miras alır (K86, K87):
+                        kartın kendi indeksi yoksa çipinki kullanılıyor. Çipi
+                        ölçümsüzse kart da FPS üretemez ve bunu söylüyor. */}
                     {variantsForChip.map((variant) => (
                       <option key={variant.id} value={variant.id}>
-                        {variant.label}
-                        {prices[variant.id]
-                          ? ` — ${formatPriceMinor(prices[variant.id].price_minor, prices[variant.id].currency)}`
-                          : ""}
+                        {secenekMetni(variant.id, variant.label)}
+                        {olcumluKart(variant) ? "" : " · ölçüm yok"}
                       </option>
                     ))}
                   </select>
@@ -326,33 +429,68 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
             </div>
           ))}
 
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-medium">
-              Depolama <span className="font-normal text-muted">(birden fazla)</span>
-            </legend>
-            {catalog.storage.map((item) => (
-              <label key={item.id} className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 shrink-0"
-                  checked={storageIds.includes(item.id)}
-                  onChange={() => toggleStorage(item.id)}
-                />
-                <span className="min-w-0">
-                  {item.label}{" "}
-                  <span className="text-muted">
-                    ({item.storage_type}, <span className="num">{item.capacity_gb}</span> GB)
-                  </span>
-                  {prices[item.id] && (
-                    <span className="num text-muted">
-                      {" "}
-                      — {formatPriceMinor(prices[item.id].price_minor, prices[item.id].currency)}
-                    </span>
-                  )}
-                </span>
-              </label>
-            ))}
-          </fieldset>
+          {/*
+            Depolama da açılır liste (K146). Onay kutusu listesi 14 satırla
+            sol sütunun üçte birini yiyordu ve diğer altı kategoriyle aynı
+            dilde konuşmuyordu. Birden fazla seçilebildiği için `multiple`.
+
+            Etiketlerden üretici stok kodu düşürülüyor (`stripSku`); tam hâli
+            `title` ipucunda ve aşağıdaki seçilenler satırında duruyor.
+          */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="sec-storage" className="text-sm font-medium">
+              Depolama <span className="font-normal text-muted">(birden fazla seçilebilir)</span>
+            </label>
+            <select
+              id="sec-storage"
+              multiple
+              size={6}
+              className="w-full min-w-0 rounded-md border border-border bg-background px-2.5 py-2 text-sm"
+              value={storageIds}
+              onChange={(event) => {
+                forgetShareLink();
+                setStorageIds([...event.target.selectedOptions].map((option) => option.value));
+              }}
+            >
+              {catalog.storage.map((item) => (
+                <option key={item.id} value={item.id} title={item.label}>
+                  {secenekMetni(item.id, stripSku(item.label))} · {item.storage_type},{" "}
+                  {item.capacity_gb} GB
+                </option>
+              ))}
+            </select>
+            <p className="text-xs leading-relaxed text-muted">
+              Birden fazlası için Ctrl (Mac&rsquo;te ⌘) basılı tutarak seçin.
+            </p>
+
+            {/* Ayrıntı satırı: stok kodu dahil tam ad ve fiyat. */}
+            {selectedStorage.length > 0 && (
+              <ul className="mt-1 flex flex-col gap-1 text-xs text-muted">
+                {selectedStorage.map((item) => {
+                  const price = prices[item.id];
+                  const tl = price ? formatDisplayPrice(price.price_minor, price.currency) : null;
+                  return (
+                    <li key={item.id}>
+                      {item.label}
+                      {tl && <span className="num"> — {tl}</span>}
+                    </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      forgetShareLink();
+                      setStorageIds([]);
+                    }}
+                    className="text-accent underline"
+                  >
+                    Seçimi temizle
+                  </button>
+                </li>
+              </ul>
+            )}
+          </div>
         </div>
       </section>
 
@@ -420,8 +558,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
               SIRALAMA ÖNCELİĞE GÖRE. Uyumluluk hataları en üstte çünkü sistem
               kurulamıyorsa performans sayısı ikincil. Eskiden en alttaydı.
             */}
-            {(errors.length > 0 || warnings.length > 0 || gpuLengthUnknown ||
-              gpuTdpFromReference || psuLengthUnknown) && (
+            {(errors.length > 0 || warnings.length > 0) && (
               <section aria-labelledby="uyumluluk-basligi">
                 <SectionTitle id="uyumluluk-basligi">Uyumluluk</SectionTitle>
 
@@ -440,49 +577,16 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                       className="border-amber-600 dark:border-amber-500"
                     />
                   )}
-
-                  {/*
-                    Uzunluğu bilinmeyen kart, C5'i sessizce atlatır (K52). Motor
-                    bunu bulgu olarak üretmiyor — "veri eksik" bir kural ihlali
-                    değil. Ama kullanıcı, kontrolün yapılmadığını "sorun
-                    bulunamadı" sanmamalı; bu yüzden burada söyleniyor.
-                    Görsel olarak HATA gibi değil BİLGİ gibi duruyor.
-                  */}
-                  {(gpuLengthUnknown || gpuTdpFromReference || psuLengthUnknown) && (
-                    <div className="space-y-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
-                        Kontrol edilemeyenler
-                      </h3>
-                      {gpuLengthUnknown && (
-                        <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-muted">
-                          {gpuVariant
-                            ? "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et."
-                            : "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et."}
-                        </p>
-                      )}
-                      {gpuTdpFromReference && (
-                        <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-muted">
-                          Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı
-                          çipin referans değeriyle yapıldı — özel tasarım kartlar
-                          referanstan biraz daha fazla çekebilir.
-                        </p>
-                      )}
-                      {psuLengthUnknown && (
-                        <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-muted">
-                          Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol
-                          edilemedi. Üreticinin sayfasından teyit et.
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
               </section>
             )}
 
-            {findings.length === 0 && !gpuLengthUnknown && !gpuTdpFromReference &&
-              !psuLengthUnknown && (
+            {findings.length === 0 && (
               <p className="text-sm text-muted">
                 Uyumluluk: sorun bulunamadı.
+                {(gpuLengthUnknown || gpuTdpFromReference || psuLengthUnknown) && (
+                  <> Veri eksik olduğu için yapılamayan kontroller var — aşağıda.</>
+                )}
               </p>
             )}
 
@@ -663,38 +767,87 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
             <section aria-labelledby="fiyat-basligi">
               <SectionTitle id="fiyat-basligi">Toplam fiyat</SectionTitle>
               <div className="mt-4">
-                {priceSummary.mixedCurrency ? (
-                  <p className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm leading-relaxed text-muted">
-                    Seçilen parçaların fiyatları farklı para birimlerinde (
-                    {priceSummary.currencies.join(", ")}). Toplam hesaplanmıyor — kur
-                    bilgisi olmadan bu sayı yanlış olurdu.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <output className="num text-2xl font-semibold tracking-tight">
-                      {formatPriceMinor(
-                        priceSummary.totalMinor,
-                        priceSummary.currency ?? "USD",
-                      )}
-                    </output>
-                    <span className="text-xs text-muted">tahmini</span>
-                  </div>
-                )}
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <output className="num text-2xl font-semibold tracking-tight">
+                    {formatPriceMinor(priceSummary.totalMinor, DISPLAY_CURRENCY)}
+                  </output>
+                  <span className="text-xs text-muted">tahmini</span>
+                </div>
                 <div className="mt-2 space-y-0.5 text-xs text-muted">
                   <p>
                     {priceSummary.latestIso
-                      ? `Son güncelleme: ${formatIsoDate(priceSummary.latestIso)}`
+                      ? `Fiyatların son güncellenmesi: ${formatIsoDate(priceSummary.latestIso)}`
                       : "Seçilen parçaların hiçbirinde fiyat kaydı yok."}
                   </p>
+                  {/* Kur canlı değil ve öyle sunulmuyor (K148). */}
+                  <p>{rateNote()}</p>
                   {priceSummary.missing > 0 && (
                     <p>
                       <span className="num">{priceSummary.missing}</span> parçanın fiyatı
                       yok, toplama katılmadı.
                     </p>
                   )}
+                  {priceSummary.unconvertible > 0 && (
+                    <p>
+                      <span className="num">{priceSummary.unconvertible}</span> parçanın para
+                      birimi çevrilemedi, toplama katılmadı.
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
+
+            {/*
+              ---- Kontrol edilemeyenler ----
+
+              Bu blok eskiden sağ sütunun EN ÜSTÜNDEydi ve kullanıcının okuduğu
+              ilk şey iki gri "bunu bilmiyoruz" kutusuydu (K147). İçerik aynen
+              duruyor — dürüstlük burada asıl mesele — ama sırası ve vurgusu
+              düştü: performans, FPS ve fiyattan sonra geliyor ve kapalı
+              açılıyor.
+
+              K134 bozulmadı: uyumluluk HATALARI hâlâ en üstte. Aşağı inen şey
+              hata değil, "veri eksik olduğu için bu kural çalışmadı" bilgisi.
+            */}
+            {(gpuLengthUnknown || gpuTdpFromReference || psuLengthUnknown) && (
+              <section aria-labelledby="kontrol-edilemeyen-basligi">
+                <details className="rounded-md border border-border bg-surface">
+                  <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted">
+                    <span id="kontrol-edilemeyen-basligi">
+                      Kontrol edilemeyenler (
+                      <span className="num">
+                        {[gpuLengthUnknown, gpuTdpFromReference, psuLengthUnknown].filter(Boolean)
+                          .length}
+                      </span>
+                      )
+                    </span>
+                  </summary>
+
+                  <div className="space-y-2 border-t border-border px-3 py-3">
+                    {gpuLengthUnknown && (
+                      <p className="text-sm leading-relaxed text-muted">
+                        {gpuVariant
+                          ? "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et."
+                          : "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et."}
+                      </p>
+                    )}
+                    {gpuTdpFromReference && (
+                      <p className="text-sm leading-relaxed text-muted">
+                        Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı çipin
+                        referans değeriyle yapıldı — özel tasarım kartlar referanstan biraz
+                        daha fazla çekebilir.
+                      </p>
+                    )}
+                    {psuLengthUnknown && (
+                      <p className="text-sm leading-relaxed text-muted">
+                        Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
+                        Üreticinin sayfasından teyit et.
+                      </p>
+                    )}
+                  </div>
+                </details>
+              </section>
+            )}
 
             {/* ---- Yükseltme önerisi ---- */}
             <section aria-labelledby="yukseltme-basligi">
@@ -716,7 +869,7 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                     value={budgetText}
                     onChange={(event) => setBudgetText(event.target.value)}
                   />
-                  <span className="text-sm text-muted">TL</span>
+                  <span className="text-sm text-muted">{DISPLAY_CURRENCY}</span>
                 </div>
               </div>
 
@@ -763,10 +916,9 @@ export function Builder({ catalog, prices, perfIndexes, fpsGroups }: BuilderProp
                           Fark:{" "}
                           <span className="num">
                             {upgrade.price_delta_minor >= 0 ? "+" : ""}
-                            {formatPriceMinor(
-                              upgrade.price_delta_minor,
-                              priceSummary.currency ?? "USD",
-                            )}
+                            {/* Motora zaten TL kuruşu verildi (K148); burada
+                                ikinci bir çevrim YOK. */}
+                            {formatPriceMinor(upgrade.price_delta_minor, DISPLAY_CURRENCY)}
                           </span>{" "}
                           · İndeks <span className="num">{upgrade.index_before}</span> →{" "}
                           <span className="num">{upgrade.index_after}</span> (
@@ -910,7 +1062,12 @@ function toUpgradePart(
   if (!id) return undefined;
   const price = prices[id];
   if (!price) return undefined;
-  return { id, price_minor: price.price_minor, perf_index: perfIndex };
+  // Bütçe kutusu TL soruyor; fiyat kaynağı USD. Çevrilmeden verilseydi motor
+  // USD sentini TL kuruşuyla karşılaştırır ve "bu bütçeyle şunu alabilirsin"
+  // cevabı ~41 kat yanlış çıkardı (K148).
+  const converted = toDisplayMinor(price.price_minor, price.currency);
+  if (converted === null) return undefined;
+  return { id, price_minor: converted, perf_index: perfIndex };
 }
 
 /** Katalog listesini aday listesine çevirir; fiyatı olmayanlar elenir. */
@@ -919,13 +1076,17 @@ function toCandidates(
   prices: Record<string, CurrentPrice>,
   perfIndexes: Record<string, number>,
 ): UpgradePart[] {
+  // Fiyatı olmayan ya da çevrilemeyen aday elenir: ikisi de "bu parçanın
+  // TL karşılığını bilmiyoruz" demek ve bütçe karşılaştırmasına giremez.
   return items
-    .filter((item) => prices[item.id])
-    .map((item) => ({
-      id: item.id,
-      price_minor: prices[item.id].price_minor,
-      perf_index: perfIndexes[item.id],
-    }));
+    .map((item): UpgradePart | null => {
+      const price = prices[item.id];
+      if (!price) return null;
+      const converted = toDisplayMinor(price.price_minor, price.currency);
+      if (converted === null) return null;
+      return { id: item.id, price_minor: converted, perf_index: perfIndexes[item.id] };
+    })
+    .filter((item): item is UpgradePart => item !== null);
 }
 
 /**
@@ -938,7 +1099,7 @@ function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>)
   let totalMinor = 0;
   let latestIso: string | null = null;
   let missing = 0;
-  const currencies = new Set<string>();
+  let unconvertible = 0;
 
   for (const id of partIds) {
     const price = prices[id];
@@ -946,20 +1107,21 @@ function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>)
       missing += 1;
       continue;
     }
-    totalMinor += price.price_minor;
-    currencies.add(price.currency);
+    // Toplam TEK para biriminde yürüyor: her satır önce ekranın para birimine
+    // çevriliyor (K148). Eskiden farklı para birimleri hiç toplanmıyordu
+    // çünkü kur yoktu; artık tek bir kur ve tarihi var ve ikisi de ekranda
+    // yazıyor. Çevrilemeyen satır toplama girmiyor.
+    const converted = toDisplayMinor(price.price_minor, price.currency);
+    if (converted === null) {
+      unconvertible += 1;
+      continue;
+    }
+    totalMinor += converted;
     // "Son güncelleme": toplamı oluşturan fiyatların en yenisi.
     if (!latestIso || price.collected_at > latestIso) latestIso = price.collected_at;
   }
 
-  // Farklı para birimlerindeki kuruşları toplamak sessizce yanlış bir sayı
-  // üretir: 47900 (USD sent) + 749900 (TRY kuruş) toplanıp tek sembolle
-  // gösterilirdi. Kur bilgisi yok ve olsa bile hangi tarihin kuru olduğu
-  // sorusu açık. Toplam üretilmez, durum kullanıcıya söylenir.
-  const mixedCurrency = currencies.size > 1;
-  const currency = currencies.size === 1 ? [...currencies][0] : null;
-
-  return { totalMinor, currency, mixedCurrency, currencies: [...currencies], latestIso, missing };
+  return { totalMinor, latestIso, missing, unconvertible };
 }
 
 /** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */
@@ -967,12 +1129,10 @@ function PriceTag({ price }: { price?: CurrentPrice }) {
   // opacity-40 yerine `text-muted`: %40 saydamlık gövde metninde WCAG AA'yı
   // (4.5:1) karşılamıyordu; --muted 6.4:1 veriyor.
   if (!price) return <span className="text-muted"> — fiyat yok</span>;
-  return (
-    <span className="num text-muted">
-      {" "}
-      — {formatPriceMinor(price.price_minor, price.currency)}
-    </span>
-  );
+  const tl = formatDisplayPrice(price.price_minor, price.currency);
+  // Çevrilemeyen para birimi: sayı hiç gösterilmiyor, sebebi yazılıyor.
+  if (!tl) return <span className="text-muted"> — fiyat {price.currency}, çevrilemedi</span>;
+  return <span className="num text-muted"> — {tl}</span>;
 }
 
 function FindingList({

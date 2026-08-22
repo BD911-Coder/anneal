@@ -241,6 +241,23 @@ gerçek bilinmeyeni bu ve kod değil kullanıcı cevaplıyor.
       indeks çubuğu, `prefers-reduced-motion` desteği. Kontrast taraması üç
       genişlik × iki temada tekrarlandı: **0 AA ihlali korundu**.
 
+### ✅ Veri kapsamı açığı görünür oldu *(22 Ağustos, K144–K149)*
+
+Katalogda 332 parça var, ölçüm 15 ekran kartı + 12 işlemcide. Eskiden ölçümsüz
+bir parça seçen kullanıcı üç boş panele bakıyor ve nedenini seçtikten sonra
+öğreniyordu.
+
+- [x] **Listeler ölçüme göre gruplandı** — "Ölçümlü / Ölçüm yok" `optgroup`,
+      ölçümlüler önce, ölçümsüzlerde satır içi işaret *(K145)*
+- [x] **Sayfa dolu açılıyor** — ölçümlü ve uyumlu bir varsayılan sistem,
+      `engine/default-build.ts`, 9 test *(K144)*
+- [x] **Başlıktaki kapsam sayıları ne saydığını söylüyor** — 15 çip / 94
+      seçenek / 213 kart, 12 / 42 işlemci *(K149)*
+- [x] **Fiyatlar ₺** — kur ve tarihi tek yerde, arayüzde yazılı; bütçe
+      karşılaştırmasındaki birim hatası düzeldi *(K148)*
+- [x] **"Kontrol edilemeyenler" sonuçların altına indi** *(K147)*
+- [x] **Depolama açılır liste**, stok kodu etiketten düştü *(K146)*
+
 ### 🟢 Eksik ama dürüstçe söyleniyor — engel değil
 
 - 126/213 ekran kartında FPS yok · 1080p'de ölçüm yok · FPS işlemciyi hesaba

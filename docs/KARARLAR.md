@@ -3038,3 +3038,133 @@ Ders: bu projede ön ek elle yazılmaz — CSS işleyicisi gerekeni kendisi
 üretiyor, elle eklenen ön ek onu bozuyor. Bulunma yolu: kuralın **tarayıcıya
 giden** hâlini `document.styleSheets` üzerinden okumak. Yazdığın CSS ile
 servis edilen CSS aynı olmayabilir.
+
+
+### K144 — Sayfa dolu açılır: varsayılan sistem seçili gelir
+
+**2026-08-22.** Katalogda 332 parça var ama `perf_index` yalnızca **15 ekran
+kartı ve 12 işlemci** için hesaplanmış. Boş formla karşılaşan kullanıcının
+rastgele seçtiği parçanın ölçümlü çıkma ihtimali düşük; sonuç, sitenin ne
+yaptığını hiç görmeden üç boş panele bakmaktı.
+
+Sayfa artık ölçümlü bir ekran kartı + işlemci ve bunlarla **uyumluluk hatası
+üretmeyen** anakart/bellek/güç kaynağı/kasa seçili açılıyor.
+
+Seçim `engine/default-build.ts` içinde ve **test ediliyor** (9 test):
+
+- **Sabit liste değil.** Parça slug'ı gömülseydi, o parça katalogdan çıktığında
+  ya da ölçümü silindiğinde varsayılan sessizce bozulurdu. Seçim her istekte
+  eldeki veriden yapılıyor.
+- **Orta segment, amiral gemisi değil.** Ölçümlü parçalar indekse göre
+  sıralanıp ortadaki alınıyor. İlk görülen sayının "en iyi" sanılması, yanlış
+  bir çıpa olurdu.
+- **Uyumluluğa motor karar veriyor.** Ön eleme (soket, bellek tipi, watt)
+  yalnızca aramayı kısaltıyor; son sözü `checkCompatibility` söylüyor. Kuralların
+  ikinci bir kopyası yazılmadı.
+- **Hatasız kombinasyon yoksa `null`.** Uydurma bir varsayılan göstermektense
+  form boş açılır.
+
+K129/K135 ile ilişkisi: boş durum paneli kaldırılmadı, yalnızca ilk açılışta
+görünmüyor. Kullanıcı seçimleri temizlediğinde yine çıkıyor.
+
+### K145 — Parça listeleri ölçüm kapsamına göre gruplanır
+
+Ekran kartı ve işlemci açılır listeleri iki `<optgroup>`a ayrıldı:
+
+```
+Ölçümlü — FPS tahmini verilebilir          (ekran kartı 15, işlemci 12)
+Ölçüm yok — sadece uyumluluk kontrolü      (ekran kartı 45, işlemci 30)
+```
+
+Ölçümlüler önce. Ölçümsüz seçeneklerin metnine ayrıca `· ölçüm yok` ekleniyor:
+açılır liste kapandığında `optgroup` başlığı görünmez olur, sonuç görünmez
+olmamalı. Seçim yapıldıktan sonra listenin altında ayrıca bir cümle çıkıyor.
+
+**Gruplama `perf_index` tablosundan türetiliyor**, gömülü listeden değil.
+Ölçüm eklendiğinde gruplar kendiliğinden değişir.
+
+**Kartlar (AIB) çiplerinin durumunu miras alır.** İndeks zaten iki seviyeli
+okunuyor: kartın kendi ölçümü yoksa çipinki kullanılıyor (K86, K87). Kart
+seçenekleri tek bir çipe ait olduğu için ayrı grup açılmıyor, işaret satır
+içinde veriliyor.
+
+Diğer kategorilerde indeks kavramı yok; onlar düz liste kaldı.
+
+### K146 — Depolama açılır listeye çevrildi, stok kodu etiketten düştü
+
+14 satırlık onay kutusu listesi sol sütunun üçte birini yiyordu ve diğer altı
+kategoriyle aynı dilde konuşmuyordu. Artık `<select multiple>`.
+
+Etiketten üretici stok kodu düşürülüyor (`stripSku`):
+
+```
+Samsung 990 EVO Plus 1TB (MZ-V9S1T0B/AM)  ->  Samsung 990 EVO Plus 1TB
+```
+
+Kural dar: **yalnızca sondaki** parantez ve **yalnızca içi büyük harf/rakam,
+boşluksuz** ise. `Corsair VENGEANCE 32GB (2 x 16GB)` gibi anlamı olan parantez
+silinmiyor. Veritabanındaki değer değişmiyor; tam hâli `title` ipucunda ve
+seçilenler ayrıntı satırında duruyor.
+
+### K147 — "Kontrol edilemeyenler" sonuçların altına indi
+
+Blok sağ sütunun en üstündeydi: kullanıcının okuduğu ilk şey iki gri
+"bunu bilmiyoruz" kutusuydu. Artık performans, FPS ve fiyattan **sonra**
+geliyor ve `<details>` ile kapalı açılıyor; başlıkta kaç kontrolün
+yapılamadığı yazıyor.
+
+**İçerik aynen duruyor** — dürüstlük burada asıl mesele, gizlenen bir şey yok.
+Düşen tek şey sıra ve vurgu.
+
+**K134 bozulmadı:** uyumluluk HATALARI hâlâ en üstte. Aşağı inen şey hata
+değil, "veri eksik olduğu için bu kural çalışmadı" bilgisi. "Sorun bulunamadı"
+cümlesi de artık yalnız kalmıyor: yapılamayan kontrol varsa aşağıyı işaret
+ediyor.
+
+### K148 — Fiyatlar ekranda TRY, veritabanında kaynağın para biriminde
+
+Fiyatlar USD olarak duruyor (22 satır, Newegg) ama bütçe kutusu TL soruyordu —
+sayfa kendi içinde çelişiyordu.
+
+**Veritabanı değişmedi.** Çevrim yalnızca ekrana basarken, `lib/currency.ts`
+içinde. Kur bir bileşene gömülmedi: gömülseydi ikinci bir bileşen eklendiğinde
+ikinci bir kur doğar ve ikisi ayrı zamanlarda eskirdi.
+
+**Kur ELLE giriliyor** ve bu gizlenmiyor: arayüz her fiyat kutusunda
+*"elle girilen kurla çevrildi: 1 USD = X ₺ (tarih). Canlı kur değildir."*
+diyor. Otomatik kur bağlamak yeni bir dış bağımlılık ve beta kapsamı dışı.
+
+Çevrim tam sayıyla: `usdKuruş × (TRY kuruş/USD) ÷ 100`, tek yuvarlama, float
+yok (SCHEMA.md bölüm 0 kural 4). Çevrilemeyen para birimi `null` dönüyor ve o
+satır hiç gösterilmiyor — 1:1 varsaymak sessizce yanlış sayı olurdu.
+
+**Bu tur bulunan hata:** yükseltme motoruna USD senti gidiyordu, bütçe ise TL
+kuruşu olarak. Motor ikisini karşılaştırıyordu, yani "bu bütçeyle şunu
+alabilirsin" cevabı ~41 kat yanlıştı. Aday listesi artık çevrilmiş değerle
+kuruluyor. Motorun kendisi değişmedi.
+
+Farklı para birimlerinin toplanamaması kısıtı (eski `mixedCurrency` dalı)
+kalktı: tek bir kur ve tarihi olduğu için toplam artık üretilebiliyor ve ikisi
+de ekranda yazıyor.
+
+Kaydedilmiş sistem sayfasında donan değer **kaynağın para biriminde** donmuş
+durumda ve değişmiyor; ekrandaki ₺ karşılığı bugünkü kurla hesaplanıyor. Bu
+sayfada ayrıca yazılı.
+
+### K149 — Başlıktaki kapsam sayıları ne saydığını söylüyor
+
+"23 oyun, 94 ekran kartı" iki soruya da cevap vermiyordu.
+
+**23 oyun doğru ama eksik anlatılmış.** `games` tablosunda 32 satır var; 23'ü
+KULLANILABİLİR bir ölçüm grubu bırakıyor. Grup en az üç farklı ekran kartı
+istiyor ve aynı kartın çelişen değerleri grubu düşürüyor (K125). Aradaki 9
+oyun tek bir karta sabitlenmiş CPU ölçümlerinden geliyor. Etiket artık
+**"Ölçümü olan oyun"** diyor ve ölçütü bir cümleyle açıklıyor.
+
+**94 uydurma bir sayı değil**, ama adı yanlıştı: 15 ölçümlü çip + o çiplere
+bağlı 79 kart. Yani "FPS gösterilebilen SEÇENEK" sayısı, "ekran kartı" değil.
+Etiket artık üç sayıyı birden veriyor: **15 çip ölçüldü, 94 seçenekte FPS
+görünüyor, katalogda 213 ekran kartı var.** Kapsam açığı böylece başlıkta
+görünüyor.
+
+İşlemci için de aynı satır eklendi: **12 / 42**.

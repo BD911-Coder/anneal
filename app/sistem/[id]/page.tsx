@@ -8,7 +8,8 @@ import { getCurrentPrices } from "@/data/prices";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import { resolvePerfIndex } from "@/engine/gpu-selection";
 import { MODEL_VERSION, bandFor } from "@/engine/performance";
-import { RESOLUTION_LABEL, formatIsoDate, formatPriceMinor } from "@/lib/format";
+import { rateNote } from "@/lib/currency";
+import { RESOLUTION_LABEL, formatDisplayPrice, formatIsoDate } from "@/lib/format";
 
 import { FeedbackForm } from "../../feedback-form";
 import { GameFpsList } from "../../game-fps";
@@ -116,10 +117,21 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             {build.total_price_minor !== null ? (
               <>
                 <output className="num block text-3xl font-semibold tracking-tight">
-                  {formatPriceMinor(build.total_price_minor, build.currency ?? "USD")}
+                  {formatDisplayPrice(build.total_price_minor, build.currency ?? "USD") ??
+                    "çevrilemedi"}
                 </output>
                 <p className="text-sm text-muted">
                   Toplam fiyat — {formatIsoDate(build.created_at)} tarihinde donduruldu
+                </p>
+                {/*
+                  DONAN ŞEY KAYNAĞIN SAYISI, ekrandaki değil (K148). Kayıt
+                  {build.currency ?? "USD"} olarak dondu ve o sayı değişmiyor;
+                  ekrandaki ₺ karşılığı bugünkü kurla hesaplanıyor, yani kur
+                  değişirse bu satır da değişir.
+                */}
+                <p className="mt-1 text-xs leading-relaxed text-muted">
+                  Donan değer {build.currency ?? "USD"} cinsindendir ve değişmez; yukarıdaki ₺
+                  karşılığı bugünkü kurla hesaplandı.
                 </p>
               </>
             ) : (
@@ -196,16 +208,18 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                 </div>
                 <div className="num mt-0.5 text-xs text-muted">
                   {item.unit_price_minor_at_save !== null
-                    ? `Kayıt anında: ${formatPriceMinor(item.unit_price_minor_at_save, build.currency ?? "USD")}`
+                    ? `Kayıt anında: ${formatDisplayPrice(item.unit_price_minor_at_save, build.currency ?? "USD") ?? "çevrilemedi"}`
                     : "Kayıt anında fiyatı yoktu"}
                   {item.current_price_minor !== null ? (
                     <>
-                      {" · "}bugün: {formatPriceMinor(item.current_price_minor, build.currency ?? "USD")}
+                      {" · "}bugün:{" "}
+                      {formatDisplayPrice(item.current_price_minor, build.currency ?? "USD") ??
+                        "çevrilemedi"}
                       {delta !== null && delta !== 0 && (
                         <span className={delta > 0 ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}>
                           {" "}
                           ({delta > 0 ? "+" : ""}
-                          {formatPriceMinor(delta, build.currency ?? "USD")})
+                          {formatDisplayPrice(delta, build.currency ?? "USD") ?? "?"})
                         </span>
                       )}
                     </>
@@ -249,14 +263,14 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
         {allPricedNow ? (
           <p className="text-sm">
             <span className="num text-2xl font-semibold tracking-tight">
-              {formatPriceMinor(currentTotalMinor, build.currency ?? "USD")}
+              {formatDisplayPrice(currentTotalMinor, build.currency ?? "USD") ?? "çevrilemedi"}
             </span>{" "}
             <span className="text-xs text-muted">tahmini</span>
             {totalDelta !== null && totalDelta !== 0 && (
               <span className="text-sm text-muted">
                 {" — kayıt anına göre "}
                 {totalDelta > 0 ? "+" : ""}
-                {formatPriceMinor(totalDelta, build.currency ?? "USD")}
+                {formatDisplayPrice(totalDelta, build.currency ?? "USD") ?? "?"}
               </span>
             )}
           </p>
@@ -265,8 +279,8 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             Parçaların bir kısmının güncel fiyatı yok, bugünkü toplam hesaplanamıyor.
           </p>
         )}
-        <p className="mt-1 text-xs text-muted">
-          Bu sayı bilgi içindir; yukarıdaki dondurulmuş toplamın yerine geçmez.
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          Bu sayı bilgi içindir; yukarıdaki dondurulmuş toplamın yerine geçmez. {rateNote()}
         </p>
       </section>
 
