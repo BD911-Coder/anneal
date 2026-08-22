@@ -17,7 +17,13 @@
 export type FpsBand = {
   /** Bu değerin ALTI bu banda girer; `Infinity` en üst bant. */
   max: number;
-  label: string;
+  /**
+   * Mesaj anahtarı — `performance.fpsBand.<key>`.
+   *
+   * Etiketin kendisi burada DEĞİL: bu dosya eşiklerin nerede olduğunu
+   * söylüyor, hangi dilde yazıldığını değil (K150).
+   */
+  key: "struggling" | "playable" | "smooth" | "highRefresh";
   /**
    * Tailwind renk sınıfı. Renk TEK BAŞINA anlam taşımıyor — etiket metni
    * (`zor`/`oynanır`/…) her zaman yanında (WCAG 1.4.1). Koyu tema için
@@ -27,10 +33,10 @@ export type FpsBand = {
 };
 
 export const FPS_BANDS: FpsBand[] = [
-  { max: 30, label: "zor", tone: "text-red-700 dark:text-red-400" },
-  { max: 60, label: "oynanır", tone: "text-amber-700 dark:text-amber-400" },
-  { max: 120, label: "akıcı", tone: "text-emerald-700 dark:text-emerald-400" },
-  { max: Infinity, label: "yüksek tazeleme", tone: "text-sky-700 dark:text-sky-400" },
+  { max: 30, key: "struggling", tone: "text-red-700 dark:text-red-400" },
+  { max: 60, key: "playable", tone: "text-amber-700 dark:text-amber-400" },
+  { max: 120, key: "smooth", tone: "text-emerald-700 dark:text-emerald-400" },
+  { max: Infinity, key: "highRefresh", tone: "text-sky-700 dark:text-sky-400" },
 ];
 
 export function bandFor(fps: number): FpsBand {
@@ -38,7 +44,5 @@ export function bandFor(fps: number): FpsBand {
   return FPS_BANDS[FPS_BANDS.length - 1];
 }
 
-/** Arayüzde eşiklerin nereden geldiğini söyleyen tek cümle. */
-export const FPS_BAND_NOTE =
-  "Eşikler (30 / 60 / 120) yaygın kabul gören sınırlardır, ölçüm değil yorumdur; " +
-  "ekranınızın tazeleme hızına göre değişir.";
+// Eşiklerin nereden geldiğini söyleyen cümle `performance.fps.bandNote`
+// mesajında; metin artık bu dosyada durmuyor.

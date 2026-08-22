@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { getFpsGameGroups } from "@/data/benchmarks";
 import { getBuild } from "@/data/builds";
@@ -7,9 +8,14 @@ import { getPerfIndexes } from "@/data/perf";
 import { getCurrentPrices } from "@/data/prices";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import { resolvePerfIndex } from "@/engine/gpu-selection";
-import { MODEL_VERSION, bandFor } from "@/engine/performance";
-import { rateNote } from "@/lib/currency";
-import { RESOLUTION_LABEL, formatDisplayPrice, formatIsoDate } from "@/lib/format";
+import { MODEL_VERSION, bandKeyFor } from "@/engine/performance";
+import { DISPLAY_CURRENCY, SOURCE_CURRENCY, USD_TRY, isConverted } from "@/lib/currency";
+import {
+  formatDisplayPrice,
+  formatIsoDate,
+  formatNumber,
+  formatPriceMinor,
+} from "@/lib/format";
 
 import { FeedbackForm } from "../../feedback-form";
 import { GameFpsList } from "../../game-fps";
@@ -18,20 +24,36 @@ import { IndexBar } from "../../index-bar";
 // Kayıt dondurulmuş olsa da güncel fiyat her açılışta yeniden okunuyor.
 export const dynamic = "force-dynamic";
 
-const CATEGORY_LABEL: Record<string, string> = {
-  cpu: "İşlemci",
-  gpu: "Ekran kartı",
-  motherboard: "Anakart",
-  ram: "Bellek",
-  psu: "Güç kaynağı",
-  storage: "Depolama",
-  case: "Kasa",
-};
-
 export default async function SavedBuildPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const build = await getBuild(id);
   if (!build) notFound();
+
+  const [t, tPerf, tPrice, tCommon, tParts, locale] = await Promise.all([
+    getTranslations("pricing.saved"),
+    getTranslations("performance"),
+    getTranslations("pricing"),
+    getTranslations("common"),
+    getTranslations("parts"),
+    getLocale(),
+  ]);
+
+  const sayi = (value: number) => formatNumber(value, locale);
+  const fiyat = (minor: number) =>
+    formatDisplayPrice(minor, build.currency ?? SOURCE_CURRENCY, locale) ??
+    tPrice("unconvertible", { currency: build.currency ?? SOURCE_CURRENCY });
+
+  // Çevrim yapılmadıysa kur cümlesi de yok (K157): varsayılan gösterim
+  // kaynağın kendi para birimi ve o hâlde anlatılacak bir işlem yok.
+  const kurNotu = !isConverted(SOURCE_CURRENCY, DISPLAY_CURRENCY)
+    ? tPrice("rateNoteNone", { source: SOURCE_CURRENCY })
+    : tPrice(USD_TRY.manual ? "rateNoteManual" : "rateNoteAuto", {
+        source: SOURCE_CURRENCY,
+    // Kur da bir para tutarı: sembolü ve ondalık ayracı dile göre çıksın diye
+    // `Intl`in para biçimlendiricisinden geçiyor.
+        rate: formatPriceMinor(USD_TRY.rateMinor, "TRY", locale),
+        date: formatIsoDate(USD_TRY.quotedAt, locale),
+      });
 
   // Güncel fiyat ayrıca gösterilir ama dondurulmuş değerin üzerine YAZILMAZ
   // (SCHEMA.md bölüm 5). İki sayı yan yana durur.
@@ -96,19 +118,22 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
     // `sonuclar`: bölümler sırayla belirir (app/globals.css).
     <main className="sonuclar mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
       <header className="giris">
-        <h1 className="text-3xl font-semibold tracking-tight">{build.title ?? "Kaydedilmiş sistem"}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {build.title ?? t("frozenHeading")}
+        </h1>
         {/* Sayfada artık üç kutu var ve hepsi aynı ana ait değil: dondurulmuş
             değerler o günün, bugünkü fiyat ve oyun bazlı FPS bugünün. Tek
             cümlede "aşağıdaki değerler o günün" demek ikisini karıştırırdı. */}
         <p className="mt-1.5 text-sm leading-relaxed text-muted">
-          {formatIsoDate(build.created_at)} tarihinde kaydedildi. Dondurulan değerler o
-          güne aittir; kesikli çerçeveli kutular bugünün verisiyle hesaplanır.
+          {t("intro", { date: formatIsoDate(build.created_at, locale) })}
         </p>
       </header>
 
       {/* Dondurulmuş değerler */}
       <section className="cam mt-8 rounded-lg border border-border p-4 sm:p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Kayıt anındaki değerler</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+          {t("frozenHeading")}
+        </h2>
 
         <div className="flex flex-col gap-3 text-sm">
           <div>
@@ -117,11 +142,10 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             {build.total_price_minor !== null ? (
               <>
                 <output className="num block text-3xl font-semibold tracking-tight">
-                  {formatDisplayPrice(build.total_price_minor, build.currency ?? "USD") ??
-                    "çevrilemedi"}
+                  {fiyat(build.total_price_minor)}
                 </output>
                 <p className="text-sm text-muted">
-                  Toplam fiyat — {formatIsoDate(build.created_at)} tarihinde donduruldu
+                  {t("totalFrozen", { date: formatIsoDate(build.created_at, locale) })}
                 </p>
                 {/*
                   DONAN ŞEY KAYNAĞIN SAYISI, ekrandaki değil (K148). Kayıt
@@ -130,17 +154,17 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                   değişirse bu satır da değişir.
                 */}
                 <p className="mt-1 text-xs leading-relaxed text-muted">
-                  Donan değer {build.currency ?? "USD"} cinsindendir ve değişmez; yukarıdaki ₺
-                  karşılığı bugünkü kurla hesaplandı.
+                  {t("frozenCurrencyNote", {
+                    currency: build.currency ?? SOURCE_CURRENCY,
+                    target: DISPLAY_CURRENCY,
+                  })}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm text-muted">Toplam fiyat dondurulmadı.</p>
+                <p className="text-sm text-muted">{t("totalNotFrozen")}</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted">
-                  Sistemdeki parçalardan en az birinin kayıt anında fiyatı yoktu. Eksik
-                  fiyatla üretilen toplam olduğundan ucuz görünürdü ve donduğu için
-                  sonradan düzeltilemezdi; bu yüzden hiç yazılmadı.
+                  {t("totalNotFrozenWhy")}
                 </p>
               </>
             )}
@@ -154,17 +178,22 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
                 </output>
                 {/* K73: 100 tavan degil, sabit referans sistemin degeri. */}
                 <span className="ml-2 text-sm font-normal text-muted">
-                  tahmini sistem indeksi — referans sistem <span className="num">100</span>
+                  {tPerf.rich("systemIndex.suffix", {
+                    reference: sayi(100),
+                    b: (chunks) => <span className="num">{chunks}</span>,
+                  })}
                 </span>
               </p>
               <IndexBar value={build.perf_index_snapshot} />
               <p className="mt-2 text-sm text-muted">
-                {bandFor(build.perf_index_snapshot)}{" "}
-                <span className="text-xs text-muted">(tahmini)</span>
+                {tPerf(`band.${bandKeyFor(build.perf_index_snapshot)}`)}{" "}
+                <span className="text-xs text-muted">({tCommon("estimated")})</span>
               </p>
               <p className="mt-1 text-xs leading-relaxed text-muted">
-                {RESOLUTION_LABEL[build.resolution]} için, motor sürümü {build.model_version} ile
-                hesaplandı. Gerçek FPS iddiası değildir.
+                {t("frozenIndexNote", {
+                  resolution: tPerf(`resolution.${build.resolution}`),
+                  modelVersion: build.model_version,
+                })}
               </p>
             </div>
           ) : (
@@ -176,12 +205,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             // verisi henüz toplanmamıştı (K71). İkisini de kapsayan bir cümle
             // yazılıyor — kayda bakıp hangisi olduğunu uydurmaktansa.
             <div>
-              <p className="text-sm text-muted">Performans tahmini için yeterli veri yok.</p>
+              <p className="text-sm text-muted">{t("noIndexTitle")}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted">
-                Bu sistem {RESOLUTION_LABEL[build.resolution]} seçiliyken kaydedildi. İndeks
-                ekran kartı ve işlemcinin ikisini birden gerektiriyor ve her ikisinin de
-                ölçüm verisinin bulunmasını şart koşuyor; kaydedildiği anda bu koşul
-                sağlanmıyordu. Sistem geçerli; sadece hızı hakkında bir sayı üretilemedi.
+                {t("noIndexWhy", { resolution: tPerf(`resolution.${build.resolution}`) })}
               </p>
             </div>
           )}
@@ -190,7 +216,9 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
 
       {/* Parçalar */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Parçalar ({build.items.length})</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+          {t("partsHeading", { count: build.items.length })}
+        </h2>
         <ul className="flex flex-col gap-2 text-sm">
           {currentItems.map((item) => {
             // Fark ancak IKI fiyat da varsa hesaplanir (K124).
@@ -201,30 +229,28 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             return (
               <li key={item.part_id} className="border-l-2 border-border pl-3">
                 <div>
-                  <span className="text-muted">
-                    {CATEGORY_LABEL[item.category] ?? item.category}:
-                  </span>{" "}
+                  <span className="text-muted">{tParts(`category.${item.category}`)}:</span>{" "}
                   {item.label}
                 </div>
                 <div className="num mt-0.5 text-xs text-muted">
                   {item.unit_price_minor_at_save !== null
-                    ? `Kayıt anında: ${formatDisplayPrice(item.unit_price_minor_at_save, build.currency ?? "USD") ?? "çevrilemedi"}`
-                    : "Kayıt anında fiyatı yoktu"}
+                    ? t("atSave", { price: fiyat(item.unit_price_minor_at_save) })
+                    : t("noPriceAtSave")}
                   {item.current_price_minor !== null ? (
                     <>
-                      {" · "}bugün:{" "}
-                      {formatDisplayPrice(item.current_price_minor, build.currency ?? "USD") ??
-                        "çevrilemedi"}
+                      {" · "}
+                      {t("today", { price: fiyat(item.current_price_minor) })}
                       {delta !== null && delta !== 0 && (
                         <span className={delta > 0 ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}>
-                          {" "}
-                          ({delta > 0 ? "+" : ""}
-                          {formatDisplayPrice(delta, build.currency ?? "USD") ?? "?"})
+                          {" ("}
+                          {delta > 0 ? "+" : ""}
+                          {fiyat(delta)}
+                          {")"}
                         </span>
                       )}
                     </>
                   ) : (
-                    <> · bugün fiyatı yok</>
+                    <> · {t("noPriceToday")}</>
                   )}
                 </div>
               </li>
@@ -238,12 +264,15 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
           fiyat kutusuyla aynı dil. */}
       {build.gpu_chip_part_id !== undefined && (
         <section className="mt-8 rounded-lg border border-dashed border-border p-4 sm:p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Bugünkü oyun bazlı FPS</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+            {t("todayFpsHeading")}
+          </h2>
           <p className="mb-4 mt-2 text-xs leading-relaxed text-muted">
-            Bu liste <span className="font-medium">dondurulmamıştır</span>: bugünkü ölçüm
-            verisiyle ve motor sürümü {MODEL_VERSION} ile hesaplandı. Yukarıdaki sistem
-            indeksi ise {formatIsoDate(build.created_at)} tarihinde dondu. Ölçüm verisi
-            yalnızca üstüne eklenerek büyüdüğü için bu sayılar zamanla değişebilir.
+            {t.rich("todayFpsNote", {
+              modelVersion: MODEL_VERSION,
+              date: formatIsoDate(build.created_at, locale),
+              b: (chunks) => <span className="font-medium">{chunks}</span>,
+            })}
           </p>
           <GameFpsList
             rows={fpsRows}
@@ -259,28 +288,29 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
 
       {/* Güncel fiyat — ayrı kutu, dondurulmuş değerin üzerine yazılmıyor */}
       <section className="mt-8 rounded-lg border border-dashed border-border p-4 sm:p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Bugünkü fiyat</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+          {t("todayHeading")}
+        </h2>
         {allPricedNow ? (
           <p className="text-sm">
             <span className="num text-2xl font-semibold tracking-tight">
-              {formatDisplayPrice(currentTotalMinor, build.currency ?? "USD") ?? "çevrilemedi"}
+              {fiyat(currentTotalMinor)}
             </span>{" "}
-            <span className="text-xs text-muted">tahmini</span>
+            <span className="text-xs text-muted">{tCommon("estimated")}</span>
             {totalDelta !== null && totalDelta !== 0 && (
               <span className="text-sm text-muted">
-                {" — kayıt anına göre "}
-                {totalDelta > 0 ? "+" : ""}
-                {formatDisplayPrice(totalDelta, build.currency ?? "USD") ?? "?"}
+                {" "}
+                {t("todayVsSaved", {
+                  delta: (totalDelta > 0 ? "+" : "") + fiyat(totalDelta),
+                })}
               </span>
             )}
           </p>
         ) : (
-          <p className="mt-1.5 text-sm leading-relaxed text-muted">
-            Parçaların bir kısmının güncel fiyatı yok, bugünkü toplam hesaplanamıyor.
-          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">{t("todayIncomplete")}</p>
         )}
         <p className="mt-1 text-xs leading-relaxed text-muted">
-          Bu sayı bilgi içindir; yukarıdaki dondurulmuş toplamın yerine geçmez. {rateNote()}
+          {t("todayNote")} {kurNotu}
         </p>
       </section>
 
@@ -290,7 +320,7 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
 
       <p className="text-sm">
         <Link className="text-accent underline" href="/">
-          ← Yeni sistem oluştur
+          {tCommon("backToBuilder")}
         </Link>
       </p>
     </main>

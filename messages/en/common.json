@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "title": "Anneal",
+    "description": "PC building and performance estimation"
+  },
+  "siteName": "Anneal",
+  "tagline": "Pick your hardware and see the performance you will get. Every number states where it came from — measured or calculated.",
+  "catalogNote": "Catalog: <b>{count}</b> parts, specifications taken from manufacturer pages.",
+  "estimated": "estimated",
+  "backToBuilder": "← Start a new build",
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "tr": "Türkçe"
+  },
+  "feedback": {
+    "label": "Feedback",
+    "placeholder": "What is missing, what is wrong?",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Thank you, saved.",
+    "privacy": "Do not include an email address or any personal details — only your message is stored."
+  },
+  "errors": {
+    "saveEmpty": "Select at least one part before saving.",
+    "saveUnknownPart": "One of the selected parts is no longer in the catalog. Refresh the page and try again.",
+    "saveIdCollision": "A build ID could not be generated. Please try again.",
+    "saveFailed": "The build could not be saved.",
+    "feedbackEmpty": "Write something first.",
+    "feedbackTooLong": "That message is too long. Please shorten it."
+  }
+}

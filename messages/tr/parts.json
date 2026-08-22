@@ -1,0 +1,60 @@
+{
+  "heading": "Parça seç",
+  "category": {
+    "cpu": "İşlemci",
+    "gpu": "Ekran kartı",
+    "motherboard": "Anakart",
+    "ram": "Bellek",
+    "psu": "Güç kaynağı",
+    "case": "Kasa",
+    "storage": "Depolama"
+  },
+  "notSelected": "— seçilmedi —",
+  "coverageGroup": {
+    "measured": "Ölçümlü — FPS tahmini verilebilir",
+    "unmeasured": "Ölçüm yok — sadece uyumluluk kontrolü"
+  },
+  "unmeasuredMarker": "ölçüm yok",
+  "unmeasuredNote": "Bu {category} için ölçüm yok: uyumluluk kontrolü çalışır, FPS ve sistem indeksi hesaplanamaz. Listede \"Ölçümlü\" başlığı altındaki parçalarda ikisi de görünür.",
+  "variant": {
+    "label": "Kart modeli",
+    "optional": "opsiyonel",
+    "unspecified": "— belirtilmedi, referans değerler —",
+    "hint": "Aynı çipten çıkan kartlar uzunluk ve güç limitinde ayrışır. Kart seçmezseniz üreticinin referans değerleri kullanılır."
+  },
+  "storage": {
+    "label": "Depolama",
+    "multipleHint": "birden fazla seçilebilir",
+    "howTo": "Birden fazlası için Ctrl (Mac'te ⌘) basılı tutarak seçin.",
+    "clear": "Seçimi temizle",
+    "detail": "{type}, {capacity} GB"
+  },
+  "coverage": {
+    "gamesTitle": "Ölçümü olan oyun",
+    "games": "<b>{count}</b> oyunda FPS listesi çıkıyor. Bir oyun, en az üç farklı ekran kartıyla ölçüldüğünde listeye giriyor.",
+    "gpusTitle": "Ölçümü olan ekran kartı",
+    "gpus": "<b>{chips}</b> çip ölçüldü; kartlar çiplerinin ölçümünü kullandığı için <b>{options}</b> seçenekte FPS görünüyor — <b>{total}</b> ekran kartının içinden.",
+    "cpusTitle": "Ölçümü olan işlemci",
+    "cpus": "<b>{measured}</b> işlemci ölçüldü, <b>{total}</b> işlemcinin içinden. Sistem indeksi ikisinde de ölçüm istiyor."
+  },
+  "empty": {
+    "heading": "Soldan parça seçin",
+    "intro": "Ekran kartı seçtiğinizde oyun bazlı FPS listesi gelir. İşlemciyi de seçerseniz sistem indeksi ve darboğaz analizi eklenir. Uyumluluk kontrolü ilk parçadan itibaren çalışır.",
+    "willSeeTitle": "Ne göreceksiniz",
+    "willSee": "Oyun başına tahmini FPS, sistem indeksi, uyumluluk hataları ve yükseltme önerisi.",
+    "willNotSeeTitle": "Ne görmeyeceksiniz",
+    "willNotSee": "Ölçümü olmayan parçalarda uydurma sayı. Veri yoksa yerinde neden olmadığı yazar.",
+    "coveredGamesTitle": "Ölçümü olan oyunlar",
+    "coveredGames": "{resolution} için <b>{count}</b> oyun: <muted>{list}</muted>",
+    "noneAtResolution": "Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin."
+  },
+  "selected": {
+    "heading": "Seçilen sistem",
+    "chip": "çip: {name}",
+    "save": "Sistemi kaydet",
+    "saving": "Kaydediliyor…",
+    "saveNote": "Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan değişmez. İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır. İndeks hesaplanamıyorsa — parça seçilmediği için ya da ölçüm verisi olmadığı için — sistem yine kaydedilir, indeks yerine sebebi görünür.",
+    "shareLabel": "Bu adres sistemi açar",
+    "openSaved": "Kaydedilen sistemi aç →"
+  }
+}
