@@ -50,6 +50,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "C1",
       level: "error",
       message: `İşlemci soketi ${cpu!.socket}, anakart soketi ${motherboard!.socket}. Bu ikisi takılamaz.`,
+      params: { cpuSocket: cpu!.socket, boardSocket: motherboard!.socket },
       involved_part_ids: [cpu!.id, motherboard!.id],
     });
   }
@@ -60,6 +61,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "C2",
       level: "error",
       message: `Bellek ${ram!.memory_type}, anakart ${motherboard!.memory_type} destekliyor. Bu ikisi takılamaz.`,
+      params: { ramType: ram!.memory_type, boardType: motherboard!.memory_type },
       involved_part_ids: [ram!.id, motherboard!.id],
     });
   }
@@ -70,6 +72,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "C3",
       level: "error",
       message: `Bellek kiti ${ram!.module_count} modülden oluşuyor ama anakartta ${motherboard!.memory_slots} yuva var.`,
+      params: { moduleCount: ram!.module_count, slots: motherboard!.memory_slots },
       involved_part_ids: [ram!.id, motherboard!.id],
     });
   }
@@ -85,6 +88,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
         code: "C4",
         level: "error",
         message: `Güç kaynağı ${psu!.wattage}W, bu sistem için en az ${required}W gerekiyor.`,
+        params: { psuWatts: psu!.wattage, requiredWatts: required },
         involved_part_ids: involved,
       });
     } else if (psu!.wattage < required * PSU_MARGIN_WARN_RATIO) {
@@ -93,6 +97,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
         code: "W3",
         level: "warning",
         message: `Güç kaynağı ${psu!.wattage}W, gereken ${required}W. Pay dar — güç kaynağı tam kapasiteye yakın çalışır, verimi düşer ve sesi artar.`,
+        params: { psuWatts: psu!.wattage, requiredWatts: required },
         involved_part_ids: involved,
       });
     }
@@ -108,6 +113,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "C5",
       level: "error",
       message: `Ekran kartı ${gpu!.length_mm} mm, kasaya en fazla ${pcCase!.max_gpu_length_mm} mm sığıyor.`,
+      params: { gpuLength: gpu!.length_mm!, maxLength: pcCase!.max_gpu_length_mm! },
       involved_part_ids: [gpu!.id, pcCase!.id],
     });
   }
@@ -122,6 +128,14 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "C6",
       level: "error",
       message: `Anakart ${motherboard!.form_factor} boyutunda, kasa şunları destekliyor: ${pcCase!.supported_form_factors.join(", ")}.`,
+      params: {
+        formFactor: motherboard!.form_factor,
+        // Dizi ICU'ya geçmiyor: liste ayracı da bir çeviri kararı olabilir
+        // ama bugün iki dilde de virgül. Sayı ayrıca gidiyor ki çeviri
+        // tekil/çoğul ayrımı yapabilsin.
+        supported: pcCase!.supported_form_factors.join(", "),
+        supportedCount: pcCase!.supported_form_factors.length,
+      },
       involved_part_ids: [motherboard!.id, pcCase!.id],
     });
   }
@@ -135,6 +149,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "W1",
       level: "warning",
       message: `Bellek ${ram!.speed_mhz} MHz ama anakart en fazla ${motherboard!.max_memory_speed_mhz} MHz destekliyor. Bellek düşük hızda çalışır.`,
+      params: { ramSpeed: ram!.speed_mhz, maxSpeed: motherboard!.max_memory_speed_mhz },
       involved_part_ids: [ram!.id, motherboard!.id],
     });
   }
@@ -145,6 +160,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "W2",
       level: "warning",
       message: `Bellek kiti ${ram!.capacity_gb} GB ama anakart en fazla ${motherboard!.max_memory_gb} GB destekliyor.`,
+      params: { ramCapacity: ram!.capacity_gb, maxCapacity: motherboard!.max_memory_gb },
       involved_part_ids: [ram!.id, motherboard!.id],
     });
   }
@@ -169,6 +185,7 @@ export function checkCompatibility(input: BuildInput): Finding[] {
       code: "W5",
       level: "warning",
       message: `Güç kaynağı ${psu!.length_mm} mm, kasa için belirtilen sınır ${pcCase!.max_psu_length_mm} mm.`,
+      params: { psuLength: psu!.length_mm!, maxLength: pcCase!.max_psu_length_mm! },
       involved_part_ids: [psu!.id, pcCase!.id],
     });
   }

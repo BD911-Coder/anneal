@@ -115,7 +115,26 @@ export type FindingCode = ErrorCode | WarningCode;
 export type Finding = {
   code: FindingCode;
   level: FindingLevel;
+  /**
+   * Türkçe hazır cümle. **Arayüz bunu kullanmıyor** (K150) — çeviri
+   * `code` + `params` üzerinden ICU ile yapılıyor.
+   *
+   * Alan yine de duruyor çünkü motor arayüzden bağımsız kullanılabilir
+   * olmalı: script'ler ve testler bir bulguyu okunur biçimde yazabilmeli.
+   * Kaldırılsaydı `/engine`, çeviri katmanı olmadan hiçbir şey söyleyemezdi.
+   */
   message: string;
+  /**
+   * Cümledeki değişken değerler, ADLARIYLA.
+   *
+   * Metin birleştirme yerine ICU kullanılabilsin diye: `"soket " + x` üç dilde
+   * üç ayrı kelime sırası demek. Adlandırılmış parametre, çeviri dosyasının
+   * sırayı kendi diline göre kurmasına izin veriyor.
+   *
+   * Kuralın hangi anahtarları ürettiği `messages/<dil>/compatibility.json`
+   * içindeki `rules.<code>` mesajıyla eşleşir.
+   */
+  params?: Record<string, string | number>;
   involved_part_ids: string[];
 };
 
