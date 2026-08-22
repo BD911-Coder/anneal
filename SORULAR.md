@@ -18,29 +18,6 @@ Son güncelleme: 2026-08-22
 
 ## Açık sorular
 
-### S47 — Dolar kuru onaylanmadı (2026-08-22)
-
-`lib/currency.ts` içindeki **1 USD = 41,00 ₺** benim koyduğum bir başlangıç
-değeri. Ölçülmüş ya da bir kaynaktan alınmış bir sayı **değil**.
-
-Sitedeki her fiyat bu sayıya bağlı: parça listeleri, toplam, yükseltme
-önerisinin bütçe karşılaştırması ve kaydedilmiş sistem sayfası.
-
-Arayüz *"elle girilen kurla çevrildi … Canlı kur değildir"* dediği için
-kullanıcıya yanlış bir iddia sunulmuyor — ama sayı yine de yanlış.
-
-**Yapılacak:** güncel kura bak, `lib/currency.ts` içindeki iki satırı
-güncelle. Başka hiçbir yerde kur yok.
-
-```ts
-rateMinor: 4100,          // 1 USD kaç kuruş
-quotedAt: "2026-08-22",   // hangi güne ait
-```
-
-Kur otomatik alınsın mı ayrı bir soru: yeni bir dış servis demek ve beta
-kapsamı dışında. Bugünkü hâl bilinçli olarak elle.
-
-
 ### S46 — Görsel kimlik gözle onaylanmadı (2026-08-20)
 
 İkinci UI turu (K138–K143) doğrulandı ama **ekran görüntüsüyle değil**: bu
@@ -257,6 +234,21 @@ Ayrıştırılmadı: Next 16 + `force-dynamic` + önizleme vekilinden hangisi?
 ---
 
 ## Kapanmış sorular
+
+### S47 — Dolar kuru onaylandı ✅ CEVAPLANDI (2026-08-22)
+
+**Proje sahibinin kararı: 1 USD = 41,00 ₺ onaylandı.** `lib/currency.ts`
+içindeki `rateMinor: 4100` artık bir yer tutucu değil, onaylanmış değer;
+`quotedAt: "2026-08-22"` onayın günü.
+
+Sayının niteliği değişmedi: elle girilmiş bir kur, canlı kur değil. Arayüz
+bunu söylemeye devam ediyor ve kur yalnızca kullanıcı TRY seçtiğinde devreye
+giriyor (K157) — varsayılan gösterim kaynağın para birimi USD.
+
+Kurun otomatik alınması ayrı bir soru olarak açılmadı: yeni bir dış servis
+demek ve beta kapsamı dışında. → `docs/KARARLAR.md` K166
+
+---
 
 ### S39 — Ölçülmüş ve türetilmiş FPS aynı listede yan yana mı dursun? ✅ CEVAPLANDI (2026-08-20)
 

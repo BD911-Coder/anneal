@@ -3529,3 +3529,17 @@ sayfası birincil kaynak; dış kaynak onu doğrulayabilir ya da şüphe düşü
 sessizce değiştiremez.
 
 **Yazma yolu yok:** `--apply` bayrağı bilinçli olarak eklenmedi.
+
+### K166 — Dolar kuru onaylandı: 1 USD = 41,00 ₺ (2026-08-22)
+
+**Proje sahibinin kararı (S47).** `lib/currency.ts` içindeki `rateMinor: 4100`
+artık benim koyduğum bir başlangıç değeri değil, onaylanmış değer.
+
+Sayının **niteliği** değişmedi ve arayüz metni de değişmiyor: elle girilmiş bir
+kur, canlı kur değil, `quotedAt` ekranda yazıyor. Onay, sayının doğru olduğunu
+söylüyor; otomatik olduğunu değil.
+
+Kapsam sınırı korunuyor: kur bir servisten çekilmiyor. Bu, yeni bir dış
+bağımlılık demek ve beta kapsamı dışında. Kur eskidiğinde tek yerden, iki
+satırla güncellenir — K157 ile birlikte okunur: varsayılan gösterim USD olduğu
+için kur yalnızca kullanıcı TRY seçtiğinde bir sayıya dokunuyor.

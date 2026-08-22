@@ -16,6 +16,10 @@
  * baktığı değer. Otomatik güncellenmiyor: kur servisi bağlamak yeni bir dış
  * bağımlılık ve beta kapsamı dışında.
  *
+ * Aşağıdaki değer proje sahibi tarafından **onaylandı** (2026-08-22, S47).
+ * Yani artık bir yer tutucu değil; eskidiğinde de aynı yerden, aynı iki
+ * satırla güncellenir.
+ *
  * Bunun bedeli: sayı eskir. Bedeli ödenebilir kılan şey, eskimenin
  * GİZLENMEMESİ — `quotedAt` arayüzde yazıyor, yani kullanıcı fiyatın hangi
  * günün kuruyla çevrildiğini görüyor ve canlı bir kur sanmıyor.
@@ -30,7 +34,7 @@ export const USD_TRY = {
    * (SCHEMA.md bölüm 0, kural 4). `4100` = 41,00 ₺.
    */
   rateMinor: 4100,
-  /** Kurun bakıldığı gün. Arayüz bu tarihi gösteriyor. */
+  /** Kurun bakıldığı ve onaylandığı gün. Arayüz bu tarihi gösteriyor. */
   quotedAt: "2026-08-22",
   /**
    * `true` olduğu sürece arayüz "elle girilen kur" diyor. Kur bir kaynaktan
