@@ -3998,3 +3998,32 @@ o soruyu cevaplayamıyor ve cevaplayamadığını yazıyor. Çekişmeleri kalıc
 kaydetmek bir şema kararı; verilmedi.
 
 Adres `SCHEMA.md` bölüm 9'a eklendi.
+
+### K178 — Dürüstlük sayfası (`/hakkinda`): sitenin asıl farkı
+
+**2026-08-22.** `app/hakkinda/page.tsx`, `messages/{en,tr}/about.json`.
+
+Her rakip bir sayı gösteriyor; hiçbiri o sayıya ne kadar güvendiğini
+söylemiyor. Bu sayfa onu söylüyor: neyin ölçüldüğü, neyin tahmin olduğu,
+bandın ne demek olduğu, spec'lerin nereden geldiği ve sitenin **bilmediği**
+şeyler.
+
+**Kaynak dil İngilizce**, Türkçe çeviri yanında (K150 deseni). Kendi ad
+alanı (`about`): tek bir sayfaya ait ve uzun; `parts.json`a karışsaydı hangi
+metnin nerede kullanıldığı görünmez olurdu.
+
+**Sayılar metne gömülü DEĞİL.** Kapsam, ölçüm sayısı, oyun sayısı, fiyatlı
+parça ve Wikipedia'dan gelen alan sayısı her istekte veritabanından okunuyor.
+Gerekçe bu sayfada iki kat geçerli: dürüstlük sayfasında eskimiş bir sayı
+sayfanın kendi iddiasını çürütür. Oyun sayısı ana sayfayla **aynı**
+fonksiyondan geliyor — iki sayfa farklı sayı yazamaz.
+
+**"Bilmediklerimiz" bölümü altı madde** ve hepsi bugün doğru: FPS işlemciyi
+hesaba katmıyor · 1080p ölçümü yok · 213 karttan yalnızca ölçülmüş çipten
+gelenler FPS gösteriyor · fiyat 22 parçada ve elle · yalnızca masaüstü ·
+vekil skor fikri **sınanmadı, çürütülmedi** (K173).
+
+Hata payları `lib/fps-margin.ts`ten okunuyor, elle yazılmıyor — o dosya
+`npm run fps:sapma` tarafından yazılıyor ve bu tur **değiştirilmedi**.
+
+Ana sayfanın altına bağlantı kondu: bağlantısız bir sayfa yok sayılır.

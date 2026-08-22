@@ -154,6 +154,16 @@ export default async function HomePage() {
       <section className="mt-12 border-t border-border pt-6">
         <FeedbackForm />
       </section>
+
+      {/*
+        Dürüstlük sayfasına bağlantı (K178). Sayfanın kendisi sitenin asıl
+        farkı; bağlantısız bir sayfa yok sayılır.
+      */}
+      <footer className="mt-8 border-t border-border pt-4 text-sm">
+        <a className="text-muted underline underline-offset-2 hover:text-foreground" href="/hakkinda">
+          {t("aboutLink")}
+        </a>
+      </footer>
     </main>
   );
 }

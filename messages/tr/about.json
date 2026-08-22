@@ -1,0 +1,43 @@
+{
+  "title": "Bu sayılar nasıl üretiliyor",
+  "intro": "Performans tahmini yapan her site size bir sayı gösterir. Bu sayfa, atladıkları kısımla ilgili: sayı nasıl üretildi, ne kadar sapabilir ve neyi bilmiyoruz.",
+  "measured": {
+    "heading": "Ölçülen ne",
+    "body": "Bir parçaya performans indeksi ancak arkasında yayınlanmış ölçüm varsa yazılıyor. Bugün bu <b>{measuredGpu}</b> ekran kartı çipi ve <b>{measuredCpu}</b> işlemci — katalogdaki {gpuChips} çip ve {cpus} işlemcinin içinden. Ölçümler <b>{points}</b> yayınlanmış veri noktasından geliyor.",
+    "games": "Oyun bazlı FPS aynı ölçümlerden çıkıyor: 1440p'de <b>{games1440}</b> oyun, 4K'da <b>{games2160}</b> oyun. Bir oyun, en az üç farklı ekran kartıyla ölçüldüğünde listeye giriyor.",
+    "noBlend": "Farklı incelemecilerin ölçümlerini harmanlamıyoruz. İki yayın farklı sistemde, farklı sürücüyle ve farklı sahnelerde test ediyor; ortalamalarını almak, kimsenin ölçmediği bir sayı üretmek olurdu."
+  },
+  "estimated": {
+    "heading": "Tahmin edilen ne",
+    "body": "Geri kalan her şey. Ölçümü olmayan bir parça, spec'inden tahmin edilmiş bir indeks alıyor ve arayüz bunu <b>≈</b> işareti ve hata bandıyla gösteriyor. Tahmin edilen bir sayı hiçbir zaman ölçülmüş gibi görünmüyor.",
+    "how": "Model aile içinde <code>indeks = k × x^b</code> oturtuyor; x, ekran kartında veri yolu × boost saati, işlemcide boost saati × √L3. Bir ailenin dörtten az ölçümü varsa kendi bandını taşıyamıyor ve tahmin, diğer ailelerle eğitilmiş modele düşüyor — o modelin daha geniş bandıyla.",
+    "cards": "Kartlar (AIB) indeksi çiplerinden miras alıyor. Fabrika hızlandırmalı bir kart ayrıca ölçülmüş değil ve saat hızından ona bir sayı uydurmuyoruz."
+  },
+  "bands": {
+    "heading": "Hata bandı ne demek",
+    "body": "Bant bir tahmin değil, ölçüm: birini-dışarıda-bırak. Ölçülmüş her nokta, kendi verisi hesaba katılmadan diğerlerinden tahmin ediliyor ve hatalar toplanıyor. Yayınlanan sayı <b>%90'lık dilim</b>: tahminlerin onda dokuzu bu bandın içinde kalıyor.",
+    "numbers": "Oyun FPS'i: ortalama hata <b>%{fpsMean}</b>, %90 dilim <b>%{fpsP90}</b>, en kötü tek nokta <b>%{fpsMax}</b>. İndeks tahmini: iyi ölçülmüş bir ailede <b>±%{bandBest}</b>, hiç ölçümü olmayan bir ailede <b>±%{bandWorst}</b>.",
+    "worst": "En kötü durum bilerek yayınlanıyor. Kuyruğunu gizleyen bir bant, pazarlama sayısıdır."
+  },
+  "specs": {
+    "heading": "Spec'ler nereden geliyor",
+    "body": "Üreticinin kendi ürün sayfası birincil kaynak ve asla ezilmiyor. Üreticinin yayınlamadığı bir değeri dış bir kaynak doldurabiliyor — ama yalnızca boş alana, ve kaynak satır başına değil <b>alan başına</b> kaydediliyor.",
+    "wikipedia": "Wikipedia şu an <b>{wikiFields}</b> değer sağlıyor; çoğu, NVIDIA'nın hiç yayınlamadığı bant genişliği ve transistör sayısı. Böyle bir değer nerede gösteriliyorsa makale adı, revizyon numarası ve CC BY-SA lisansı da orada gösteriliyor.",
+    "checks": "Saklanan değerler birbirine karşı denetleniyor: bant genişliği veri yoluna, VRAM veri yoluna ve yonga kapasitesine, TDP önerilen güç kaynağına, ve bir düzine daha. Fiziksel olarak imkânsız bir değer, hiçbir dış kaynak itiraz etmese bile yakalanıyor. Bu denetim RTX 5060 Ti'nın bant genişliğindeki kendi hatamızı bulup düzeltti."
+  },
+  "unknown": {
+    "heading": "Bu sitenin bilmediği şeyler",
+    "cpu": "Oyun FPS sayıları ekran kartıyla sınırlı. İşlemci ölçümleriyle ekran kartı ölçümlerinin oyunları hiç kesişmiyor, bu yüzden işlemci FPS sayısına girmiyor. Arayüz bunu listenin yanında söylüyor.",
+    "resolution": "Oyun listesinde 1080p ölçümü yok. Yalnızca 1440p ve 4K.",
+    "coverage": "Seçilebilen {gpuCards} ekran kartının yalnızca ölçülmüş bir çipten geleni oyun FPS'i gösterebiliyor. Kalanı uyumluluk sonuçlarını ve tahmini indeksi gösteriyor.",
+    "price": "{pricedParts} parçada fiyat var; elle girildi, USD cinsinden. Burası bir fiyat karşılaştırma sitesi değil.",
+    "platform": "Yalnızca masaüstü. Dizüstü ve konsol farklı donanım ve kapsam dışında.",
+    "proxy": "Ölçümü olmayan aileleri kamuya açık sentetik skorlarla çapalamayı düşündük. Kullanacağımız kaynak otomatik erişime izin vermiyor, yani fikir sınanmadı — çürütülmedi."
+  },
+  "audit": {
+    "heading": "Bizi nasıl denetlersiniz",
+    "body": "Kalıcı her karar, kötü gidenler dahil, gerekçesi ve tarihiyle yazılı. Tahmin kalitesi dondurulmuş bir temele karşı izleniyor; tahminleri kötüleştiren bir değişiklik sessizce geçmiyor, bir kontrolü düşürüyor.",
+    "note": "Bu sitedeki bir sayı size yanlış görünüyorsa, bu bizim için övgüden daha değerli. Ana sayfadaki geri bildirim kutusu, bu sayfayı yazan kişiye gidiyor."
+  },
+  "updated": "Bu sayfadaki kapsam sayıları her istekte veritabanından okunuyor, metne yazılmıyor."
+}

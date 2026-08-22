@@ -28,5 +28,6 @@
     "saveFailed": "The build could not be saved.",
     "feedbackEmpty": "Write something first.",
     "feedbackTooLong": "That message is too long. Please shorten it."
-  }
+  },
+  "aboutLink": "How these numbers are made →"
 }
