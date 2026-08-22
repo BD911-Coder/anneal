@@ -133,6 +133,33 @@ enum ShaderUnitType {
   xe_vector_engine   // Intel — ~16 kat kucuk olcekte
 }
 
+// Mimari ailesi — KONTROLLU LISTE, serbest metin degil (K158).
+//
+// Neden enum: tahmin "once aile icinde" yapiliyor ve aile bir GRUPLAMA
+// anahtari. Serbest metin olsaydi "RDNA 4" ile "RDNA4" iki ayri aile sayilir,
+// grup ikiye bolunur ve LOO sessizce anlamsizlasirdi.
+//
+// Deger adlari ureticinin yayinladigi mimari adinin slug hali.
+enum ArchitectureFamily {
+  // NVIDIA
+  blackwell
+  ada_lovelace
+  ampere
+  // AMD GPU
+  rdna_4
+  rdna_3
+  rdna_2
+  // Intel GPU
+  xe2
+  alchemist
+  // AMD CPU
+  zen_5
+  zen_4
+  // Intel CPU
+  arrow_lake
+  raptor_lake_refresh
+}
+
 enum ImportStatus {
   pending
   processed
@@ -209,6 +236,23 @@ model GpuSpecs {
   shader_unit_type     ShaderUnitType?
   boost_clock_mhz      Int?
   memory_bandwidth_gbs Float?
+
+  // Indeks tahmini icin (K154). Ikisi de uc ureticinin de yayinladigi alanlar.
+  //
+  // bus_width_bits, memory_bandwidth_gbs'in YERINE gecen olcu:
+  // bant genisligi = veri yolu x bellek hizi / 8, ve NVIDIA bu carpimin
+  // yalnizca ilk terimini yayinliyor (30 karttan 27'sinde bant genisligi yok).
+  // Yarisi bos bir sutun tahmin ekseni olamaz.
+  bus_width_bits       Int?
+  // Tahmin once aile icinde yapiliyor ve shader_units yalnizca ayni mimaride
+  // anlamli (K57), bu yuzden aile bilgisi satirin kendisinde durmak zorunda --
+  // parca adindan tahmin edilemez. Kontrollu liste (K158).
+  architecture_family  ArchitectureFamily?
+  // Fabrikasyon sureci ve transistor sayisi. Ikisi de opsiyonel ve bugun
+  // SEYREK: NVIDIA hicbirini, AMD yalnizca transistor sayisini yayinliyor.
+  // Kapsam raporu docs/log icinde.
+  process_node_nm      Int?
+  transistor_count_m   Int? // milyon adet; 53.9 B -> 53900
 
   source       Source
   source_url   String?
@@ -287,6 +331,16 @@ model CpuSpecs {
   tdp_watt        Int
   memory_type     CpuMemoryType
   has_igpu        Boolean
+
+  // Indeks tahmini icin (K154). Oyun yukunde islemciler arasindaki farki
+  // cekirdek sayisi ve saat hizi aciklamiyor: olculen 12 islemcide X3D
+  // parcalari DAHA DUSUK cekirdekxsaat degeriyle DAHA YUKSEK indeks aliyor.
+  // Fark yigilmis onbellekten geliyor.
+  l3_cache_mb     Int?
+  // Islemcide de aile gruplamasi var (K158). Soket yakin bir vekildi ama ayni
+  // sey degil: AM5 hem Zen 4 hem Zen 5 tasiyor.
+  architecture_family ArchitectureFamily?
+  process_node_nm     Int?
 
   source       Source
   source_url   String?
