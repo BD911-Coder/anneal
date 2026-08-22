@@ -236,10 +236,9 @@ console.log("=".repeat(74));
       .filter((r) => r.v !== null && r.v > 0)
       .map((r) => ({
         id: r.c.part_id,
-        // İşlemcide mimari ailesi şemada yok; sokete göre gruplanıyor.
-        // Soket bir nesil sınırıdır ve AM5/LGA1700/LGA1851 tam olarak
-        // farklı mimarilere denk geliyor.
-        family: r.c.socket,
+        // Artık gerçek mimari ailesi (K158). Soket yakın bir vekildi ama
+        // aynı şey değil: AM5 hem Zen 4 hem Zen 5 taşıyor.
+        family: r.c.architecture_family ?? "?",
         y: index.get(r.c.part_id)!,
         x: r.v!,
       }));
@@ -255,7 +254,7 @@ console.log("=".repeat(74));
       c.l3_cache_mb === null ? null : c.boost_clock_mhz * Math.sqrt(c.cores * c.l3_cache_mb)),
   ];
 
-  console.log("\n--- AİLE İÇİ (sokete göre) ---");
+  console.log("\n--- AİLE İÇİ (mimari ailesine göre) ---");
   for (const e of eksenler) eksenRaporu(e.ad, e.pts, true);
   console.log("\n--- AİLELER ARASI ---");
   for (const e of eksenler) eksenRaporu(e.ad, e.pts, false);
@@ -278,13 +277,16 @@ for (const g of gpuSpecs) {
   gpuAileSayisi.set(f, (gpuAileSayisi.get(f) ?? 0) + 1);
 }
 const cpuAileSayisi = new Map<string, number>();
-for (const c of cpuSpecs) cpuAileSayisi.set(c.socket, (cpuAileSayisi.get(c.socket) ?? 0) + 1);
+for (const c of cpuSpecs) {
+  const f = c.architecture_family ?? "?";
+  cpuAileSayisi.set(f, (cpuAileSayisi.get(f) ?? 0) + 1);
+}
 
 const tumGpuAile = await prisma.gpuSpecs.groupBy({
   by: ["architecture_family"],
   _count: true,
 });
-const tumCpuSoket = await prisma.cpuSpecs.groupBy({ by: ["socket"], _count: true });
+const tumCpuSoket = await prisma.cpuSpecs.groupBy({ by: ["architecture_family"], _count: true });
 
 console.log("\nGPU — mimari ailesine göre");
 console.log("  aile                 katalog  ölçümlü  doğrulanabilir mi");
@@ -298,13 +300,16 @@ for (const a of tumGpuAile.sort((x, y) => (x.architecture_family ?? "").localeCo
   );
 }
 
-console.log("\nCPU — sokete göre");
-console.log("  soket                katalog  ölçümlü  doğrulanabilir mi");
-for (const a of tumCpuSoket.sort((x, y) => x.socket.localeCompare(y.socket))) {
-  const olculen = cpuAileSayisi.get(a.socket) ?? 0;
+console.log("\nCPU — mimari ailesine göre");
+console.log("  aile                 katalog  ölçümlü  doğrulanabilir mi");
+for (const a of tumCpuSoket.sort((x, y) =>
+  String(x.architecture_family).localeCompare(String(y.architecture_family)),
+)) {
+  const fam = String(a.architecture_family);
+  const olculen = cpuAileSayisi.get(fam) ?? 0;
   const dogrulanir = olculen >= MIN_FAMILY;
   console.log(
-    `  ${a.socket.padEnd(20)} ${String(a._count).padStart(7)} ${String(olculen).padStart(8)}  ` +
+    `  ${fam.padEnd(20)} ${String(a._count).padStart(7)} ${String(olculen).padStart(8)}  ` +
       (dogrulanir ? "EVET — kendi bandı" : `HAYIR (n=${olculen}) — aileler arası bandı devralır`),
   );
 }

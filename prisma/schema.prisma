@@ -204,6 +204,7 @@ model Part {
   case_specs        CaseSpecs?
   price_snapshots   PriceSnapshot[]
   perf_index        PerfIndex[]
+  perf_index_estimated PerfIndexEstimated[]
   build_items       BuildItem[]
   click_events      ClickEvent[]
   benchmarks_as_gpu BenchmarkPoint[]  @relation("benchmark_gpu")
@@ -574,6 +575,57 @@ model PerfIndex {
   // bilgisini computed_at taşır, bu yüzden updated_at yoktur.
   @@unique([part_id, workload, model_version])
   @@map("perf_index")
+}
+
+// Spec'ten TAHMIN EDILEN indeks — perf_index'ten AYRI TABLO (K160).
+//
+// perf_index yalnizca olcumden uretilir ve K71 aynen gecerlidir: o tabloya
+// tahmin satiri YAZILMAZ, bayrakla da yazilmaz, istisnayla da. K71'in verdigi
+// guvence "o tabloda sahte satir OLAMAZ" ve bu tablo o guvenceyi bozmuyor --
+// tam tersine, tahminlerin gidecek bir yeri oldugu icin oraya sizma basincini
+// da kaldiriyor.
+//
+// Cozumleme /data katmaninda: olculen her zaman kazanir, tahmin bosluk
+// doldurur ve cevap hangisi oldugunu HER ZAMAN soyler.
+model PerfIndexEstimated {
+  id      String @id @default(uuid())
+  part_id String
+  part    Part   @relation(fields: [part_id], references: [id])
+
+  workload    Workload
+  index_value Float
+
+  // Hangi yolla uretildi:
+  //   spec_model  -> spec eksenine oturtulmus model
+  //   family_mean -> ailenin olculmus ortalamasi (model degil, ortalama)
+  // Ikisi ekranda AYRI etiketle gorunur; ortalama "model tahmini" gibi
+  // sunulmaz.
+  method EstimateMethod
+
+  confidence     Confidence
+  // Bandin YUZDE genisligi. Ailenin kendi dogrulama hatasindan geliyor,
+  // tek bir kuresel sayidan degil.
+  error_band_pct Float
+  // Band HANGI ailenin dogrulamasindan geldi. Dogrulanamayan bir aile
+  // aileler arasi bandi devralir ve bu sutun onu gorunur kilar.
+  error_band_source_family ArchitectureFamily?
+  // Bandin dayandigi olcum sayisi. Dort veri noktasina dayanan bir band,
+  // on ikiye dayanandan farklidir ve bu fark okunabilir olmali.
+  n_used Int
+
+  model_version String
+  computed_at   DateTime @db.Timestamptz(6)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([part_id, workload, model_version])
+  @@index([model_version])
+  @@map("perf_index_estimated")
+}
+
+enum EstimateMethod {
+  spec_model  @map("spec-model")
+  family_mean @map("family-mean")
 }
 
 // ---------------------------------------------------------------------------
