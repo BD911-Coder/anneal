@@ -35,7 +35,6 @@ import {
   MIN_FAMILY_FOR_OWN_BAND,
   bandFromErrors,
   estimate,
-  fit,
   fitCrossFamily,
   fitFamily,
   predict,
