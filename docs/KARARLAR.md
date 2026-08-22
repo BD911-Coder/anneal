@@ -4027,3 +4027,56 @@ Hata payları `lib/fps-margin.ts`ten okunuyor, elle yazılmıyor — o dosya
 `npm run fps:sapma` tarafından yazılıyor ve bu tur **değiştirilmedi**.
 
 Ana sayfanın altına bağlantı kondu: bağlantısız bir sayfa yok sayılır.
+
+### K179 — Bant paradoksu çözüldü: tahminci artefaktı, veri bulgusu değil
+
+**2026-08-22.** `npm run bant:analiz`, tam analiz
+`docs/bant-genisligi-paradoksu.md`.
+
+K172 "blackwell n=5 bandı (±%19,8), kendi dörtlü ortalamasından (±%16,9)
+geniş" diye bir çelişki kaydetmişti. **Çelişki yok; iki sayı hiç
+karşılaştırılabilir değildi.**
+
+**Sebep, tahmincinin tanımı:** `bandFromErrors = sorted[min(n-1, floor(0.9n))]`
+ve **n ≤ 10 için bu MAKSİMUMU seçiyor**. Maksimum örneklem büyüdükçe asla
+küçülmez. Yani "n=5 bandı n=4'ten geniş" bir veri bulgusu değil, aritmetik.
+
+**Önyükleme doğruladı** (4000 tekrar): n=5 bandının %95 aralığı ±%9,5 … ±%19,8
+ve dörtlü ortalama (16,9) bu aralığın içinde. İki sayı istatistiksel olarak
+ayırt edilemiyor. Not: bir maksimumu önyüklerken üst uç dejenere olur —
+tahmincinin ikinci bedeli.
+
+**Bandı ailenin EN UÇ üyesi belirliyor**, kaçıncı ölçüldüğü değil. Blackwell'de
+o üye RTX 5090 (log-merkezden %103 uzakta, LOO hatası %19,8); 5090'sız dörtlü
+±%6,0 veriyor, 5090'lı dörtlüler 19,7-25,9.
+
+**Aynı ailede dörtlü bant ±%6,0 ile ±%25,9 arasında değişiyor** — hangi dördünü
+seçtiğinize göre dört kat. Küçük örneklemde bant tahmininin kendisi bu kadar
+oynak.
+
+**Öğrenme eğrisi (ortalama mutlak hata, k eğitim noktasıyla):** k=3 → %8,5
+(28 ölçüm), k=4 → %8,8 (5 ölçüm). **Üç ile dört nokta arasında ölçülebilir
+fark yok.** Bu "fark yok" demek değil, **"15 ölçümle söyleyemeyiz"** demek.
+
+**Stratejik sonuç — ölçümün değeri kademeli değil, EŞİKTE:**
+
+```
+blackwell  aileler arasi ±%30,7  ->  kendi modeli ±%19,8
+rdna_4     aileler arasi ±%8,5   ->  kendi modeli ±%6,4
+```
+
+0 → 4 ölçüm: kanıtlanmış kazanç. 4 → 5+: ölçülemedi, ve yayın tarafında
+**ters** etkisi var (bant maksimum olduğu için n büyüdükçe yayınlanan bant
+büyür). **Öneri: aile başına dört, beşinci ancak ailenin en uç üyesi
+ölçülmemişse.**
+
+**K156 yeniden ifade edildi (değiştirilmedi):** `MIN_FAMILY_FOR_OWN_BAND = 4`
+bir **üretim kuralıdır ve eğitim kümesi boyutunu söyler**. Değerlendirme ayrı
+bir iştir: LOO bir noktayı çıkardığı için n=4 ailede eğitim 3'e düşer, bu
+yüzden regresyon tablosunda `aile-modeli` satırı yalnızca n≥5'te görünür.
+Dört: "ürün bu bandı takabilir mi". Beş: "o bandın doğruluğunu ölçebilir
+miyiz". Farklı sorular.
+
+**Karar bekliyor:** tahminci maksimum olarak kalsın mı (adı düzeltilerek), ara
+değerli p90'a mı geçsin. Değişiklik yayınlanan HER bandı ve regresyon temelini
+etkiler; bu yüzden bu turda **dokunulmadı**.
