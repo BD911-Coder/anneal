@@ -284,6 +284,8 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
             ? "DDR4_DDR5"
             : row.memory_type) as "DDR4" | "DDR5" | "DDR4_DDR5",
           has_igpu: boolOrNull(row.has_igpu, "has_igpu")!,
+          // Indeks tahmini icin (K154). Opsiyonel.
+          l3_cache_mb: intOrNull(row.l3_cache_mb ?? "", "l3_cache_mb"),
           ...provenance,
         };
         // parts ve spec satiri TEK islemde yazilir: spec yazimi patlarsa
@@ -322,6 +324,10 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
             | "cuda_core" | "stream_processor" | "xe_vector_engine" | null,
           boost_clock_mhz: intOrNull(row.boost_clock_mhz ?? "", "boost_clock_mhz"),
           memory_bandwidth_gbs: floatOrNull(row.memory_bandwidth_gbs ?? "", "memory_bandwidth_gbs"),
+          // Indeks tahmini icin (K154). Ikisi de opsiyonel: hicbir uyumluluk
+          // kurali okumuyor, zorunluluk olcutunu (K56) karsilamiyorlar.
+          bus_width_bits: intOrNull(row.bus_width_bits ?? "", "bus_width_bits"),
+          architecture_family: (row.architecture_family ?? "").trim() || null,
           ...provenance,
         };
         await prisma.$transaction(async (tx) => {

@@ -17,8 +17,11 @@
 //                shader_units yalnızca burada anlamlı (K57, K58).
 //   AİLELER ARASI — parça, BAŞKA mimarilerdeki parçalardan tahmin edilir.
 //                shader_units kullanılamaz: 160 Xe vektör motoru ile 2048
-//                stream processor aynı eksende değil. Yalnızca marka/mimari
-//                bağımsız alanlar kalıyor.
+//                stream processor aynı eksende değil.
+//
+// BİRDEN FAZLA EKSEN deneniyor ve hepsi raporlanıyor. Tek bir eksen seçip
+// sonucunu yazmak, seçimin kendisini gizlerdi; hangi ölçünün ne kadar
+// açıkladığı görünür olmalı.
 //
 // Karşılaştırma tabanı da yazılıyor: "hep ortalamayı söyle" ne kadar hata
 // yapıyor? Model bundan iyi değilse spec'ten tahmin bir şey katmıyor demektir.
@@ -47,54 +50,17 @@ const MODEL_VERSION = "v0.2";
 const MIN_FAMILY = 4;
 
 // ---------------------------------------------------------------------------
-// Mimari ailesi — şemada YOK, parça slug'ından türetiliyor.
+// En küçük kareler — elle, kütüphanesiz. İki model de log uzayında:
 //
-// Sütun açmak yerine burada türetmenin sebebi: bu bir ölçüm script'i, henüz
-// hiçbir şey yayınlamıyor. Aile bilgisi kalıcı olarak gerekirse SCHEMA.md'ye
-// alan eklenir — o bir "dur ve sor" kararı.
-// ---------------------------------------------------------------------------
-function gpuFamily(id: string): string {
-  if (/^intel-arc-b/.test(id)) return "Intel Xe2 (Battlemage)";
-  if (/^intel-arc-a/.test(id)) return "Intel Xe (Alchemist)";
-  if (/^nvidia-rtx-50/.test(id)) return "NVIDIA Blackwell (RTX 50)";
-  if (/^nvidia-rtx-40/.test(id)) return "NVIDIA Ada (RTX 40)";
-  if (/^nvidia-rtx-30/.test(id)) return "NVIDIA Ampere (RTX 30)";
-  if (/^amd-rx-9/.test(id)) return "AMD RDNA4 (RX 9000)";
-  if (/^amd-rx-7/.test(id)) return "AMD RDNA3 (RX 7000)";
-  if (/^amd-rx-6/.test(id)) return "AMD RDNA2 (RX 6000)";
-  return "bilinmiyor";
-}
-
-function cpuFamily(id: string): string {
-  if (/^amd-ryzen-\d-9/.test(id)) return "AMD Zen 5 (Ryzen 9000)";
-  if (/^amd-ryzen-\d-7/.test(id)) return "AMD Zen 4 (Ryzen 7000)";
-  if (/^amd-ryzen-\d-5/.test(id)) return "AMD Zen 3 (Ryzen 5000)";
-  if (/^intel-core-ultra/.test(id)) return "Intel Arrow Lake (Core Ultra 200)";
-  if (/^intel-core-i\d-14/.test(id)) return "Intel Raptor Lake R (14. nesil)";
-  if (/^intel-core-i\d-13/.test(id)) return "Intel Raptor Lake (13. nesil)";
-  if (/^intel-core-i\d-12/.test(id)) return "Intel Alder Lake (12. nesil)";
-  return "bilinmiyor";
-}
-
-// ---------------------------------------------------------------------------
-// En küçük kareler — elle, kütüphanesiz.
-//
-// İki model var ve ikisi de log uzayında çalışıyor:
-//
-//   M1 (tek parametre)  log(indeks) = a + log(x)        yani indeks = k·x
-//   M2 (iki parametre)  log(indeks) = a + b·log(x)      yani indeks = k·x^b
+//   M1 (tek parametre)  indeks = k·x
+//   M2 (iki parametre)  indeks = k·x^b
 //
 // Log uzayı seçildi çünkü ölçülen hata YÜZDE cinsinden okunuyor; mutlak
-// hatayı küçültmek büyük kartlara ağırlık verirdi.
-//
-// M1 tek parametre istiyor, yani iki noktalı bir aileye de uyar. M2 eğriyi de
-// öğreniyor ama en az üç nokta gerekiyor. Küçük örneklemde iki parametre
-// gürültüyü ezberler; ikisi de raporlanıyor ki fark görülsün.
+// hatayı küçültmek büyük parçalara ağırlık verirdi.
 // ---------------------------------------------------------------------------
 type Point = { id: string; family: string; y: number; x: number };
 
 function fitM1(points: Point[]): (x: number) => number {
-  // log y = a + log x  ->  a = ortalama(log y - log x)
   const a = points.reduce((s, p) => s + (Math.log(p.y) - Math.log(p.x)), 0) / points.length;
   return (x: number) => Math.exp(a + Math.log(x));
 }
@@ -111,7 +77,6 @@ function fitM2(points: Point[]): (x: number) => number {
     num += (lx[i] - mx) * (ly[i] - my);
     den += (lx[i] - mx) ** 2;
   }
-  // Bütün x'ler aynıysa eğim tanımsız; o zaman sabit modele düş.
   const b = den === 0 ? 1 : num / den;
   const a = my - b * mx;
   return (x: number) => Math.exp(a + b * Math.log(x));
@@ -138,54 +103,57 @@ function summarize(errs: number[]): Errors | null {
   };
 }
 
-/**
- * Birini-dışarıda-bırak.
- *
- * `trainFilter` hangi noktaların eğitime gireceğini söylüyor: aile içi ölçümde
- * aynı aile, aileler arası ölçümde BAŞKA aileler.
- */
 function loo(
   points: Point[],
   fit: (p: Point[]) => (x: number) => number,
   trainFilter: (train: Point, held: Point) => boolean,
   minTrain: number,
-): { errs: number[]; atlanan: number } {
+): number[] {
   const errs: number[] = [];
-  let atlanan = 0;
   for (const held of points) {
     const train = points.filter((p) => p.id !== held.id && trainFilter(p, held));
-    if (train.length < minTrain) {
-      atlanan += 1;
-      continue;
-    }
-    const predict = fit(train);
-    const yhat = predict(held.x);
-    errs.push(Math.abs(yhat - held.y) / held.y * 100);
+    if (train.length < minTrain) continue;
+    const yhat = fit(train)(held.x);
+    errs.push((Math.abs(yhat - held.y) / held.y) * 100);
   }
-  return { errs, atlanan };
+  return errs;
 }
 
-function row(label: string, e: Errors | null, atlanan = 0): string {
-  if (!e) return `${label.padEnd(34)} ${"—".padStart(6)}  (ölçülemedi)`;
+function row(label: string, e: Errors | null): string {
+  if (!e) return `${label.padEnd(30)}   —  (ölçülemedi)`;
   return [
-    label.padEnd(34),
+    label.padEnd(30),
     String(e.n).padStart(3),
     `${e.mean.toFixed(1)}%`.padStart(7),
     `${e.median.toFixed(1)}%`.padStart(7),
     `${e.p90.toFixed(1)}%`.padStart(7),
     `${e.max.toFixed(1)}%`.padStart(7),
-    atlanan > 0 ? `  ${atlanan} parça atlandı` : "",
   ].join(" ");
 }
 
-const BASLIK = [
-  "".padEnd(34),
-  "  n",
-  "   ort",
-  "medyan",
-  "   p90",
-  "en kötü",
-].join(" ");
+const BASLIK = ["".padEnd(30), "  n", "   ort", "medyan", "   p90", "en kötü"].join(" ");
+
+/** Bir eksen için aile içi ve aileler arası tabloları basar. */
+function eksenRaporu(ad: string, points: Point[], aileIci: boolean) {
+  console.log(`\n  eksen: ${ad}`);
+  console.log("  " + BASLIK);
+  if (aileIci) {
+    const families = [...new Set(points.map((p) => p.family))].sort();
+    for (const family of families) {
+      const inFamily = points.filter((p) => p.family === family);
+      if (inFamily.length < MIN_FAMILY) continue;
+      const same = (t: Point, h: Point) => t.family === h.family;
+      console.log("  " + row(`${family} · M1`, summarize(loo(inFamily, fitM1, same, 2))));
+      console.log("  " + row(`${family} · M2`, summarize(loo(inFamily, fitM2, same, 3))));
+      console.log("  " + row(`${family} · taban`, summarize(loo(inFamily, fitBaseline, same, 2))));
+    }
+  } else {
+    const diff = (t: Point, h: Point) => t.family !== h.family;
+    console.log("  " + row("M1", summarize(loo(points, fitM1, diff, 2))));
+    console.log("  " + row("M2", summarize(loo(points, fitM2, diff, 3))));
+    console.log("  " + row("taban (ortalama)", summarize(loo(points, fitBaseline, diff, 2))));
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Veri
@@ -196,151 +164,149 @@ const perfRows = await prisma.perfIndex.findMany({
 });
 const index = new Map(perfRows.map((r) => [r.part_id, r.index_value]));
 
-const gpuSpecs = await prisma.gpuSpecs.findMany({
-  where: { part_id: { in: [...index.keys()] } },
-});
-const cpuSpecs = await prisma.cpuSpecs.findMany({
-  where: { part_id: { in: [...index.keys()] } },
-});
+const gpuSpecs = await prisma.gpuSpecs.findMany({ where: { part_id: { in: [...index.keys()] } } });
+const cpuSpecs = await prisma.cpuSpecs.findMany({ where: { part_id: { in: [...index.keys()] } } });
 
 console.log("Spec'ten indeks tahmini — birini-dışarıda-bırak hata payı");
-console.log(`Motor sürümü ${MODEL_VERSION}. Hiçbir satır yazılmadı.\n`);
+console.log(`Motor sürümü ${MODEL_VERSION}. Hiçbir satır yazılmadı.`);
+console.log(`Ölçümlü: ${gpuSpecs.length} ekran kartı, ${cpuSpecs.length} işlemci.`);
 
-// ---------------------------------------------------------------------------
-// ELDE OLMAYAN ALANLAR — istenen ile şemada bulunan arasındaki fark
-// ---------------------------------------------------------------------------
-const bwVar = gpuSpecs.filter((g) => g.memory_bandwidth_gbs !== null).length;
-console.log("--- İstenen ama ŞEMADA OLMAYAN alanlar ---");
-console.log("  GPU : bus_width, base_clock, fabrikasyon süreci, transistör sayısı,");
-console.log("        mimari ailesi (bu script'te slug'dan türetildi)");
-console.log("  CPU : L3 önbellek, mimari ailesi, fabrikasyon süreci, transistör sayısı");
-console.log("");
-console.log("--- Elde olan ama EKSİK DOLU alanlar ---");
-console.log(`  memory_bandwidth_gbs : ölçümlü 15 GPU'nun ${bwVar}'inde var`);
-console.log("        (NVIDIA RTX 40/50 satırlarının çoğunda boş — tahmin ekseni olamaz)");
-console.log("");
+// Aile artık şemadan geliyor (K154), parça adından türetilmiyor.
+const eksikAile = gpuSpecs.filter((g) => !g.architecture_family).map((g) => g.part_id);
+if (eksikAile.length > 0) console.log(`UYARI: mimari ailesi boş: ${eksikAile.join(", ")}`);
 
-// ---------------------------------------------------------------------------
-// GPU
-// ---------------------------------------------------------------------------
-const gpuPoints: Point[] = gpuSpecs
-  .filter((g) => g.shader_units !== null && g.boost_clock_mhz !== null)
-  .map((g) => ({
-    id: g.part_id,
-    family: gpuFamily(g.part_id),
-    y: index.get(g.part_id)!,
-    // Aile içi eksen: hesap gücü vekili = gölgelendirici × saat.
-    x: g.shader_units! * g.boost_clock_mhz!,
-  }));
+console.log("\n" + "=".repeat(74));
+console.log("GPU — AİLE İÇİ");
+console.log("=".repeat(74));
+{
+  const shaderClock = gpuSpecs
+    .filter((g) => g.shader_units !== null && g.boost_clock_mhz !== null)
+    .map((g) => ({
+      id: g.part_id,
+      family: g.architecture_family ?? "?",
+      y: index.get(g.part_id)!,
+      x: g.shader_units! * g.boost_clock_mhz!,
+    }));
+  eksenRaporu("shader_units × boost_clock", shaderClock, true);
 
-const gpuFamilies = [...new Set(gpuPoints.map((p) => p.family))].sort();
-
-console.log("=".repeat(78));
-console.log("GPU — AİLE İÇİ  (eksen: shader_units × boost_clock)");
-console.log("=".repeat(78));
-console.log(BASLIK);
-for (const family of gpuFamilies) {
-  const inFamily = gpuPoints.filter((p) => p.family === family);
-  if (inFamily.length < MIN_FAMILY) {
-    console.log(
-      `${family.padEnd(34)} ${String(inFamily.length).padStart(3)}   ÖLÇÜLEMEDİ — LOO için en az ${MIN_FAMILY} parça gerekiyor`,
-    );
-    continue;
-  }
-  const m1 = loo(inFamily, fitM1, (t, h) => t.family === h.family, 2);
-  const m2 = loo(inFamily, fitM2, (t, h) => t.family === h.family, 3);
-  const base = loo(inFamily, fitBaseline, (t, h) => t.family === h.family, 2);
-  console.log(row(`${family}  M1 k·x`, summarize(m1.errs)));
-  console.log(row(`${family}  M2 k·x^b`, summarize(m2.errs)));
-  console.log(row(`${family}  taban (ortalama)`, summarize(base.errs)));
+  const busClock = gpuSpecs
+    .filter((g) => g.bus_width_bits !== null && g.boost_clock_mhz !== null)
+    .map((g) => ({
+      id: g.part_id,
+      family: g.architecture_family ?? "?",
+      y: index.get(g.part_id)!,
+      x: g.bus_width_bits! * g.boost_clock_mhz!,
+    }));
+  eksenRaporu("bus_width × boost_clock  (YENİ)", busClock, true);
 }
 
-console.log("");
-console.log("=".repeat(78));
-console.log("GPU — AİLELER ARASI  (eksen: TDP — markadan bağımsız tek alan)");
-console.log("=".repeat(78));
+console.log("\n" + "=".repeat(74));
+console.log("GPU — AİLELER ARASI");
+console.log("=".repeat(74));
 console.log("shader_units KULLANILAMAZ: 160 Xe vektör motoru ile 2048 stream");
 console.log("processor aynı eksende değil (K57, K58).");
-console.log("");
-const gpuCross: Point[] = gpuSpecs.map((g) => ({
-  id: g.part_id,
-  family: gpuFamily(g.part_id),
-  y: index.get(g.part_id)!,
-  x: g.tdp_watt,
-}));
-console.log(BASLIK);
 {
-  const m1 = loo(gpuCross, fitM1, (t, h) => t.family !== h.family, 2);
-  const m2 = loo(gpuCross, fitM2, (t, h) => t.family !== h.family, 3);
-  const base = loo(gpuCross, fitBaseline, (t, h) => t.family !== h.family, 2);
-  console.log(row("TDP  M1 k·x", summarize(m1.errs), m1.atlanan));
-  console.log(row("TDP  M2 k·x^b", summarize(m2.errs), m2.atlanan));
-  console.log(row("taban (ortalama)", summarize(base.errs), base.atlanan));
+  const base = (x: (g: (typeof gpuSpecs)[number]) => number | null) =>
+    gpuSpecs
+      .map((g) => ({ g, v: x(g) }))
+      .filter((r) => r.v !== null && r.v > 0)
+      .map((r) => ({
+        id: r.g.part_id,
+        family: r.g.architecture_family ?? "?",
+        y: index.get(r.g.part_id)!,
+        x: r.v!,
+      }));
+
+  eksenRaporu("TDP", base((g) => g.tdp_watt), false);
+  eksenRaporu("bus_width  (YENİ)", base((g) => g.bus_width_bits), false);
+  eksenRaporu(
+    "TDP × bus_width  (YENİ)",
+    base((g) => (g.bus_width_bits === null ? null : g.tdp_watt * g.bus_width_bits)),
+    false,
+  );
 }
 
-// ---------------------------------------------------------------------------
-// CPU
-// ---------------------------------------------------------------------------
-const cpuPoints: Point[] = cpuSpecs.map((c) => ({
-  id: c.part_id,
-  family: cpuFamily(c.part_id),
-  y: index.get(c.part_id)!,
-  // Oyun yükü tek çekirdek hızına yaslanıyor; çekirdek sayısı doyuma gidiyor.
-  // Eksen: boost saat × çekirdeğin karekökü (doyum kabaca böyle modellenir).
-  x: c.boost_clock_mhz * Math.sqrt(c.cores),
-}));
-
-const cpuFamilies = [...new Set(cpuPoints.map((p) => p.family))].sort();
-
-console.log("");
-console.log("=".repeat(78));
-console.log("CPU — AİLE İÇİ  (eksen: boost_clock × √cores)");
-console.log("=".repeat(78));
-console.log(BASLIK);
-for (const family of cpuFamilies) {
-  const inFamily = cpuPoints.filter((p) => p.family === family);
-  if (inFamily.length < MIN_FAMILY) {
-    console.log(
-      `${family.padEnd(34)} ${String(inFamily.length).padStart(3)}   ÖLÇÜLEMEDİ — LOO için en az ${MIN_FAMILY} parça gerekiyor`,
-    );
-    continue;
-  }
-  const m1 = loo(inFamily, fitM1, (t, h) => t.family === h.family, 2);
-  const m2 = loo(inFamily, fitM2, (t, h) => t.family === h.family, 3);
-  const base = loo(inFamily, fitBaseline, (t, h) => t.family === h.family, 2);
-  console.log(row(`${family}  M1 k·x`, summarize(m1.errs)));
-  console.log(row(`${family}  M2 k·x^b`, summarize(m2.errs)));
-  console.log(row(`${family}  taban (ortalama)`, summarize(base.errs)));
-}
-
-console.log("");
-console.log("=".repeat(78));
-console.log("CPU — AİLELER ARASI  (eksen: boost_clock × √cores)");
-console.log("=".repeat(78));
-console.log(BASLIK);
+console.log("\n" + "=".repeat(74));
+console.log("CPU — L3 ÖNBELLEK EKLENDİKTEN SONRA");
+console.log("=".repeat(74));
 {
-  const m1 = loo(cpuPoints, fitM1, (t, h) => t.family !== h.family, 2);
-  const m2 = loo(cpuPoints, fitM2, (t, h) => t.family !== h.family, 3);
-  const base = loo(cpuPoints, fitBaseline, (t, h) => t.family !== h.family, 2);
-  console.log(row("M1 k·x", summarize(m1.errs), m1.atlanan));
-  console.log(row("M2 k·x^b", summarize(m2.errs), m2.atlanan));
-  console.log(row("taban (ortalama)", summarize(base.errs), base.atlanan));
+  const mk = (ad: string, x: (c: (typeof cpuSpecs)[number]) => number | null) => {
+    const pts = cpuSpecs
+      .map((c) => ({ c, v: x(c) }))
+      .filter((r) => r.v !== null && r.v > 0)
+      .map((r) => ({
+        id: r.c.part_id,
+        // İşlemcide mimari ailesi şemada yok; sokete göre gruplanıyor.
+        // Soket bir nesil sınırıdır ve AM5/LGA1700/LGA1851 tam olarak
+        // farklı mimarilere denk geliyor.
+        family: r.c.socket,
+        y: index.get(r.c.part_id)!,
+        x: r.v!,
+      }));
+    return { ad, pts };
+  };
+
+  const eksenler = [
+    mk("boost × √cores  (eski)", (c) => c.boost_clock_mhz * Math.sqrt(c.cores)),
+    mk("l3_cache_mb  (YENİ)", (c) => c.l3_cache_mb),
+    mk("boost × √l3  (YENİ)", (c) =>
+      c.l3_cache_mb === null ? null : c.boost_clock_mhz * Math.sqrt(c.l3_cache_mb)),
+    mk("boost × √(cores × l3)  (YENİ)", (c) =>
+      c.l3_cache_mb === null ? null : c.boost_clock_mhz * Math.sqrt(c.cores * c.l3_cache_mb)),
+  ];
+
+  console.log("\n--- AİLE İÇİ (sokete göre) ---");
+  for (const e of eksenler) eksenRaporu(e.ad, e.pts, true);
+  console.log("\n--- AİLELER ARASI ---");
+  for (const e of eksenler) eksenRaporu(e.ad, e.pts, false);
 }
 
 // ---------------------------------------------------------------------------
-// X3D etkisi — L3 önbellek şemada yok, sonucu burada görünüyor
+// ÖNERİLEN BANTLAR — her bandın yanında n
+//
+// Kullanıcının kuralı: doğrulanamayan aile, iyimser bir bant taşıyamaz.
+// Doğrulanamamış ailenin hatası KÜÇÜK değil, BİLİNMİYOR — o yüzden aileler
+// arası bandı devralıyor.
 // ---------------------------------------------------------------------------
-console.log("");
-console.log("=".repeat(78));
-console.log("CPU — X3D ETKİSİ  (L3 önbellek şemada YOK)");
-console.log("=".repeat(78));
-const x3d = cpuPoints.filter((p) => /x3d/.test(p.id));
-const digerleri = cpuPoints.filter((p) => !/x3d/.test(p.id));
-const ort = (ps: Point[]) => ps.reduce((s, p) => s + p.y, 0) / ps.length;
-const ortX = (ps: Point[]) => ps.reduce((s, p) => s + p.x, 0) / ps.length;
-console.log(`  X3D    : ${x3d.length} parça, ortalama indeks ${ort(x3d).toFixed(1)}, ortalama eksen ${ortX(x3d).toFixed(0)}`);
-console.log(`  X3D dışı: ${digerleri.length} parça, ortalama indeks ${ort(digerleri).toFixed(1)}, ortalama eksen ${ortX(digerleri).toFixed(0)}`);
-console.log("  Aynı ekseni paylaşan iki küme, farklı indeks seviyesinde:");
-console.log("  fark önbellekten geliyor ve o alan şemada yok.");
+console.log("\n" + "=".repeat(74));
+console.log("ÖNERİLEN BANT TABLOSU (n ile birlikte)");
+console.log("=".repeat(74));
+
+const gpuAileSayisi = new Map<string, number>();
+for (const g of gpuSpecs) {
+  const f = g.architecture_family ?? "?";
+  gpuAileSayisi.set(f, (gpuAileSayisi.get(f) ?? 0) + 1);
+}
+const cpuAileSayisi = new Map<string, number>();
+for (const c of cpuSpecs) cpuAileSayisi.set(c.socket, (cpuAileSayisi.get(c.socket) ?? 0) + 1);
+
+const tumGpuAile = await prisma.gpuSpecs.groupBy({
+  by: ["architecture_family"],
+  _count: true,
+});
+const tumCpuSoket = await prisma.cpuSpecs.groupBy({ by: ["socket"], _count: true });
+
+console.log("\nGPU — mimari ailesine göre");
+console.log("  aile                 katalog  ölçümlü  doğrulanabilir mi");
+for (const a of tumGpuAile.sort((x, y) => (x.architecture_family ?? "").localeCompare(y.architecture_family ?? ""))) {
+  const fam = a.architecture_family ?? "?";
+  const olculen = gpuAileSayisi.get(fam) ?? 0;
+  const dogrulanir = olculen >= MIN_FAMILY;
+  console.log(
+    `  ${fam.padEnd(20)} ${String(a._count).padStart(7)} ${String(olculen).padStart(8)}  ` +
+      (dogrulanir ? "EVET — kendi bandı" : `HAYIR (n=${olculen}) — aileler arası bandı devralır`),
+  );
+}
+
+console.log("\nCPU — sokete göre");
+console.log("  soket                katalog  ölçümlü  doğrulanabilir mi");
+for (const a of tumCpuSoket.sort((x, y) => x.socket.localeCompare(y.socket))) {
+  const olculen = cpuAileSayisi.get(a.socket) ?? 0;
+  const dogrulanir = olculen >= MIN_FAMILY;
+  console.log(
+    `  ${a.socket.padEnd(20)} ${String(a._count).padStart(7)} ${String(olculen).padStart(8)}  ` +
+      (dogrulanir ? "EVET — kendi bandı" : `HAYIR (n=${olculen}) — aileler arası bandı devralır`),
+  );
+}
 
 await prisma.$disconnect();
