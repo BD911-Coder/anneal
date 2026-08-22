@@ -3799,3 +3799,55 @@ merkezilik ölçütü tam bu yüzden var.
 **Karşı bulgu — sayı büyüdükçe bandın daralacağı GARANTİ DEĞİL.**
 Blackwell'in beşli bandı (±%19,8), kendi dörtlü ortalamasından (±%16,9) daha
 geniş. Eşiği beşe çıkarmanın ne getireceği bu yüzden ölçülmeden söylenemez.
+
+### K173 — OpenBenchmarking KAPALI: robots.txt ClaudeBot'u açıkça yasaklıyor
+
+**2026-08-22.** Vekil indeks (proxy) doğrulaması için OpenBenchmarking'den 15
+ölçümlü kartın skoru toplanacaktı. **Tek satır veri alınmadı** ve sebebi
+yöntem değil, erişim izni.
+
+```
+https://openbenchmarking.org/robots.txt
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: *
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+```
+
+`ClaudeBot` **adıyla ve tam yolla** yasaklanmış. Bu projenin kalıcı
+kurallarından biri bunu tek başına bitiriyor: *"`robots.txt` yasaklıyorsa o
+kaynak kapalı. Araç değiştirmek durumu değiştirmez."* Tarayıcı `User-Agent`'ı
+takmak yasağı kaldırmaz, yalnızca gizler.
+
+Site ayrıca Cloudflare arkasında ve düz istek **403** dönüyor — K113'te
+kaydedilen 403 buydu. O gün "biçim sorunu" sanılmıştı; asıl sebep bu.
+
+**Kapı değerlendirilemedi, GEÇİLEMEDİ de.** Ölçüt (aile içi kalıntı yayılımı
+≥ %30,7 → vekil bir şey katmıyor) hiç uygulanmadı çünkü uygulanacak veri yok.
+Bu ayrım önemli: vekil fikri **sınanmadı**, çürütülmedi.
+
+**Görev 2 (vekil çapalama) bu yüzden atlandı.** Ön koşulu olan skorlar yok.
+
+**Yeniden açılma koşulu — üç yol, üçü de proje sahibinin elinde:**
+
+1. **Elle toplama.** Proje sahibi bir insan olarak siteyi gezip 15 kartın
+   skorunu okuyabilir; `robots.txt` insana değil otomatik ajana bakıyor.
+   Skorlar bir CSV'ye yazılırsa regresyon tarafı hazır: `npm run
+   indeks:tahmin-sapma` ile aynı desende bir ölçüm script'i yazılabilir.
+2. **Phoronix Test Suite.** Aracın kendisi sonuçları programatik indiriyor;
+   proje sahibi kendi makinesinde çalıştırırsa veri kendi elinden gelir.
+3. **Sitenin izin politikası değişirse.** `ClaudeBot` satırı kalkarsa yol
+   açılır.
+
+**Bir de premis düzeltmesi:** görev tanımında OpenBenchmarking "açık
+platform, sonuçlar herkese açık karşılaştırma için gönderilmiş" diye
+tanımlanmıştı. Veri kamuya açık olabilir; **otomatik erişim açık değil.**
+İkisi ayrı sorular ve ikincisinin cevabı hayır.
+
+**Geekbench Browser** zaten elenmişti (resmî API yok, kazıma politikası
+belirsiz) ve **Kaggle "GPUs FPS Benchmarks"** gibi kaynağı doğrulanamayan
+derlemeler kural gereği kapalı. Yani bu tur vekil skoru için **açık hiçbir
+otomatik kaynak kalmadı.**
