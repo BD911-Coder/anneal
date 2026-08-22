@@ -249,10 +249,10 @@ model GpuSpecs {
   // anlamli (K57), bu yuzden aile bilgisi satirin kendisinde durmak zorunda --
   // parca adindan tahmin edilemez. Kontrollu liste (K158).
   architecture_family  ArchitectureFamily?
-  // Fabrikasyon sureci ve transistor sayisi. Ikisi de opsiyonel ve bugun
-  // SEYREK: NVIDIA hicbirini, AMD yalnizca transistor sayisini yayinliyor.
-  // Kapsam raporu docs/log icinde.
-  process_node_nm      Int?
+  // Transistor sayisi. Opsiyonel ve bugun SEYREK: NVIDIA yayinlamiyor, AMD
+  // yayinliyor. Kapsam raporu docs/log icinde.
+  // Fabrikasyon sureci (process_node_nm) BURADAN KALDIRILDI (K167): hicbir
+  // ureticide ve Wikipedia tablolarinda da yoktu, sutun bostu.
   transistor_count_m   Int? // milyon adet; 53.9 B -> 53900
 
   source       Source
@@ -341,7 +341,6 @@ model CpuSpecs {
   // Islemcide de aile gruplamasi var (K158). Soket yakin bir vekildi ama ayni
   // sey degil: AM5 hem Zen 4 hem Zen 5 tasiyor.
   architecture_family ArchitectureFamily?
-  process_node_nm     Int?
 
   source       Source
   source_url   String?

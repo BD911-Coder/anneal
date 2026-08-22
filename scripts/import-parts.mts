@@ -288,7 +288,6 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
           l3_cache_mb: intOrNull(row.l3_cache_mb ?? "", "l3_cache_mb"),
           architecture_family: ((row.architecture_family ?? "").trim() || null) as
             | "zen_5" | "zen_4" | "arrow_lake" | "raptor_lake_refresh" | null,
-          process_node_nm: intOrNull(row.process_node_nm ?? "", "process_node_nm"),
           ...provenance,
         };
         // parts ve spec satiri TEK islemde yazilir: spec yazimi patlarsa
@@ -336,7 +335,6 @@ async function importFile(dir: string, fileName: string, sonuc: Sonuc): Promise<
             | "blackwell" | "ada_lovelace" | "ampere" | "rdna_4" | "rdna_3" | "rdna_2"
             | "xe2" | "alchemist" | "zen_5" | "zen_4" | "arrow_lake"
             | "raptor_lake_refresh" | null,
-          process_node_nm: intOrNull(row.process_node_nm ?? "", "process_node_nm"),
           transistor_count_m: intOrNull(row.transistor_count_m ?? "", "transistor_count_m"),
           ...provenance,
         };

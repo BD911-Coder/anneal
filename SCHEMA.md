@@ -141,20 +141,25 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `memory_bandwidth_gbs` | float? |
 | `bus_width_bits` | int? |
 | `architecture_family` | enum? (`ArchitectureFamily`) |
-| `process_node_nm` | int? |
 | `transistor_count_m` | int? (milyon adet) |
 
-`bus_width_bits`, `architecture_family`, `process_node_nm` ve
-`transistor_count_m` **indeks tahmini için** eklendi (K154, K158).
+`bus_width_bits`, `architecture_family` ve `transistor_count_m` **indeks
+tahmini için** eklendi (K154, K158).
 
 Mimari ailesi alanı **kontrollü listedir**, serbest metin değil (K158).
 Tahmin "önce aile içinde" yapılıyor ve aile bir gruplama anahtarı; serbest
 metin olsaydı `RDNA 4` ile `RDNA4` iki ayrı aile sayılır, grup ikiye bölünür
 ve doğrulama sessizce anlamsızlaşırdı. Hem ekran kartında hem işlemcide var.
 
-`process_node_nm` ve `transistor_count_m` **seyrektir ve öyle kalacaktır**:
-üreticiler bunları tutarsız yayınlıyor. Doluluk `npm run spec:kapsam` ile
-ölçülüyor; tahmin ekseni seçilirken o rapora bakılır.
+`transistor_count_m` **seyrektir ve öyle kalacaktır**: üreticiler bunu
+tutarsız yayınlıyor. Doluluk `npm run spec:kapsam` ile ölçülüyor; tahmin
+ekseni seçilirken o rapora bakılır.
+
+`process_node_nm` **kaldırıldı** (K167). Üç üreticinin hiçbiri yayınlamıyor
+(ölçüldü: 0/60 GPU, 0/42 işlemci) ve Wikipedia tablolarında da sıfır geçiş var.
+Doldurulacak kaynağı olmayan bir sütun, olmayan bir sütundan kötüdür: dolu
+sanılır, `spec:kapsam` çıktısında yer kaplar ve her yeni içe aktarmada boş
+geçilir.
 
 İlk ikisi üç üreticinin de yayınladığı alanlar:
 
@@ -266,7 +271,6 @@ yapılandırılır. Bkz. `SORULAR.md` S38.
 | `has_igpu` | bool |
 | `l3_cache_mb` | int? |
 | `architecture_family` | enum? (`ArchitectureFamily`) |
-| `process_node_nm` | int? |
 
 `l3_cache_mb` **indeks tahmini için** eklendi (K154) ve opsiyoneldir.
 `architecture_family` işlemcide de var (K158): soket yakın bir vekildi ama
