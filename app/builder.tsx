@@ -869,7 +869,7 @@ export function Builder({
                     value={budgetText}
                     onChange={(event) => setBudgetText(event.target.value)}
                   />
-                  <span className="text-sm text-muted">TL</span>
+                  <span className="text-sm text-muted">{DISPLAY_CURRENCY}</span>
                 </div>
               </div>
 

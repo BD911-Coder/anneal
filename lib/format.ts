@@ -14,7 +14,9 @@ import { DISPLAY_CURRENCY, toDisplayMinor } from "./currency.ts";
  * Hesap tamamen tam sayıyla yapılır; fiyat hiçbir aşamada float'a çevrilmez
  * (SCHEMA.md bölüm 0, kural 4).
  */
-export function formatPriceMinor(minor: number, currency = "TRY"): string {
+const SYMBOL: Record<string, string> = { TRY: "₺", USD: "$" };
+
+export function formatPriceMinor(minor: number, currency = "USD"): string {
   const negative = minor < 0;
   const absolute = Math.abs(minor);
   const major = Math.trunc(absolute / 100);
@@ -22,7 +24,7 @@ export function formatPriceMinor(minor: number, currency = "TRY"): string {
 
   // Binlik ayracı: sağdan üçer basamak.
   const grouped = String(major).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  const symbol = currency === "TRY" ? "₺" : currency;
+  const symbol = SYMBOL[currency] ?? currency;
 
   return `${negative ? "-" : ""}${grouped},${String(cents).padStart(2, "0")} ${symbol}`;
 }
