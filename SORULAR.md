@@ -18,6 +18,39 @@ Son güncelleme: 2026-08-22
 
 ## Açık sorular
 
+### S48 — Wikipedia'dan gelen değer NEREYE yazılacak? (2026-08-22)
+
+Ayrıştırıcı hazır ve çalışıyor (`npm run wikipedia:deneme`, K168): 60 çipin
+60'ı eşleşiyor, bant genişliği **22 çipte**, transistör sayısı **28 çipte**
+boş olan alanı doldurabilir. Ama **yazma yolu yok** ve sebebi şema:
+
+**1. Provenance satır başına, alan başına değil.** `gpu_specs` satırında tek
+bir `source`/`source_url`/`confidence` üçlüsü var ve bugün hepsi
+`manufacturer`. Bir alanı Wikipedia'dan doldurmak, satırın tamamının
+üreticiden geldiği iddiasını yalan yapar.
+
+**2. Çelişmeyen çapraz kontrol değerinin duracağı yer yok.** Dış kaynak
+üreticiyi doğruladığında bu bilgi değerlidir (güven artırır) ama bugün
+kaydedilecek bir tablo yok.
+
+Üç seçenek:
+
+- **A. Alan başına kaynak tablosu** — `spec_field_sources (part_id, field,
+  value, source, source_url, source_revision_id, license, collected_at)`.
+  Doğrusu bu: her sayı kendi kaynağını taşır, lisans satırda durur (CC BY-SA
+  atfı revizyon numarası istiyor), üretici değeri hiç dokunulmadan kalır.
+  Bedeli: yeni tablo, yeni okuma yolu, arayüzde atıf gösterimi.
+- **B. Yalnızca boş alanları doldur, satır provenance'ını `mixed` yap.** Ucuz
+  ama kaynak defteri bozulur: hangi alanın nereden geldiği kaybolur.
+- **C. Hiç yazma, script çapraz kontrol aracı olarak kalsın.** Bedava ve
+  bugün de çalışıyor — ama 22 boş bant genişliği boş kalır.
+
+**Önerim A.** Sebebi: bu sitenin bütün duruşu "sayının nereden geldiği
+görünür" üstüne kurulu; alan başına kaynak, o duruşun veri tarafındaki
+karşılığı. Ama yeni tablo demek ve karar senin.
+
+Karar verilene kadar script yazmıyor; `--apply` bayrağı bilinçli olarak yok.
+
 ### S46 — Görsel kimlik gözle onaylanmadı (2026-08-20)
 
 İkinci UI turu (K138–K143) doğrulandı ama **ekran görüntüsüyle değil**: bu
