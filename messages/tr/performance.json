@@ -1,0 +1,73 @@
+{
+  "heading": "Performans",
+  "resolution": {
+    "label": "Çözünürlük",
+    "1080p": "1080p",
+    "1440p": "1440p",
+    "2160p": "4K"
+  },
+  "systemIndex": {
+    "suffix": "tahmini sistem indeksi — referans sistem {reference}",
+    "barReference": "referans {value}",
+    "barMax": "{value}+",
+    "weights": "Ekran kartı {gpuIndex}, işlemci {cpuIndex}. Bu çözünürlükte ağırlıklar: ekran kartı {gpuWeight}, işlemci {cpuWeight}. Motor sürümü {modelVersion}. Gerçek FPS iddiası değildir.",
+    "chipMeasurement": "Ekran kartı indeksi {chip} çipi için ölçüldü; seçtiğiniz kart için ayrı ölçüm yok. Fabrika hız aşırtması bu sayıya yansımaz.",
+    "margin": "Ölçülen sapma: ortalama %{mean}, en büyük %{max}. {method} ({measuredAt})",
+    "method": "parçaların indeksi, bağımsız bir kaynağın aynı parçalar için verdiği sıralamayla karşılaştırıldı"
+  },
+  "band": {
+    "1080pLow": "1080p düşük ayar",
+    "1080pMedium": "1080p orta/yüksek ayar",
+    "1440pHigh": "1440p yüksek ayar",
+    "1440pUltra": "1440p ultra / 4K yüksek",
+    "4kUltra": "4K ultra"
+  },
+  "bottleneck": {
+    "label": "Darboğaz:",
+    "balanced": "Dengeli — işlemci ve ekran kartı birbirine yakın güçte.",
+    "cpuLimited": "İşlemci sınırlıyor — ekran kartı işlemciden belirgin şekilde güçlü, kart tam kullanılamayabilir.",
+    "gpuLimited": "Ekran kartı sınırlıyor — işlemci ekran kartından belirgin şekilde güçlü, bu çözünürlükte kart yetişemeyebilir.",
+    "gain": "Kataloğun en iyisine geçseniz: ekran kartı +{gpu}, işlemci +{cpu} indeks."
+  },
+  "missing": {
+    "indexTitle": "Sistem indeksi hesaplanamıyor — bu sayı işlemci ve ekran kartının ikisinin de ölçümünü gerektiriyor.",
+    "needBoth": "Sistem indeksi için hem işlemci hem ekran kartı gerekiyor.",
+    "notSelected": "{category} seçilmedi.",
+    "noData": "{category} için performans verisi yok.",
+    "partsStillValid": "Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor.",
+    "fpsStillShown": "Aşağıdaki oyun bazlı FPS listesi yine de görünüyor:",
+    "fpsStillShownWhy": "o liste yalnızca ekran kartına bakıyor, işlemciyi hesaba katmıyor. İki sayı farklı sorulara cevap veriyor."
+  },
+  "fps": {
+    "heading": "Oyun bazlı FPS",
+    "pickGpu": "Oyun bazlı tahmin için ekran kartı seçin.",
+    "coveredGames": "Bu çözünürlükte ölçümü olan {count} oyun: {list}.",
+    "noneAtResolution": "Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin.",
+    "noDataForResolution": "Bu çözünürlükte ({resolution}) henüz ölçüm yok. Ölçüm verisi olan çözünürlüğü seçerseniz liste görünür.",
+    "noDataForCard": "Bu kart için ölçüm yok. Oyun bazlı FPS yalnızca ölçüm verisi toplanmış kartlarda gösterilebiliyor; uydurma bir sayı göstermektense hiç göstermiyoruz.",
+    "gpuOnlyTitle": "Bu sayılar yalnızca ekran kartına göredir.",
+    "gpuOnlyBody": "İşlemcinin sınırlamadığı bir test sisteminde ölçülmüştür; seçtiğiniz işlemci bu sayılara girmiyor. İşlemciye yüklenen oyunlarda gerçek sonuç bunun altında kalabilir.",
+    "cpuStanding": "Seçtiğiniz işlemci{label}: indeks {index}, referans {reference}.",
+    "cpuBelow": "Referansın altında; işlemciye yüklenen oyunlarda fark daha belirgin olur.",
+    "cpuAbove": "Referansın üstünde.",
+    "cpuEqual": "Referans işlemcinin kendisi.",
+    "cpuLimitedWarning": "Sistem indeksi bu kurulumda işlemciyi sınırlayıcı buluyor — aşağıdaki sayılar bu yüzden iyimser olabilir.",
+    "noCpuMeasured": "Henüz ölçümü olan bir işlemci seçmediniz. Liste yalnızca ekran kartına baktığı için yine de görünüyor.",
+    "setting": "Ayar: <b>{setting}</b>",
+    "unit": "FPS",
+    "measured": "ölçüldü",
+    "estimate": "tahmin ±%{margin}",
+    "measuredTitle": "Bu sayı ölçüldü, hesaplanmadı.",
+    "estimateTitle": "Ölçüm yok; bu kartın indeksinden hesaplandı. Ortalama hata %{mean}.",
+    "counts": "<b>{measured}</b> oyunda sayı doğrudan ölçüm, <b>{derived}</b> oyunda bu kartın ölçümü yok ve indeksinden hesaplandı.",
+    "marginNote": "Hesaplananın ölçülen hata payı: ortalama %{mean}, tahminlerin %90'ı %{p90} altında, en kötü %{max}. {method} ({measuredAt})",
+    "bandNote": "Eşikler (30 / 60 / 120) yaygın kabul gören sınırlardır, ölçüm değil yorumdur; ekranınızın tazeleme hızına göre değişir.",
+    "method": "birini-dışarıda-bırak: her ölçüm, kendi verisi hesaba katılmadan aynı oyunun diğer ölçümlerinden tahmin edildi"
+  },
+  "fpsBand": {
+    "struggling": "zor",
+    "playable": "oynanır",
+    "smooth": "akıcı",
+    "highRefresh": "yüksek tazeleme"
+  }
+}

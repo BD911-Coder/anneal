@@ -1,0 +1,73 @@
+{
+  "heading": "Performance",
+  "resolution": {
+    "label": "Resolution",
+    "1080p": "1080p",
+    "1440p": "1440p",
+    "2160p": "4K"
+  },
+  "systemIndex": {
+    "suffix": "estimated system index — reference build is {reference}",
+    "barReference": "reference {value}",
+    "barMax": "{value}+",
+    "weights": "Graphics card {gpuIndex}, processor {cpuIndex}. Weights at this resolution: graphics card {gpuWeight}, processor {cpuWeight}. Engine version {modelVersion}. This is not a claim about real frame rates.",
+    "chipMeasurement": "The graphics index was measured for the {chip} chip; there is no separate measurement for the card you selected. Factory overclocking is not reflected in this number.",
+    "margin": "Measured deviation: {mean}% on average, {max}% at worst. {method} ({measuredAt})",
+    "method": "each part's index was compared with the ordering an independent source gives for the same parts"
+  },
+  "band": {
+    "1080pLow": "1080p low settings",
+    "1080pMedium": "1080p medium/high settings",
+    "1440pHigh": "1440p high settings",
+    "1440pUltra": "1440p ultra / 4K high",
+    "4kUltra": "4K ultra"
+  },
+  "bottleneck": {
+    "label": "Bottleneck:",
+    "balanced": "Balanced — the processor and graphics card are close in capability.",
+    "cpuLimited": "Processor limiting — the graphics card is noticeably stronger than the processor, so the card may not be fully used.",
+    "gpuLimited": "Graphics card limiting — the processor is noticeably stronger than the graphics card, so at this resolution the card may not keep up.",
+    "gain": "If you moved to the best in the catalog: graphics card +{gpu}, processor +{cpu} index points."
+  },
+  "missing": {
+    "indexTitle": "The system index cannot be calculated — this number requires a measurement for both the processor and the graphics card.",
+    "needBoth": "The system index needs both a processor and a graphics card.",
+    "notSelected": "No {category} selected.",
+    "noData": "There is no performance data for the selected {category}.",
+    "partsStillValid": "Your selected parts are valid — the compatibility check is running.",
+    "fpsStillShown": "The per-game FPS list below is still shown:",
+    "fpsStillShownWhy": "that list only looks at the graphics card and does not take the processor into account. The two numbers answer different questions."
+  },
+  "fps": {
+    "heading": "Per-game FPS",
+    "pickGpu": "Pick a graphics card for per-game estimates.",
+    "coveredGames": "{count} games have measurements at this resolution: {list}.",
+    "noneAtResolution": "There is no measurement at this resolution yet; pick another one.",
+    "noDataForResolution": "There is no measurement at {resolution} yet. Pick a resolution that has measurement data and the list will appear.",
+    "noDataForCard": "There is no measurement for this card. Per-game FPS can only be shown for cards with collected measurement data; rather than invent a number, we show none.",
+    "gpuOnlyTitle": "These numbers reflect the graphics card only.",
+    "gpuOnlyBody": "They were measured on a test system where the processor was not the limit; the processor you selected does not enter these numbers. In processor-heavy games the real result can fall below this.",
+    "cpuStanding": "Your processor{label}: index {index}, reference {reference}.",
+    "cpuBelow": "Below the reference; in processor-heavy games the gap will be more pronounced.",
+    "cpuAbove": "Above the reference.",
+    "cpuEqual": "This is the reference processor itself.",
+    "cpuLimitedWarning": "The system index finds the processor limiting in this build — the numbers below may therefore be optimistic.",
+    "noCpuMeasured": "You have not selected a processor with measurements yet. The list still appears because it only looks at the graphics card.",
+    "setting": "Setting: <b>{setting}</b>",
+    "unit": "FPS",
+    "measured": "measured",
+    "estimate": "estimate ±{margin}%",
+    "measuredTitle": "This number was measured, not calculated.",
+    "estimateTitle": "No measurement; calculated from this card's index. Average error {mean}%.",
+    "counts": "<b>{measured}</b> games have a directly measured number; in <b>{derived}</b> games this card has no measurement and the value was calculated from its index.",
+    "marginNote": "Measured error of the calculated values: {mean}% on average, 90% of estimates below {p90}%, worst case {max}%. {method} ({measuredAt})",
+    "bandNote": "The thresholds (30 / 60 / 120) are widely accepted boundaries — an interpretation, not a measurement; they shift with your display's refresh rate.",
+    "method": "leave-one-out: each measurement was predicted from the other measurements of the same game, without its own data"
+  },
+  "fpsBand": {
+    "struggling": "struggling",
+    "playable": "playable",
+    "smooth": "smooth",
+    "highRefresh": "high refresh"
+  }
+}

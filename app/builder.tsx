@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import type { CurrentPrice } from "@/data/prices";
 import type { BuilderCatalog } from "@/data/parts";
@@ -9,17 +10,24 @@ import type { DefaultBuild } from "@/engine/default-build";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import type { FpsGameGroup } from "@/engine/fps-estimate";
 import { resolveGpuSelection, resolvePerfIndex } from "@/engine/gpu-selection";
-import { computePerformance } from "@/engine/performance";
+import { bandKeyFor, computePerformance } from "@/engine/performance";
 import { suggestUpgrades } from "@/engine/upgrade";
 import type {
+  Bottleneck,
   BuildInput,
   Finding,
   Resolution,
   UpgradeCategory,
   UpgradePart,
 } from "@/engine/types";
-import { DISPLAY_CURRENCY, rateNote, toDisplayMinor } from "@/lib/currency";
-import { formatDisplayPrice, formatIsoDate, formatPriceMinor, stripSku } from "@/lib/format";
+import { DISPLAY_CURRENCY, SOURCE_CURRENCY, USD_TRY, toDisplayMinor } from "@/lib/currency";
+import {
+  formatDisplayPrice,
+  formatIsoDate,
+  formatNumber,
+  formatPriceMinor,
+  stripSku,
+} from "@/lib/format";
 import { PERF_MARGIN } from "@/lib/perf-margin";
 
 import { saveBuildAction } from "./actions";
@@ -32,21 +40,25 @@ import { IndexBar } from "./index-bar";
 const ENGINE_CATEGORIES = ["cpu", "gpu", "motherboard", "ram", "psu", "case"] as const;
 type EngineCategory = (typeof ENGINE_CATEGORIES)[number];
 
-const CATEGORY_LABEL: Record<EngineCategory, string> = {
-  cpu: "İşlemci",
-  gpu: "Ekran kartı",
-  motherboard: "Anakart",
-  ram: "Bellek",
-  psu: "Güç kaynağı",
-  case: "Kasa",
-};
+// Motorun tanıdığı değerler. Ekranda ne yazacaklarını
+// `performance.resolution.<value>` söylüyor — "4K" bir çeviri kararı.
+const RESOLUTIONS: Resolution[] = ["1080p", "1440p", "2160p"];
 
-// Motorun tanıdığı değer '2160p'; "4K" sadece ekranda yazan ad.
-const RESOLUTIONS: { value: Resolution; label: string }[] = [
-  { value: "1080p", label: "1080p" },
-  { value: "1440p", label: "1440p" },
-  { value: "2160p", label: "4K" },
-];
+/** K73: sabit referans sistemin indeksi. Tavan değil, ölçüt. */
+const REFERENCE_INDEX = 100;
+
+/**
+ * Motorun darboğaz türü -> mesaj anahtarı.
+ *
+ * Motor `cpu_limited` diyor, çeviri dosyası `cpuLimited` bekliyor: veri
+ * adlandırması ile mesaj adlandırması ayrı dünyalar ve eşlemeyi bir yerde
+ * yapmak, her çağrıda dize çevirmekten açık.
+ */
+const BOTTLENECK_KEY: Record<Bottleneck, string> = {
+  balanced: "balanced",
+  cpu_limited: "cpuLimited",
+  gpu_limited: "gpuLimited",
+};
 
 type Selection = Partial<Record<EngineCategory, string>>;
 
@@ -75,6 +87,32 @@ export function Builder({
   fpsGroups,
   defaultSelection,
 }: BuilderProps) {
+  // Ad alanları ayrı çağrılıyor: bir bileşenin hangi metin kümesini kullandığı
+  // çağrıdan okunabilsin (K150).
+  const t = useTranslations("parts");
+  const tPerf = useTranslations("performance");
+  const tComp = useTranslations("compatibility");
+  const tPrice = useTranslations("pricing");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+
+  /** Sayı biçimi dile göre: binlik ve ondalık ayracı değişiyor. */
+  const sayi = (value: number) => formatNumber(value, locale);
+  /** Kategori adı — motorun anahtarı, ekranın çevirisi. */
+  const kategoriAdi = (category: EngineCategory | "storage") => t(`category.${category}`);
+
+  /**
+   * Kur notu: cümle çeviri dosyasında, sayı `lib/currency.ts`te, biçim
+   * `Intl`de. Üçü de kendi yerinde duruyor.
+   */
+  const kurNotu = tPrice(USD_TRY.manual ? "rateNoteManual" : "rateNoteAuto", {
+    source: SOURCE_CURRENCY,
+    // Kur da bir para tutarı: sembolü ve ondalık ayracı dile göre çıksın diye
+    // `Intl`in para biçimlendiricisinden geçiyor.
+    rate: formatPriceMinor(USD_TRY.rateMinor, DISPLAY_CURRENCY, locale),
+    date: formatIsoDate(USD_TRY.quotedAt, locale),
+  });
+
   // Başlangıç değeri tembel: `pickDefaultBuild` sunucuda bir kez çalıştı,
   // burada yalnızca kategori adlarına çevriliyor. Sonraki çizimlerde
   // kullanıcının seçimi geçerli — varsayılan bir daha uygulanmaz.
@@ -254,9 +292,10 @@ export function Builder({
   /** Bir parçanın indeksi neden yok: seçilmedi mi, verisi mi yok? */
   function eksikSebebi(kind: "gpu" | "cpu"): string {
     const id = kind === "gpu" ? gpuChipId : cpuId;
-    const ad = kind === "gpu" ? "Ekran kartı" : "İşlemci";
-    if (!id) return `${ad} seçilmedi.`;
-    return `${ad} için performans verisi yok.`;
+    const category = kategoriAdi(kind);
+    return id
+      ? tPerf("missing.noData", { category })
+      : tPerf("missing.notSelected", { category });
   }
 
   /** Öneride görünen parça adı — motor id döndürüyor, adı katalog biliyor. */
@@ -283,7 +322,7 @@ export function Builder({
     olcumlu(variant.id) || olcumlu(variant.chip_part_id);
 
   /** Ölçümlüler önce. Grup içindeki sıra katalogdan geldiği gibi kalıyor. */
-  function olcumeGoreAyir<T extends { id: string }>(items: T[]) {
+  function olcumeGoreAyir<T extends { id: string }>(items: readonly T[]) {
     return {
       olcumlu: items.filter((item) => olcumlu(item.id)),
       olcumsuz: items.filter((item) => !olcumlu(item.id)),
@@ -293,7 +332,7 @@ export function Builder({
   /** Seçenek metni: ad + (varsa) fiyat. Fiyat çevrilemiyorsa hiç yazılmıyor. */
   function secenekMetni(id: string, label: string): string {
     const price = prices[id];
-    const tl = price ? formatDisplayPrice(price.price_minor, price.currency) : null;
+    const tl = price ? formatDisplayPrice(price.price_minor, price.currency, locale) : null;
     return tl ? `${label} — ${tl}` : label;
   }
 
@@ -305,7 +344,7 @@ export function Builder({
     <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-12 [&>*]:min-w-0">
       {/* ---------------- Seçim ---------------- */}
       <section aria-labelledby="secim-basligi" className="lg:sticky lg:top-6 lg:self-start">
-        <SectionTitle id="secim-basligi">Parça seç</SectionTitle>
+        <SectionTitle id="secim-basligi">{t("heading")}</SectionTitle>
 
         <div className="mt-4 flex flex-col gap-4">
           {ENGINE_CATEGORIES.map((category) => (
@@ -314,7 +353,7 @@ export function Builder({
                   ama ekran okuyucu için açık bağ daha güvenilir. */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor={`sec-${category}`} className="text-sm font-medium">
-                  {CATEGORY_LABEL[category]}
+                  {kategoriAdi(category)}
                 </label>
                 <select
                   id={`sec-${category}`}
@@ -330,7 +369,7 @@ export function Builder({
                     }));
                   }}
                 >
-                  <option value="">— seçilmedi —</option>
+                  <option value="">{t("notSelected")}</option>
                   {/*
                     Ekran kartı ve işlemci ÖLÇÜM DURUMUNA göre ikiye ayrılıyor
                     (K145). Katalogda 331 parça var ama ölçümü olan 15 ekran
@@ -343,11 +382,16 @@ export function Builder({
                   */}
                   {category === "gpu" || category === "cpu" ? (
                     (() => {
-                      const gruplar = olcumeGoreAyir(catalog[category]);
+                      // `catalog[category]` iki farklı spec tipinin birleşimi;
+                      // gruplama yalnızca `id` alanına bakıyor, spec tipini
+                      // hiç okumuyor. Daraltma bu yüzden güvenli.
+                      const gruplar = olcumeGoreAyir<{ id: string; label: string }>(
+                        catalog[category],
+                      );
                       return (
                         <>
                           {gruplar.olcumlu.length > 0 && (
-                            <optgroup label="Ölçümlü — FPS tahmini verilebilir">
+                            <optgroup label={t("coverageGroup.measured")}>
                               {gruplar.olcumlu.map((item) => (
                                 <option key={item.id} value={item.id}>
                                   {secenekMetni(item.id, item.label)}
@@ -356,10 +400,10 @@ export function Builder({
                             </optgroup>
                           )}
                           {gruplar.olcumsuz.length > 0 && (
-                            <optgroup label="Ölçüm yok — sadece uyumluluk kontrolü">
+                            <optgroup label={t("coverageGroup.unmeasured")}>
                               {gruplar.olcumsuz.map((item) => (
                                 <option key={item.id} value={item.id}>
-                                  {secenekMetni(item.id, item.label)} · ölçüm yok
+                                  {secenekMetni(item.id, item.label)} · {t("unmeasuredMarker")}
                                 </option>
                               ))}
                             </optgroup>
@@ -382,10 +426,9 @@ export function Builder({
                   selection[category] !== undefined &&
                   !olcumlu(selection[category]!) && (
                     <p className="text-xs leading-relaxed text-muted">
-                      Bu {CATEGORY_LABEL[category].toLocaleLowerCase("tr")} için ölçüm yok:
-                      uyumluluk kontrolü çalışır, FPS ve sistem indeksi
-                      hesaplanamaz. Listede &ldquo;Ölçümlü&rdquo; başlığı altındaki
-                      parçalarda ikisi de görünür.
+                      {t("unmeasuredNote", {
+                        category: kategoriAdi(category).toLocaleLowerCase(locale),
+                      })}
                     </p>
                   )}
               </div>
@@ -398,7 +441,8 @@ export function Builder({
               {category === "gpu" && variantsForChip.length > 0 && (
                 <div className="flex flex-col gap-1.5 border-l-2 border-border pl-3">
                   <label htmlFor="sec-gpu-variant" className="text-sm font-medium">
-                    Kart modeli <span className="font-normal text-muted">(opsiyonel)</span>
+                    {t("variant.label")}{" "}
+                    <span className="font-normal text-muted">({t("variant.optional")})</span>
                   </label>
                   <select
                     id="sec-gpu-variant"
@@ -409,21 +453,18 @@ export function Builder({
                       setGpuVariantId(event.target.value || undefined);
                     }}
                   >
-                    <option value="">— belirtilmedi, referans değerler —</option>
+                    <option value="">{t("variant.unspecified")}</option>
                     {/* Kart, çipinin ölçüm durumunu miras alır (K86, K87):
                         kartın kendi indeksi yoksa çipinki kullanılıyor. Çipi
                         ölçümsüzse kart da FPS üretemez ve bunu söylüyor. */}
                     {variantsForChip.map((variant) => (
                       <option key={variant.id} value={variant.id}>
                         {secenekMetni(variant.id, variant.label)}
-                        {olcumluKart(variant) ? "" : " · ölçüm yok"}
+                        {olcumluKart(variant) ? "" : ` · ${t("unmeasuredMarker")}`}
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs leading-relaxed text-muted">
-                    Aynı çipten çıkan kartlar uzunluk ve güç limitinde ayrışır. Kart
-                    seçmezseniz üreticinin referans değerleri kullanılır.
-                  </p>
+                  <p className="text-xs leading-relaxed text-muted">{t("variant.hint")}</p>
                 </div>
               )}
             </div>
@@ -439,7 +480,8 @@ export function Builder({
           */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="sec-storage" className="text-sm font-medium">
-              Depolama <span className="font-normal text-muted">(birden fazla seçilebilir)</span>
+              {t("storage.label")}{" "}
+              <span className="font-normal text-muted">({t("storage.multipleHint")})</span>
             </label>
             <select
               id="sec-storage"
@@ -454,21 +496,21 @@ export function Builder({
             >
               {catalog.storage.map((item) => (
                 <option key={item.id} value={item.id} title={item.label}>
-                  {secenekMetni(item.id, stripSku(item.label))} · {item.storage_type},{" "}
-                  {item.capacity_gb} GB
+                  {secenekMetni(item.id, stripSku(item.label))} ·{" "}
+                  {t("storage.detail", { type: item.storage_type, capacity: sayi(item.capacity_gb) })}
                 </option>
               ))}
             </select>
-            <p className="text-xs leading-relaxed text-muted">
-              Birden fazlası için Ctrl (Mac&rsquo;te ⌘) basılı tutarak seçin.
-            </p>
+            <p className="text-xs leading-relaxed text-muted">{t("storage.howTo")}</p>
 
             {/* Ayrıntı satırı: stok kodu dahil tam ad ve fiyat. */}
             {selectedStorage.length > 0 && (
               <ul className="mt-1 flex flex-col gap-1 text-xs text-muted">
                 {selectedStorage.map((item) => {
                   const price = prices[item.id];
-                  const tl = price ? formatDisplayPrice(price.price_minor, price.currency) : null;
+                  const tl = price
+                    ? formatDisplayPrice(price.price_minor, price.currency, locale)
+                    : null;
                   return (
                     <li key={item.id}>
                       {item.label}
@@ -485,7 +527,7 @@ export function Builder({
                     }}
                     className="text-accent underline"
                   >
-                    Seçimi temizle
+                    {t("storage.clear")}
                   </button>
                 </li>
               </ul>
@@ -510,45 +552,41 @@ export function Builder({
             className="cam rounded-lg border border-border p-6"
           >
             <h2 id="bos-durum" className="text-lg font-semibold tracking-tight">
-              Soldan parça seçin
+              {t("empty.heading")}
             </h2>
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-              Ekran kartı seçtiğinizde oyun bazlı FPS listesi gelir. İşlemciyi de
-              seçerseniz sistem indeksi ve darboğaz analizi eklenir. Uyumluluk kontrolü
-              ilk parçadan itibaren çalışır.
+              {t("empty.intro")}
             </p>
 
             <dl className="mt-5 space-y-3 text-sm">
               <div>
-                <dt className="font-medium">Ne göreceksiniz</dt>
-                <dd className="mt-0.5 leading-relaxed text-muted">
-                  Oyun başına tahmini FPS, sistem indeksi, uyumluluk hataları ve
-                  yükseltme önerisi.
-                </dd>
+                <dt className="font-medium">{t("empty.willSeeTitle")}</dt>
+                <dd className="mt-0.5 leading-relaxed text-muted">{t("empty.willSee")}</dd>
               </div>
               <div>
-                <dt className="font-medium">Ne görmeyeceksiniz</dt>
-                <dd className="mt-0.5 leading-relaxed text-muted">
-                  Ölçümü olmayan parçalarda uydurma sayı. Veri yoksa yerinde neden
-                  olmadığı yazar.
-                </dd>
+                <dt className="font-medium">{t("empty.willNotSeeTitle")}</dt>
+                <dd className="mt-0.5 leading-relaxed text-muted">{t("empty.willNotSee")}</dd>
               </div>
             </dl>
 
             <div className="mt-5 border-t border-border pt-4">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
-                Ölçümü olan oyunlar
+                {t("empty.coveredGamesTitle")}
               </h3>
               {kapsananOyunlar.length > 0 ? (
                 <p className="mt-2 text-sm leading-relaxed">
-                  <span className="num font-medium">{kapsananOyunlar.length}</span> oyun,{" "}
-                  {RESOLUTIONS.find((r) => r.value === resolution)?.label} için:{" "}
-                  <span className="text-muted">{kapsananOyunlar.join(", ")}</span>
+                  {t.rich("empty.coveredGames", {
+                    count: kapsananOyunlar.length,
+                    resolution: tPerf(`resolution.${resolution}`),
+                    // Oyun adları çevrilmez; liste ayracı da dile göre
+                    // değişebilsin diye mesajın içinde değil, burada birleşiyor.
+                    list: kapsananOyunlar.join(", "),
+                    b: (chunks) => <span className="num font-medium">{chunks}</span>,
+                    muted: (chunks) => <span className="text-muted">{chunks}</span>,
+                  })}
                 </p>
               ) : (
-                <p className="mt-2 text-sm text-muted">
-                  Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin.
-                </p>
+                <p className="mt-2 text-sm text-muted">{t("empty.noneAtResolution")}</p>
               )}
             </div>
           </section>
@@ -560,19 +598,19 @@ export function Builder({
             */}
             {(errors.length > 0 || warnings.length > 0) && (
               <section aria-labelledby="uyumluluk-basligi">
-                <SectionTitle id="uyumluluk-basligi">Uyumluluk</SectionTitle>
+                <SectionTitle id="uyumluluk-basligi">{tComp("heading")}</SectionTitle>
 
                 <div className="mt-4 flex flex-col gap-4">
                   {errors.length > 0 && (
                     <FindingList
-                      title={`Hata (${errors.length}) — sistem bu haliyle kurulamaz`}
+                      title={tComp("errors", { count: errors.length })}
                       findings={errors}
                       className="border-red-600 dark:border-red-500"
                     />
                   )}
                   {warnings.length > 0 && (
                     <FindingList
-                      title={`Uyarı (${warnings.length}) — kurulur ama dikkat`}
+                      title={tComp("warnings", { count: warnings.length })}
                       findings={warnings}
                       className="border-amber-600 dark:border-amber-500"
                     />
@@ -583,38 +621,38 @@ export function Builder({
 
             {findings.length === 0 && (
               <p className="text-sm text-muted">
-                Uyumluluk: sorun bulunamadı.
+                {tComp("noIssues")}
                 {(gpuLengthUnknown || gpuTdpFromReference || psuLengthUnknown) && (
-                  <> Veri eksik olduğu için yapılamayan kontroller var — aşağıda.</>
+                  <> {tComp("noIssuesButSkipped")}</>
                 )}
               </p>
             )}
 
             {/* ---- Performans ---- */}
             <section aria-labelledby="performans-basligi">
-              <SectionTitle id="performans-basligi">Performans</SectionTitle>
+              <SectionTitle id="performans-basligi">{tPerf("heading")}</SectionTitle>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted">Çözünürlük</span>
-                <div className="flex gap-1.5" role="group" aria-label="Çözünürlük">
+                <span className="text-xs text-muted">{tPerf("resolution.label")}</span>
+                <div className="flex gap-1.5" role="group" aria-label={tPerf("resolution.label")}>
                   {RESOLUTIONS.map((option) => (
                     <button
-                      key={option.value}
+                      key={option}
                       type="button"
-                      aria-pressed={resolution === option.value}
+                      aria-pressed={resolution === option}
                       onClick={() => {
                         // Çözünürlük dondurulan indeksi belirliyor; değişince
                         // eldeki paylaşım linki artık bu ekrandakini göstermiyor.
                         forgetShareLink();
-                        setResolution(option.value);
+                        setResolution(option);
                       }}
                       className={`rounded-md border px-3 py-1 text-sm ${
-                        resolution === option.value
+                        resolution === option
                           ? "border-accent bg-accent/10 font-medium text-accent"
                           : "border-border text-muted"
                       }`}
                     >
-                      {option.label}
+                      {tPerf(`resolution.${option}`)}
                     </button>
                   ))}
                 </div>
@@ -629,31 +667,37 @@ export function Builder({
                     </output>
                     {/* K73: 100 tavan değil, sabit referans sistemin değeri. */}
                     <span className="text-sm text-muted">
-                      tahmini sistem indeksi — referans sistem{" "}
-                      <span className="num">100</span>
+                      {tPerf.rich("systemIndex.suffix", {
+                        reference: sayi(REFERENCE_INDEX),
+                        b: (chunks) => <span className="num">{chunks}</span>,
+                      })}
                     </span>
                   </div>
 
                   <IndexBar value={performance.system_index} />
 
                   <p className="mt-2 text-sm">
-                    {performance.band} <span className="text-xs text-muted">(tahmini)</span>
+                    {tPerf(`band.${bandKeyFor(performance.system_index)}`)}{" "}
+                    <span className="text-xs text-muted">({tCommon("estimated")})</span>
                   </p>
 
                   {/* Kataloğun en iyileri bilinmiyorsa satır hiç gösterilmez (K83). */}
-                  {performance.bottleneck_message && (
+                  {performance.bottleneck_message && performance.bottleneck && (
                     <div className="mt-3 rounded-md border border-border bg-surface px-3 py-2.5">
                       <p className="text-sm">
-                        <span className="font-medium">Darboğaz:</span>{" "}
-                        {performance.bottleneck_message}
+                        <span className="font-medium">{tPerf("bottleneck.label")}</span>{" "}
+                        {/* Metin motorun hazır cümlesinden değil, darboğaz
+                            TÜRÜNDEN üretiliyor: motor Türkçe yazıyor, arayüz
+                            kendi dilinde söylüyor (K150). */}
+                        {tPerf(`bottleneck.${BOTTLENECK_KEY[performance.bottleneck]}`)}
                       </p>
                       {performance.bottleneck_gain && (
                         <p className="mt-1 text-xs text-muted">
-                          Kataloğun en iyisine geçseniz: ekran kartı{" "}
-                          <span className="num">+{performance.bottleneck_gain.gpu}</span>,
-                          işlemci{" "}
-                          <span className="num">+{performance.bottleneck_gain.cpu}</span>{" "}
-                          indeks.
+                          {tPerf.rich("bottleneck.gain", {
+                            gpu: sayi(performance.bottleneck_gain.gpu),
+                            cpu: sayi(performance.bottleneck_gain.cpu),
+                            b: (chunks) => <span className="num">{chunks}</span>,
+                          })}
                         </p>
                       )}
                     </div>
@@ -661,26 +705,31 @@ export function Builder({
 
                   <div className="mt-3 space-y-1 text-xs leading-relaxed text-muted">
                     <p>
-                      Ekran kartı <span className="num">{performance.gpu_index}</span>,
-                      işlemci <span className="num">{performance.cpu_index}</span>. Bu
-                      çözünürlükte ağırlıklar: ekran kartı{" "}
-                      <span className="num">{performance.weights.gpu}</span>, işlemci{" "}
-                      <span className="num">{performance.weights.cpu}</span>. Motor sürümü{" "}
-                      {performance.model_version}. Gerçek FPS iddiası değildir.
+                      {tPerf.rich("systemIndex.weights", {
+                        gpuIndex: sayi(performance.gpu_index),
+                        cpuIndex: sayi(performance.cpu_index),
+                        gpuWeight: sayi(performance.weights.gpu),
+                        cpuWeight: sayi(performance.weights.cpu),
+                        modelVersion: performance.model_version,
+                        b: (chunks) => <span className="num">{chunks}</span>,
+                      })}
                     </p>
                     {/* Çipin indeksi kartın ölçümü değildir (K86). */}
                     {gpuVariant && gpuIndex.origin === "chip" && (
                       <p>
-                        Ekran kartı indeksi {gpuChip?.label} çipi için ölçüldü; seçtiğiniz
-                        kart için ayrı ölçüm yok. Fabrika hız aşırtması bu sayıya yansımaz.
+                        {tPerf("systemIndex.chipMeasurement", { chip: gpuChip?.label ?? "" })}
                       </p>
                     )}
                     {/* Hata payı ölçülür, tahmin edilmez (K79). */}
                     <p>
-                      Ölçülen sapma: ortalama %
-                      <span className="num">{PERF_MARGIN.meanPercent}</span>, en büyük %
-                      <span className="num">{PERF_MARGIN.maxPercent}</span>.{" "}
-                      {PERF_MARGIN.method} ({PERF_MARGIN.measuredAt})
+                      {tPerf("systemIndex.margin", {
+                        mean: sayi(PERF_MARGIN.meanPercent),
+                        max: sayi(PERF_MARGIN.maxPercent),
+                        // `PERF_MARGIN.method` Türkçe ve o dosyaya
+                        // dokunulmuyor; yöntem adı çeviriden okunuyor.
+                        method: tPerf("systemIndex.method"),
+                        measuredAt: PERF_MARGIN.measuredAt,
+                      })}
                     </p>
                   </div>
                 </div>
@@ -691,34 +740,28 @@ export function Builder({
                       {/* Bu metin EKSİK OLANIN ADINI koyuyor (K126). Eskiden
                           "performans tahmini için yeterli veri yok" diyordu ve
                           hemen altında dolu bir FPS listesi duruyordu. */}
-                      <p className="text-sm">
-                        <span className="font-medium">Sistem indeksi</span> hesaplanamıyor —
-                        bu sayı işlemci ve ekran kartının ikisinin de ölçümünü gerektiriyor.
-                      </p>
+                      <p className="text-sm">{tPerf("missing.indexTitle")}</p>
                       <ul className="mt-1.5 list-inside list-disc text-xs text-muted">
                         {performance.missing.map((kind) => (
                           <li key={kind}>{eksikSebebi(kind)}</li>
                         ))}
                       </ul>
                       <p className="mt-2 text-xs leading-relaxed text-muted">
-                        Seçtiğiniz parçalar geçerli — uyumluluk kontrolü çalışıyor.
+                        {tPerf("missing.partsStillValid")}
                         {fpsRows.length > 0 && (
                           <>
                             {" "}
                             <span className="font-medium text-foreground">
-                              Aşağıdaki oyun bazlı FPS listesi yine de görünüyor:
+                              {tPerf("missing.fpsStillShown")}
                             </span>{" "}
-                            o liste yalnızca ekran kartına bakıyor, işlemciyi hesaba
-                            katmıyor. İki sayı farklı sorulara cevap veriyor.
+                            {tPerf("missing.fpsStillShownWhy")}
                           </>
                         )}
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm">
-                        Sistem indeksi için hem işlemci hem ekran kartı gerekiyor.
-                      </p>
+                      <p className="text-sm">{tPerf("missing.needBoth")}</p>
                       <ul className="mt-1.5 list-inside list-disc text-xs text-muted">
                         {performance.missing.map((kind) => (
                           <li key={kind}>{eksikSebebi(kind)}</li>
@@ -732,21 +775,21 @@ export function Builder({
 
             {/* ---- Oyun bazlı FPS (A.1) ---- */}
             <section aria-labelledby="fps-basligi">
-              <SectionTitle id="fps-basligi">Oyun bazlı FPS</SectionTitle>
+              <SectionTitle id="fps-basligi">{tPerf("fps.heading")}</SectionTitle>
               <div className="mt-4">
                 {gpuChipId === undefined ? (
                   <div className="rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-muted">
-                    <p>Oyun bazlı tahmin için ekran kartı seçin.</p>
+                    <p>{tPerf("fps.pickGpu")}</p>
                     {kapsananOyunlar.length > 0 ? (
                       <p className="mt-1.5 text-xs leading-relaxed">
-                        Bu çözünürlükte ölçümü olan{" "}
-                        <span className="num">{kapsananOyunlar.length}</span> oyun:{" "}
-                        {kapsananOyunlar.join(", ")}.
+                        {tPerf.rich("fps.coveredGames", {
+                          count: kapsananOyunlar.length,
+                          list: kapsananOyunlar.join(", "),
+                          b: (chunks) => <span className="num">{chunks}</span>,
+                        })}
                       </p>
                     ) : (
-                      <p className="mt-1.5 text-xs">
-                        Bu çözünürlükte henüz ölçüm yok; başka çözünürlük seçin.
-                      </p>
+                      <p className="mt-1.5 text-xs">{tPerf("fps.noneAtResolution")}</p>
                     )}
                   </div>
                 ) : (
@@ -765,33 +808,29 @@ export function Builder({
 
             {/* ---- Toplam fiyat ---- */}
             <section aria-labelledby="fiyat-basligi">
-              <SectionTitle id="fiyat-basligi">Toplam fiyat</SectionTitle>
+              <SectionTitle id="fiyat-basligi">{tPrice("totalHeading")}</SectionTitle>
               <div className="mt-4">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <output className="num text-2xl font-semibold tracking-tight">
-                    {formatPriceMinor(priceSummary.totalMinor, DISPLAY_CURRENCY)}
+                    {formatPriceMinor(priceSummary.totalMinor, DISPLAY_CURRENCY, locale)}
                   </output>
-                  <span className="text-xs text-muted">tahmini</span>
+                  <span className="text-xs text-muted">{tCommon("estimated")}</span>
                 </div>
                 <div className="mt-2 space-y-0.5 text-xs text-muted">
                   <p>
                     {priceSummary.latestIso
-                      ? `Fiyatların son güncellenmesi: ${formatIsoDate(priceSummary.latestIso)}`
-                      : "Seçilen parçaların hiçbirinde fiyat kaydı yok."}
+                      ? tPrice("lastUpdated", {
+                          date: formatIsoDate(priceSummary.latestIso, locale),
+                        })
+                      : tPrice("noPriceRecord")}
                   </p>
                   {/* Kur canlı değil ve öyle sunulmuyor (K148). */}
-                  <p>{rateNote()}</p>
+                  <p>{kurNotu}</p>
                   {priceSummary.missing > 0 && (
-                    <p>
-                      <span className="num">{priceSummary.missing}</span> parçanın fiyatı
-                      yok, toplama katılmadı.
-                    </p>
+                    <p>{tPrice("missingCount", { count: priceSummary.missing })}</p>
                   )}
                   {priceSummary.unconvertible > 0 && (
-                    <p>
-                      <span className="num">{priceSummary.unconvertible}</span> parçanın para
-                      birimi çevrilemedi, toplama katılmadı.
-                    </p>
+                    <p>{tPrice("unconvertibleCount", { count: priceSummary.unconvertible })}</p>
                   )}
                 </div>
               </div>
@@ -814,34 +853,32 @@ export function Builder({
                 <details className="rounded-md border border-border bg-surface">
                   <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted">
                     <span id="kontrol-edilemeyen-basligi">
-                      Kontrol edilemeyenler (
-                      <span className="num">
-                        {[gpuLengthUnknown, gpuTdpFromReference, psuLengthUnknown].filter(Boolean)
-                          .length}
-                      </span>
-                      )
+                      {tComp("uncheckable.heading", {
+                        count: [gpuLengthUnknown, gpuTdpFromReference, psuLengthUnknown].filter(
+                          Boolean,
+                        ).length,
+                      })}
                     </span>
                   </summary>
 
                   <div className="space-y-2 border-t border-border px-3 py-3">
                     {gpuLengthUnknown && (
                       <p className="text-sm leading-relaxed text-muted">
-                        {gpuVariant
-                          ? "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et."
-                          : "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et."}
+                        {tComp(
+                          gpuVariant
+                            ? "uncheckable.gpuLengthWithCard"
+                            : "uncheckable.gpuLengthChipOnly",
+                        )}
                       </p>
                     )}
                     {gpuTdpFromReference && (
                       <p className="text-sm leading-relaxed text-muted">
-                        Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı çipin
-                        referans değeriyle yapıldı — özel tasarım kartlar referanstan biraz
-                        daha fazla çekebilir.
+                        {tComp("uncheckable.gpuTdpFromReference")}
                       </p>
                     )}
                     {psuLengthUnknown && (
                       <p className="text-sm leading-relaxed text-muted">
-                        Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi.
-                        Üreticinin sayfasından teyit et.
+                        {tComp("uncheckable.psuLength")}
                       </p>
                     )}
                   </div>
@@ -851,11 +888,11 @@ export function Builder({
 
             {/* ---- Yükseltme önerisi ---- */}
             <section aria-labelledby="yukseltme-basligi">
-              <SectionTitle id="yukseltme-basligi">Yükseltme önerisi</SectionTitle>
+              <SectionTitle id="yukseltme-basligi">{tPrice("upgrade.heading")}</SectionTitle>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <label htmlFor="butce" className="text-xs text-muted">
-                  Bütçe farkı
+                  {tPrice("upgrade.budgetLabel")}
                 </label>
                 <div className="flex items-center gap-1.5">
                   <span aria-hidden="true" className="text-sm text-muted">
@@ -865,31 +902,24 @@ export function Builder({
                     id="butce"
                     className="num w-28 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm"
                     inputMode="numeric"
-                    placeholder="2000"
+                    placeholder={tPrice("upgrade.budgetPlaceholder")}
                     value={budgetText}
                     onChange={(event) => setBudgetText(event.target.value)}
                   />
-                  <span className="text-sm text-muted">TL</span>
+                  <span className="text-sm text-muted">{DISPLAY_CURRENCY}</span>
                 </div>
               </div>
 
               <div className="mt-3">
                 {olcumEksik ? (
                   <p className="text-sm leading-relaxed text-muted">
-                    Yükseltme önerisi de performans verisine dayanıyor. Ölçüm toplanana
-                    kadar &ldquo;bu para neyi ne kadar artırır&rdquo; sorusuna dürüst bir
-                    cevap veremiyoruz.
+                    {tPrice("upgrade.needsMeasurement")}
                   </p>
                 ) : !performance.ok ? (
-                  <p className="text-sm leading-relaxed text-muted">
-                    Öneri için önce işlemci ve ekran kartı seçilmeli — artışın neye göre
-                    ölçüleceği belli olmuyor.
-                  </p>
+                  <p className="text-sm leading-relaxed text-muted">{tPrice("upgrade.needsParts")}</p>
                 ) : upgrades.length === 0 ? (
                   <p className="text-sm text-muted">
-                    {budgetMinor === 0
-                      ? "Bütçe farkı girin, bu parayla ne alınabileceğini arayalım."
-                      : "Bu bütçeyle indeksi artıran bir değişiklik bulunamadı."}
+                    {tPrice(budgetMinor === 0 ? "upgrade.enterBudget" : "upgrade.nothingFound")}
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-3">
@@ -902,7 +932,7 @@ export function Builder({
                       >
                         <div className="text-sm">
                           <span className="text-muted">
-                            {CATEGORY_LABEL[upgrade.category as EngineCategory]}:
+                            {kategoriAdi(upgrade.category as EngineCategory)}:
                           </span>{" "}
                           {labelOf(upgrade.category, upgrade.current_part_id)}{" "}
                           <span aria-hidden="true" className="text-muted">
@@ -913,17 +943,22 @@ export function Builder({
                           </span>
                         </div>
                         <div className="mt-0.5 text-xs text-muted">
-                          Fark:{" "}
-                          <span className="num">
-                            {upgrade.price_delta_minor >= 0 ? "+" : ""}
-                            {/* Motora zaten TL kuruşu verildi (K148); burada
-                                ikinci bir çevrim YOK. */}
-                            {formatPriceMinor(upgrade.price_delta_minor, DISPLAY_CURRENCY)}
-                          </span>{" "}
-                          · İndeks <span className="num">{upgrade.index_before}</span> →{" "}
-                          <span className="num">{upgrade.index_after}</span> (
-                          <span className="num">+{upgrade.index_delta}</span>) tahmini
-                          {index === 0 && upgrades.length > 1 && " · en çok kazandıran"}
+                          {tPrice.rich("upgrade.delta", {
+                            // Motora zaten gösterim para biriminde değer verildi
+                            // (K148); burada ikinci bir çevrim YOK.
+                            price:
+                              (upgrade.price_delta_minor >= 0 ? "+" : "") +
+                              formatPriceMinor(
+                                upgrade.price_delta_minor,
+                                DISPLAY_CURRENCY,
+                                locale,
+                              ),
+                            before: sayi(upgrade.index_before),
+                            after: sayi(upgrade.index_after),
+                            delta: "+" + sayi(upgrade.index_delta),
+                            b: (chunks) => <span className="num">{chunks}</span>,
+                          })}
+                          {index === 0 && upgrades.length > 1 && ` · ${tPrice("upgrade.bestValue")}`}
                         </div>
                       </li>
                     ))}
@@ -937,7 +972,7 @@ export function Builder({
               aria-labelledby="sistem-basligi"
               className="cam rounded-lg border border-border p-4 sm:p-5"
             >
-              <SectionTitle id="sistem-basligi">Seçilen sistem</SectionTitle>
+              <SectionTitle id="sistem-basligi">{t("selected.heading")}</SectionTitle>
 
               <ul className="mt-3 flex flex-col gap-1 text-sm">
                 {ENGINE_CATEGORIES.filter((category) => selection[category]).map((category) => {
@@ -951,10 +986,12 @@ export function Builder({
                         );
                   return (
                     <li key={category}>
-                      <span className="text-muted">{CATEGORY_LABEL[category]}:</span>{" "}
-                      {item?.label}
+                      <span className="text-muted">{kategoriAdi(category)}:</span> {item?.label}
                       {category === "gpu" && gpuVariant && (
-                        <span className="text-xs text-muted"> · çip: {gpuChip?.label}</span>
+                        <span className="text-xs text-muted">
+                          {" · "}
+                          {t("selected.chip", { name: gpuChip?.label ?? "" })}
+                        </span>
                       )}
                       <PriceTag price={item ? prices[item.id] : undefined} />
                     </li>
@@ -962,7 +999,7 @@ export function Builder({
                 })}
                 {selectedStorage.map((item) => (
                   <li key={item.id}>
-                    <span className="text-muted">Depolama:</span> {item.label}
+                    <span className="text-muted">{kategoriAdi("storage")}:</span> {item.label}
                     <PriceTag price={prices[item.id]} />
                   </li>
                 ))}
@@ -975,20 +1012,17 @@ export function Builder({
                   disabled={saving || hicSecimYok}
                   className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-medium text-background disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {saving ? "Kaydediliyor…" : "Sistemi kaydet"}
+                  {saving ? t("selected.saving") : t("selected.save")}
                 </button>
 
                 <p className="mt-2 text-xs leading-relaxed text-muted">
-                  Hesap gerekmez. Kaydedilen fiyat ve indeks o ana dondurulur, sonradan
-                  değişmez. İndeks şu an seçili çözünürlükte ({resolution}) hesaplanır.
-                  İndeks hesaplanamıyorsa — parça seçilmediği için ya da ölçüm verisi
-                  olmadığı için — sistem yine kaydedilir, indeks yerine sebebi görünür.
+                  {t("selected.saveNote", { resolution: tPerf(`resolution.${resolution}`) })}
                 </p>
 
                 {shareUrl && (
                   <div className="mt-4">
                     <label htmlFor="paylasim-linki" className="text-xs text-muted">
-                      Bu adres sistemi açar
+                      {t("selected.shareLabel")}
                     </label>
                     <input
                       id="paylasim-linki"
@@ -998,7 +1032,7 @@ export function Builder({
                       className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-1.5 font-mono text-xs"
                     />
                     <a className="mt-2 inline-block text-sm text-accent underline" href={shareUrl}>
-                      Kaydedilen sistemi aç →
+                      {t("selected.openSaved")}
                     </a>
                   </div>
                 )}
@@ -1126,12 +1160,19 @@ function summarizePrice(partIds: string[], prices: Record<string, CurrentPrice>)
 
 /** Fiyatı olan parçanın yanında fiyatı, olmayanda "fiyat yok" yazar. */
 function PriceTag({ price }: { price?: CurrentPrice }) {
+  const t = useTranslations("pricing");
+  const locale = useLocale();
+
   // opacity-40 yerine `text-muted`: %40 saydamlık gövde metninde WCAG AA'yı
   // (4.5:1) karşılamıyordu; --muted 6.4:1 veriyor.
-  if (!price) return <span className="text-muted"> — fiyat yok</span>;
-  const tl = formatDisplayPrice(price.price_minor, price.currency);
+  if (!price) return <span className="text-muted"> {t("noPrice")}</span>;
+  const tl = formatDisplayPrice(price.price_minor, price.currency, locale);
   // Çevrilemeyen para birimi: sayı hiç gösterilmiyor, sebebi yazılıyor.
-  if (!tl) return <span className="text-muted"> — fiyat {price.currency}, çevrilemedi</span>;
+  if (!tl) {
+    return (
+      <span className="text-muted"> {t("unconvertible", { currency: price.currency })}</span>
+    );
+  }
   return <span className="num text-muted"> — {tl}</span>;
 }
 
@@ -1144,6 +1185,11 @@ function FindingList({
   findings: Finding[];
   className: string;
 }) {
+  // Kural cümlesi motorun hazır metninden DEĞİL, `code` + `params` ile
+  // çeviriden kuruluyor (K150). Böylece "soket X, anakart Y" sırasını dil
+  // kendisi belirliyor; metin birleştirme yok.
+  const t = useTranslations("compatibility.rules");
+
   return (
     <div>
       <h3 className="mb-2 text-sm font-semibold">{title}</h3>
@@ -1154,7 +1200,7 @@ function FindingList({
                 kenarlık rengiyle DE gösteriliyor ama tek başına renge
                 bağlı değil — başlıkta "Hata"/"Uyarı" yazıyor. */}
             <span className="font-mono text-xs text-muted">{finding.code}</span>{" "}
-            {finding.message}
+            {t(finding.code, finding.params)}
             <div className="mt-0.5 font-mono text-xs text-muted">
               {finding.involved_part_ids.join(", ")}
             </div>

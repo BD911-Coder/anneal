@@ -1,0 +1,27 @@
+{
+  "heading": "Compatibility",
+  "errors": "{count, plural, one {# error} other {# errors}} — this build cannot be assembled as configured",
+  "warnings": "{count, plural, one {# warning} other {# warnings}} — it will work, but note this",
+  "noIssues": "Compatibility: no problems found.",
+  "noIssuesButSkipped": "Some checks could not run because data is missing — see below.",
+  "rules": {
+    "C1": "The CPU uses socket {cpuSocket} and the motherboard uses socket {boardSocket}. These two cannot be fitted together.",
+    "C2": "The memory is {ramType} and the motherboard supports {boardType}. These two cannot be fitted together.",
+    "C3": "The memory kit has {moduleCount, plural, one {# module} other {# modules}}, but the motherboard has {slots, plural, one {# slot} other {# slots}}.",
+    "C4": "The power supply is rated {psuWatts} W; this build needs at least {requiredWatts} W.",
+    "C5": "The graphics card is {gpuLength} mm long and the case has {maxLength} mm of clearance.",
+    "C6": "The motherboard is {formFactor} form factor; the case supports {supportedCount, plural, one {form factor} other {form factors}}: {supported}.",
+    "W1": "The memory runs at {ramSpeed} MHz but the motherboard supports at most {maxSpeed} MHz. The memory will run at the lower speed.",
+    "W2": "The memory kit is {ramCapacity} GB but the motherboard supports at most {maxCapacity} GB.",
+    "W3": "The power supply is rated {psuWatts} W against a required {requiredWatts} W. The headroom is thin — the unit will run close to full load, which lowers efficiency and raises noise.",
+    "W4": "This build has no graphics card and the CPU has no integrated graphics. There will be no video output.",
+    "W5": "The power supply is {psuLength} mm long and the case lists a {maxLength} mm limit."
+  },
+  "uncheckable": {
+    "heading": "Could not be checked ({count})",
+    "gpuLengthWithCard": "The length of the card you selected is unknown, so case clearance could not be checked. The chip's reference measurement was deliberately not substituted: custom-design cards are longer than the reference card, and a check made with that figure would give false confidence. Confirm the card's dimensions on the manufacturer's page.",
+    "gpuLengthChipOnly": "The graphics card's length is unknown, so case clearance could not be checked. Confirm the card's physical dimensions on the manufacturer's page.",
+    "gpuTdpFromReference": "The total board power (TBP) of the card you selected has not been published. The power calculation used the chip's reference figure — custom-design cards can draw somewhat more than the reference.",
+    "psuLength": "The power supply's length is unknown, so case clearance could not be checked. Confirm it on the manufacturer's page."
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "heading": "Uyumluluk",
+  "errors": "Hata ({count}) — sistem bu haliyle kurulamaz",
+  "warnings": "Uyarı ({count}) — kurulur ama dikkat",
+  "noIssues": "Uyumluluk: sorun bulunamadı.",
+  "noIssuesButSkipped": "Veri eksik olduğu için yapılamayan kontroller var — aşağıda.",
+  "rules": {
+    "C1": "İşlemci soketi {cpuSocket}, anakart soketi {boardSocket}. Bu ikisi takılamaz.",
+    "C2": "Bellek {ramType}, anakart {boardType} destekliyor. Bu ikisi takılamaz.",
+    "C3": "Bellek kiti {moduleCount} modülden oluşuyor ama anakartta {slots} yuva var.",
+    "C4": "Güç kaynağı {psuWatts} W, bu sistem için en az {requiredWatts} W gerekiyor.",
+    "C5": "Ekran kartı {gpuLength} mm, kasaya en fazla {maxLength} mm sığıyor.",
+    "C6": "Anakart {formFactor} boyutunda, kasa şunları destekliyor: {supported}.",
+    "W1": "Bellek {ramSpeed} MHz ama anakart en fazla {maxSpeed} MHz destekliyor. Bellek düşük hızda çalışır.",
+    "W2": "Bellek kiti {ramCapacity} GB ama anakart en fazla {maxCapacity} GB destekliyor.",
+    "W3": "Güç kaynağı {psuWatts} W, gereken {requiredWatts} W. Pay dar — güç kaynağı tam kapasiteye yakın çalışır, verimi düşer ve sesi artar.",
+    "W4": "Sistemde ekran kartı yok ve işlemcide tümleşik grafik bulunmuyor. Görüntü alınamaz.",
+    "W5": "Güç kaynağı {psuLength} mm, kasa için belirtilen sınır {maxLength} mm."
+  },
+  "uncheckable": {
+    "heading": "Kontrol edilemeyenler ({count})",
+    "gpuLengthWithCard": "Seçtiğiniz kartın uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Çipin referans ölçüsü kullanılmadı: özel tasarım kartlar referans karttan uzun olur, o ölçüyle yapılan kontrol yanlış güven verirdi. Kartın ölçüsünü üreticinin sayfasından teyit et.",
+    "gpuLengthChipOnly": "Ekran kartının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Kartın fiziksel ölçüsünü üreticinin sayfasından teyit et.",
+    "gpuTdpFromReference": "Seçtiğiniz kartın güç limiti (TBP) yayınlanmamış. Güç hesabı çipin referans değeriyle yapıldı — özel tasarım kartlar referanstan biraz daha fazla çekebilir.",
+    "psuLength": "Güç kaynağının uzunluğu bilinmiyor, kasa uyumluluğu kontrol edilemedi. Üreticinin sayfasından teyit et."
+  }
+}

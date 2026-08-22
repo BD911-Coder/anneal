@@ -3168,3 +3168,99 @@ görünüyor, katalogda 213 ekran kartı var.** Kapsam açığı böylece başl�
 görünüyor.
 
 İşlemci için de aynı satır eklendi: **12 / 42**.
+
+
+### K150 — Arayüz metinleri bileşenden çıktı, kaynak dil İngilizce
+
+**2026-08-22.** Bütün kullanıcıya görünen metinler `messages/<dil>/<ad-alanı>.json`
+dosyalarına taşındı. Varsayılan ve kaynak dil **`en`**; `tr` mevcut metinden
+dolduruldu. Kütüphane `next-intl`.
+
+**Ad alanları düz değil, özelliğe göre:** `common`, `parts`, `compatibility`,
+`performance`, `pricing`. Tek büyük dosya iki kişinin aynı anda çeviri
+yapmasını imkânsız kılar ve hangi metnin nerede kullanıldığını gizler.
+
+**Kural mesajları (C1–C6, W1–W5) ICU ile ve ADLANDIRILMIŞ parametreyle.**
+Motor artık her bulgunun yanında `params` taşıyor:
+
+```
+C1  { cpuSocket: "AM5", boardSocket: "LGA1700" }
+C4  { psuWatts: 550, requiredWatts: 579 }
+```
+
+Metin birleştirme (`"soket " + x`) kullanılmadı: üç dilde üç ayrı kelime
+sırası demek. Adlandırılmış parametre, çeviri dosyasının sırayı kendi diline
+göre kurmasına izin veriyor. C3 ve C6 ayrıca `plural` kullanıyor.
+
+**Motor mantığı DEĞİŞMEDİ.** `Finding.message` (Türkçe hazır cümle) yerinde
+duruyor ve `params` onun YANINA eklendi:
+
+- Arayüz `message`'ı hiç okumuyor, `code` + `params` ile çeviriden kuruyor.
+- Motor arayüz olmadan da okunur bir çıktı verebiliyor; script'ler ve testler
+  onu kullanmaya devam ediyor. Kaldırılsaydı `/engine` çeviri katmanı olmadan
+  hiçbir şey söyleyemezdi.
+- 153 testin hiçbiri değişmedi.
+
+Aynı desen bantlar için: `bandFor()` Türkçe etiketi döndürmeye devam ediyor,
+yanına `bandKeyFor()` eklendi ve arayüz onu kullanıyor.
+
+**Hata payı dosyalarına DOKUNULMADI.** `lib/perf-margin.ts` ve
+`lib/fps-margin.ts` içindeki `method` alanı Türkçe bir cümle; o dosyalar
+kısıt gereği değişmediği için arayüz o alanı artık OKUMUYOR — yöntemin adı
+`performance.*.method` anahtarından geliyor.
+
+### K151 — Adreste dil öneki YOK; dil çerezden ve başlıktan çözümleniyor
+
+next-intl'in yaygın kurulumu `/en/...`, `/tr/...` yol önekleri kullanır.
+**Kullanılamaz:** `SCHEMA.md` bölüm 9 adres yapısını sabitliyor ve "sonradan
+değiştirilmez" diyor. Önek eklemek `/sistem/<id>` adreslerini
+`/en/sistem/<id>` yapardı — dağıtılmış her paylaşım linki kırılırdı.
+
+Sıra: `NEXT_LOCALE` çerezi → `Accept-Language` başlığı → `en`.
+
+Bedeli açıkça: aynı adres iki dilde farklı içerik döndürüyor. Sayfalar zaten
+`force-dynamic` ve arama motorlarına kapalı (K30), yani bugün bir önbellek ya
+da indeksleme sorunu doğurmuyor. **Site aramaya açılırsa bu yeniden
+düşünülmeli.**
+
+`/parca/…`, `/hakkinda`, `/gizlilik` gibi Türkçe adresler İngilizce arayüzde
+de Türkçe kalıyor — adres yapısı sabit.
+
+### K152 — Sayı, para ve tarih `Intl` üzerinden; para birimi dilden AYRI
+
+Bu, eski bir kararın tersine çevrilmesi. `lib/format.ts` bilinçli olarak
+`Intl` kullanmıyordu: değerler hem sunucuda hem tarayıcıda basılıyor ve iki
+tarafın dil/saat dilimi farklı olursa React hydration uyuşmazlığı veriyordu.
+
+**Sebep ortadan kalktı** çünkü ikisi de artık sabit: dil `i18n/request.ts`te
+istek başına bir kez çözümlenip `NextIntlClientProvider` ile istemciye
+geçiyor, saat dilimi açıkça `UTC`.
+
+**Para birimi dilden ayrı bir mesele.** İngilizce okuyan bir kullanıcı da ₺
+görmek isteyebilir: `locale` sayının nasıl yazılacağını, `currency` hangi para
+birimi olduğunu söylüyor.
+
+```
+tr + TRY  ->  ₺54.939,18      1 USD = ₺41,00      20.08.2026
+en + TRY  ->  TRY 54,939.18   1 USD = TRY 41.00   08/20/2026
+```
+
+Fiyat hâlâ hiçbir aşamada float'a çevrilmiyor: bölme yalnızca `Intl`e verilen
+son adımda (SCHEMA.md bölüm 0, kural 4).
+
+### K153 — Eksik çeviri anahtarı dağıtımı durdurur
+
+`npm run dil:kontrol`. Ölçüt `en`: orada olup başka dilde olmayan anahtar
+**hata** — o ekran, o dilde ham anahtar adını basar ve kullanıcı bunu görür.
+
+Fazladan anahtar uyarı: ölü satırdır, ekranda bir şey bozmaz.
+
+ICU parametreleri ve zengin metin etiketleri de karşılaştırılıyor ama
+**asimetrik**:
+
+- çeviride **fazla** değişken → **hata**; bileşen o adı göndermiyor, cümle
+  çizilirken patlar
+- çeviride **eksik** değişken → uyarı; bir dil kaynak dilin ihtiyaç duyduğu
+  değişkene ihtiyaç duymayabilir. Bugün gerçek bir örneği var: İngilizce C6
+  kuralı tekil/çoğul için `supportedCount` kullanıyor, Türkçede gerekmiyor.
+  Hata saymak, çeviriyi İngilizcenin dilbilgisine mahkûm ederdi.

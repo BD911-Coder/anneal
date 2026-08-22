@@ -39,12 +39,12 @@ export const RESOLUTION_WEIGHTS: Record<Resolution, { gpu: number; cpu: number }
 // K73: ölçek sabit referans parçaya bağlı (RTX 4070 / Ryzen 5 9600X = 100),
 // kataloğun en hızlısına değil. Referans sistem her çözünürlükte tam 100 verir.
 // Sınırlar GEÇİCİ: ölçülmüş sistemlere karşı doğrulanmadan kesinleşmiş sayılmaz.
-export const BANDS: { max: number; label: string }[] = [
-  { max: 40, label: "1080p düşük ayar" },
-  { max: 65, label: "1080p orta/yüksek ayar" },
-  { max: 90, label: "1440p yüksek ayar" },
-  { max: 130, label: "1440p ultra / 4K yüksek" },
-  { max: Infinity, label: "4K ultra" },
+export const BANDS: { max: number; label: string; key: string }[] = [
+  { max: 40, label: "1080p düşük ayar", key: "1080pLow" },
+  { max: 65, label: "1080p orta/yüksek ayar", key: "1080pMedium" },
+  { max: 90, label: "1440p yüksek ayar", key: "1440pHigh" },
+  { max: 130, label: "1440p ultra / 4K yüksek", key: "1440pUltra" },
+  { max: Infinity, label: "4K ultra", key: "4kUltra" },
 ];
 
 /**
@@ -97,6 +97,21 @@ export function bandFor(systemIndex: number): string {
     if (systemIndex < band.max) return band.label;
   }
   return BANDS[BANDS.length - 1].label; // tam 100
+}
+
+/**
+ * Aynı bandın MESAJ ANAHTARI (K150).
+ *
+ * `bandFor` duruyor ve Türkçe etiketi döndürmeye devam ediyor: motor arayüz
+ * olmadan da okunur bir çıktı verebilmeli, script'ler ve testler onu
+ * kullanıyor. Arayüz ise anahtarı alıp kendi dilinde yazıyor. Eşikler ve
+ * hangi banda düşüldüğü — yani mantık — değişmedi.
+ */
+export function bandKeyFor(systemIndex: number): string {
+  for (const band of BANDS) {
+    if (systemIndex < band.max) return band.key;
+  }
+  return BANDS[BANDS.length - 1].key;
 }
 
 /**

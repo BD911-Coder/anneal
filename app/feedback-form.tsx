@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { MAX_FEEDBACK_LENGTH } from "@/lib/limits";
 
@@ -14,6 +15,7 @@ import { sendFeedbackAction } from "./actions";
  * iletişim bilgisini kendisi yazar.
  */
 export function FeedbackForm({ buildId }: { buildId?: string }) {
+  const t = useTranslations("common.feedback");
   const [message, setMessage] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function FeedbackForm({ buildId }: { buildId?: string }) {
   return (
     <form onSubmit={submit} className="flex flex-col gap-2 text-sm">
       <label className="text-xs font-semibold uppercase tracking-wider text-muted" htmlFor="feedback-message">
-        Geri bildirim
+        {t("label")}
       </label>
       <div className="flex gap-2">
         <input
@@ -51,7 +53,7 @@ export function FeedbackForm({ buildId }: { buildId?: string }) {
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 py-1.5"
           value={message}
           maxLength={MAX_FEEDBACK_LENGTH}
-          placeholder="Ne eksik, ne yanlış?"
+          placeholder={t("placeholder")}
           onChange={(event) => {
             setMessage(event.target.value);
             if (state === "sent") setState("idle");
@@ -62,15 +64,15 @@ export function FeedbackForm({ buildId }: { buildId?: string }) {
           className="rounded-md border border-border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={state === "sending" || message.trim().length === 0}
         >
-          {state === "sending" ? "Gönderiliyor…" : "Gönder"}
+          {state === "sending" ? t("sending") : t("send")}
         </button>
       </div>
 
       <p className="text-xs text-muted">
-        E-posta veya kişisel bilgi yazmayın — sadece mesajınız kaydedilir.
+        {t("privacy")}
       </p>
 
-      {state === "sent" && <p className="text-xs">Teşekkürler, kaydedildi.</p>}
+      {state === "sent" && <p className="text-xs">{t("sent")}</p>}
       {error && <p className="text-xs text-red-600">{error}</p>}
     </form>
   );
