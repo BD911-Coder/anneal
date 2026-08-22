@@ -69,5 +69,20 @@
     "playable": "playable",
     "smooth": "smooth",
     "highRefresh": "high refresh"
+  },
+  "estimate": {
+    "prefix": "≈",
+    "band": "±{band}%",
+    "measuredLabel": "measured",
+    "specModelLabel": "estimated from specs",
+    "familyMeanLabel": "family average",
+    "specModelTitle": "No measurement for this part. The value was predicted from its specifications; {band}% is the measured error of that prediction ({source}, {n} measurements).",
+    "familyMeanTitle": "No measurement for this part and no usable model. The value shown is the measured average of its architecture family — an average, not a model prediction ({n} measurements).",
+    "bandSourceOwn": "validated within {family}",
+    "bandSourceCross": "validated across families",
+    "wideBandNote": "This band is wide: the prediction for this part could not be validated within its own architecture family, so it carries the across-family error. Treat it as a rough placement, not a figure to choose between two parts with.",
+    "derivedEstimate": "Derived from an estimated index",
+    "derivedBandNote": "The band below carries the estimate's own band plus the measured error of the derivation.",
+    "unvalidatedFamily": "no measured part in this family yet"
   }
 }

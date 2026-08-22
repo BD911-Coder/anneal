@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   MIN_FAMILY_FOR_OWN_BAND,
   bandFromErrors,
+  compoundBand,
   confidenceFor,
+  deriveBand,
   estimate,
   fit,
   fitFamily,
@@ -116,5 +118,25 @@ describe("confidenceFor", () => {
     expect(confidenceFor(8)).toBe("high");
     expect(confidenceFor(22)).toBe("medium");
     expect(confidenceFor(40)).toBe("low");
+  });
+});
+
+describe("compoundBand / deriveBand", () => {
+  it("ağırlıklı toplar", () => {
+    expect(compoundBand([{ bandPct: 10, weight: 0.7 }, { bandPct: 20, weight: 0.3 }])).toBe(13);
+  });
+
+  it("ağırlık yoksa sıfır döner", () => {
+    expect(compoundBand([])).toBe(0);
+  });
+
+  it("karekök DEĞİL toplam kullanır — geniş taraftan yanılır", () => {
+    // Bağımsız olsalardı √(10²+10²)=14.1 olurdu; burada 10 (ağırlıklı ortalama).
+    const v = compoundBand([{ bandPct: 10, weight: 1 }, { bandPct: 10, weight: 1 }]);
+    expect(v).toBe(10);
+  });
+
+  it("türetme kendi hata payını EKLER", () => {
+    expect(deriveBand(30.7, 15.6)).toBe(46.3);
   });
 });

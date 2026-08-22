@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { getFpsGameGroups } from "@/data/benchmarks";
 import { getBuild } from "@/data/builds";
-import { getPerfIndexes } from "@/data/perf";
+import { getResolvedPerfIndexes } from "@/data/perf";
 import { getCurrentPrices } from "@/data/prices";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import { resolvePerfIndex } from "@/engine/gpu-selection";
@@ -80,11 +80,15 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
   // için "kayıt anındaki FPS" diye bir şey zaten mevcut değil.
   const [fpsGroups, perfIndexes] = await Promise.all([
     getFpsGameGroups(MODEL_VERSION),
-    getPerfIndexes(MODEL_VERSION),
+    getResolvedPerfIndexes(MODEL_VERSION),
   ]);
 
+  // Motor sayı bekliyor; çözümlenmiş kayıttan düz haritaya iniyoruz.
+  const indexValues: Record<string, number> = {};
+  for (const [id, r] of Object.entries(perfIndexes)) indexValues[id] = r.value;
+
   const gpuIndex = resolvePerfIndex(
-    perfIndexes,
+    indexValues,
     build.gpu_chip_part_id,
     build.gpu_variant_part_id,
   );
@@ -279,7 +283,12 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
             gpuSelected
             resolution={build.resolution}
             hasDataForResolution={fpsGroupsForRes.length > 0}
-            cpuIndex={cpuPartId ? perfIndexes[cpuPartId] : undefined}
+            cpuIndex={cpuPartId ? indexValues[cpuPartId] : undefined}
+            gpuIndexOrigin={
+              // Kaydedilen sistemin FPS listesi bugünkü indeksle hesaplanıyor
+              // (K102); o indeks tahmin ise liste de tahmin işareti taşır.
+              fpsPartId ? perfIndexes[fpsPartId] : undefined
+            }
             // Sayılar sunucudan geliyor ve zaten boyanmış: sayma titreme olurdu.
             animateNumbers={false}
           />

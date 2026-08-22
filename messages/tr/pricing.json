@@ -8,7 +8,7 @@
   "unconvertibleCount": "{count} parçanın para birimi çevrilemedi, toplama katılmadı.",
   "rateNoteManual": "Fiyatlar {source} kaynaktan elle girilen kurla çevrildi: 1 {source} = {rate} ({date}). Canlı kur değildir.",
   "rateNoteAuto": "1 {source} = {rate} ({date}).",
-  "coverageNote": "Yalnızca bir bölüm parçada ve tek kaynaktan. Kaynak {source} yayınlıyor; ekranda elle girilen kurla {target} gösteriliyor",
+  "coverageNote": "Yalnızca bir bölüm parçada ve tek kaynaktan, kaynağın yayınladığı para biriminde ({source}).",
   "upgrade": {
     "heading": "Yükseltme önerisi",
     "budgetLabel": "Bütçe farkı",

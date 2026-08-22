@@ -10,12 +10,6 @@
     "storage": "Depolama"
   },
   "notSelected": "— seçilmedi —",
-  "coverageGroup": {
-    "measured": "Ölçümlü — FPS tahmini verilebilir",
-    "unmeasured": "Ölçüm yok — sadece uyumluluk kontrolü"
-  },
-  "unmeasuredMarker": "ölçüm yok",
-  "unmeasuredNote": "Bu {category} için ölçüm yok: uyumluluk kontrolü çalışır, FPS ve sistem indeksi hesaplanamaz. Listede \"Ölçümlü\" başlığı altındaki parçalarda ikisi de görünür.",
   "variant": {
     "label": "Kart modeli",
     "optional": "opsiyonel",
@@ -32,10 +26,10 @@
   "coverage": {
     "gamesTitle": "Ölçümü olan oyun",
     "games": "<b>{count}</b> oyunda FPS listesi çıkıyor. Bir oyun, en az üç farklı ekran kartıyla ölçüldüğünde listeye giriyor.",
-    "gpusTitle": "Ölçümü olan ekran kartı",
-    "gpus": "<b>{chips}</b> çip ölçüldü; kartlar çiplerinin ölçümünü kullandığı için <b>{options}</b> seçenekte FPS görünüyor — <b>{total}</b> ekran kartının içinden.",
-    "cpusTitle": "Ölçümü olan işlemci",
-    "cpus": "<b>{measured}</b> işlemci ölçüldü, <b>{total}</b> işlemcinin içinden. Sistem indeksi ikisinde de ölçüm istiyor."
+    "gpusTitle": "Ekran kartı kapsamı",
+    "gpus": "<b>{total}</b> çipin <b>{measured}</b> tanesi ölçüldü; kalanlar spec'ten tahmin taşıyor. Her kart bir değer döndürüyor.",
+    "cpusTitle": "İşlemci kapsamı",
+    "cpus": "<b>{total}</b> işlemcinin <b>{measured}</b> tanesi ölçüldü; kalanlar spec'ten tahmin taşıyor."
   },
   "empty": {
     "heading": "Soldan parça seçin",

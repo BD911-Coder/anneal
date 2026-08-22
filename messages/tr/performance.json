@@ -69,5 +69,20 @@
     "playable": "oynanır",
     "smooth": "akıcı",
     "highRefresh": "yüksek tazeleme"
+  },
+  "estimate": {
+    "prefix": "≈",
+    "band": "±%{band}",
+    "measuredLabel": "ölçüldü",
+    "specModelLabel": "spec'ten tahmin",
+    "familyMeanLabel": "aile ortalaması",
+    "specModelTitle": "Bu parçanın ölçümü yok. Değer speclerinden tahmin edildi; %{band} o tahminin ölçülmüş hatası ({source}, {n} ölçüm).",
+    "familyMeanTitle": "Bu parçanın ölçümü yok ve kurulabilir bir model de yok. Gösterilen değer mimari ailesinin ölçülmüş ORTALAMASI — bir ortalama, model tahmini değil ({n} ölçüm).",
+    "bandSourceOwn": "{family} içinde doğrulandı",
+    "bandSourceCross": "aileler arası doğrulandı",
+    "wideBandNote": "Bu bant geniş: bu parçanın tahmini kendi mimari ailesi içinde doğrulanamadı, aileler arası hatayı taşıyor. Kaba bir yerleştirme sayın; iki parça arasında seçim yapmak için kullanmayın.",
+    "derivedEstimate": "Tahmini indeksten türetildi",
+    "derivedBandNote": "Aşağıdaki bant, tahminin kendi bandına türetmenin ölçülmüş hatasının eklenmiş hâli.",
+    "unvalidatedFamily": "bu ailede henüz ölçülmüş parça yok"
   }
 }

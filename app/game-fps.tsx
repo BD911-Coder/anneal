@@ -16,7 +16,9 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
+import type { ResolvedIndex } from "@/data/perf";
 import { countByOrigin } from "@/engine/fps-estimate";
+import { deriveBand } from "@/engine/index-prediction";
 import type { GameFpsEstimate } from "@/engine/fps-estimate";
 import type { Bottleneck, Resolution } from "@/engine/types";
 import { formatNumber } from "@/lib/format";
@@ -63,6 +65,15 @@ type GameFpsListProps = {
    * saymak titreme olurdu.
    */
   animateNumbers?: boolean;
+  /**
+   * Bu listenin dayandığı ekran kartı indeksi ölçüldü mü, tahmin mi?
+   *
+   * Tahminse **türetilen FPS de tahmindir** (K163) ve bandı iki parçadan
+   * oluşur: indeksin kendi bandı + FPS türetmesinin ölçülmüş hata payı.
+   * Ölçülmüş bir indeksten türeyen satır bu işareti taşımaz; onun hata payı
+   * zaten listenin altında yazılı.
+   */
+  gpuIndexOrigin?: ResolvedIndex;
 };
 
 /** İşlemci indeksinin referansı — K73'teki sabit referans parça = 100. */
@@ -77,6 +88,7 @@ export function GameFpsList({
   cpuLabel,
   bottleneck,
   animateNumbers = true,
+  gpuIndexOrigin,
 }: GameFpsListProps) {
   const t = useTranslations("performance");
   const locale = useLocale();
@@ -84,6 +96,14 @@ export function GameFpsList({
   if (!gpuSelected) return null;
 
   const sayi = (value: number) => formatNumber(value, locale);
+
+  // İndeks tahminse listenin TAMAMI tahmin: satırların hepsi o indeksten
+  // türüyor. Bant, indeksin bandına türetmenin kendi hata payı EKLENEREK
+  // bulunuyor — iki hata bağımsız değil, geniş taraftan yanılmak doğru yön.
+  const indeksTahmin = gpuIndexOrigin?.origin === "estimated" ? gpuIndexOrigin : null;
+  const bilesikBant = indeksTahmin
+    ? deriveBand(indeksTahmin.bandPct, FPS_MARGIN.p90Percent)
+    : null;
 
   if (!hasDataForResolution) {
     return (
@@ -149,6 +169,32 @@ export function GameFpsList({
         {cpuIndex === undefined && <p className="mt-2">{t("fps.noCpuMeasured")}</p>}
       </div>
 
+      {indeksTahmin && (
+        <div className="rounded-md border border-dashed border-border bg-surface p-3 text-xs leading-relaxed text-muted">
+          <p>
+            <span className="font-medium text-foreground">
+              {t("estimate.derivedEstimate")}
+            </span>{" "}
+            {t("estimate.derivedBandNote")}
+          </p>
+          <p className="mt-1">
+            {indeksTahmin.method === "spec-model"
+              ? t("estimate.specModelTitle", {
+                  band: sayi(indeksTahmin.bandPct),
+                  source:
+                    indeksTahmin.bandSourceFamily === null
+                      ? t("estimate.bandSourceCross")
+                      : t("estimate.bandSourceOwn", { family: indeksTahmin.bandSourceFamily }),
+                  n: indeksTahmin.nUsed,
+                })
+              : t("estimate.familyMeanTitle", { n: indeksTahmin.nUsed })}
+          </p>
+          {indeksTahmin.bandSourceFamily === null && (
+            <p className="mt-1">{t("estimate.wideBandNote")}</p>
+          )}
+        </div>
+      )}
+
       {singleSetting && (
         <p className="text-xs text-muted">
           {t.rich("fps.setting", {
@@ -178,6 +224,11 @@ export function GameFpsList({
               {/* Sayı ile birimi arasında belirgin hiyerarşi. */}
               <span className="flex shrink-0 items-baseline gap-1">
                 <output className="num text-xl font-semibold tracking-tight">
+                  {indeksTahmin && (
+                    <span aria-hidden="true" className="text-muted">
+                      {t("estimate.prefix")}
+                    </span>
+                  )}
                   <CountUp value={row.fps} animate={animateNumbers} />
                 </output>
                 <span className="text-[11px] text-muted">{t("fps.unit")}</span>
@@ -199,10 +250,14 @@ export function GameFpsList({
                     : t("fps.estimateTitle", { mean: sayi(FPS_MARGIN.meanPercent) })
                 }
               >
-                <span aria-hidden="true">{olculdu ? "■" : "□"}</span>{" "}
-                {olculdu
+                <span aria-hidden="true">{olculdu && !indeksTahmin ? "■" : "□"}</span>{" "}
+                {/* İndeks tahminse satır ölçülmüş olsa bile türetilmiş sayılır:
+                    ölçüm başka bir kartta yapıldı, bu karta indeksten taşındı. */}
+                {olculdu && !indeksTahmin
                   ? t("fps.measured")
-                  : t("fps.estimate", { margin: sayi(FPS_MARGIN.p90Percent) })}
+                  : t("fps.estimate", {
+                      margin: sayi(bilesikBant ?? FPS_MARGIN.p90Percent),
+                    })}
               </span>
 
               {!singleSetting && (
