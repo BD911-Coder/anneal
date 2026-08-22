@@ -208,6 +208,23 @@ site, tahmin veren siteden farklı bir şeydir.
 - [x] **`npm run sapma:tumu`** — iki ölçüm tek komutta; biri çalıştırılıp
       diğeri unutulmasın *(20 Ağustos)*
 - [ ] Kapsam dışı ve düşük güvenli hücreler işaretlensin
+- [x] **Tahmin regresyon koşumu** *(22 Ağustos, K175)* — `npm run
+      tahmin:degerlendir`, dondurulmuş değerlendirme kümesi + 34 satırlık
+      temel. Tahminleri kötüleştiren değişiklik artık sessizce geçmiyor.
+      `npm run kontrol:tumu` on iki adımı tek komutta çalıştırıyor.
+- [x] **Makullük denetimi** *(22 Ağustos, K174)* — `npm run makul:kontrol`,
+      iki değerin birbirini kısıtladığı **1136 kontrol**, 0 ihlal.
+- [x] **`/veri` iç panosu** *(22 Ağustos, K177)* — kapsam, kaynak dağılımı,
+      aile bantları, ihlaller ve dış kaynaklı alanlar tek ekranda.
+- [x] **Dürüstlük sayfası** *(22 Ağustos, K178)* — `/hakkinda`, iki dilde;
+      ölçülen/tahmin ayrımı, bandın anlamı, kaynaklar ve **bilmediklerimiz**.
+- [x] **Bayat Prisma istemcisi yapısal olarak engellendi** *(22 Ağustos,
+      K176)* — üç kez tetiklenen tuzak; artık `test`/`build`/`typecheck`
+      öncesinde şema-istemci karşılaştırması var.
+- [ ] **Vekil indeks** 🔒 **KAYNAK KAPALI (K173)** — OpenBenchmarking
+      `robots.txt` ClaudeBot'u yasaklıyor. Kapı **değerlendirilemedi**,
+      geçilemedi değil: fikir sınanmadı. Yeniden açılma koşulu K173'te.
+      `docs/log/2026-08-22-proxy-indeks-kapisi.md`
 
 **Son ölçüm** (birini-dışarıda-bırak, **184 nokta**, 20 Ağustos):
 ortalama mutlak hata **%6.6**, medyan %5.4, %90 dilim %13.7, en kötü %35.3.
