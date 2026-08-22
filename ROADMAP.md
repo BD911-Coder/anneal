@@ -114,6 +114,19 @@ sayısını artırıyor — altyapı işleri bu yüzden burada.
             işlemci var ama sayfa yalnızca toplu 720p rating yayınlıyor;
             oyun başına FPS yok. Rangliste'nin oyun başına sayfaları da
             içerik duvarının arkasına geçmiş. CPU 12'de kalıyor.
+      - [x] **Ölçüm hedefleri sıralandı** *(22 Ağustos, K169)* — 29 çip
+            (ampere 12, rdna_2 12, alchemist 5) ailesinde hiç ölçüm olmadığı
+            için ±%30,7 taşıyor. Aile başına bir çapa, spec uzayında
+            merkeziliğe göre: **`amd-rx-6700`**, **`nvidia-rtx-3070-ti`**,
+            **`intel-arc-a750`**. `npm run olcum:hedefler`.
+            **Tek ölçüm bandı düşürmez** — eşik dört (K156); eşiğe ulaşmanın
+            kazancı ölçüldü: blackwell ±%30,7 → ±%19,8.
+            `docs/log/2026-08-22-olcum-hedefleri.md`
+      - [x] **Spec kapsamı için dış kaynak açıldı** *(22 Ağustos, K168)* —
+            Wikipedia wikitext ayrıştırıcı, `npm run wikipedia:deneme`.
+            60/60 çip eşleşiyor; bant genişliği 22 çipte, transistör sayısı
+            28 çipte boş alanı doldurabilir. **Yazma yolu bir şema kararı
+            bekliyor (S48).** `docs/log/2026-08-22-wikipedia-ayristirici.md`
 - [x] **Kart varyantı 58 → 153** *(20 Ağustos)* — yapıldı. Aynı dört marka,
       yeni kaynak yok. **+95 kart**, kapsanan çip 20 → **47/60**,
       `length_mm` **%99 dolu**, C5 **125 → 245** kombinasyon.

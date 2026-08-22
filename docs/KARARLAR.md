@@ -3638,3 +3638,35 @@ Bu kontrol script'e kalıcı olarak eklendi (`TUTARLILIK KONTROLU` bölümü).
 
 **9. `--apply` YOK.** Sebebi teknik değil, şema: dış değerin nereye yazılacağı
 kararsız (`SORULAR.md` S48).
+
+### K169 — Ölçüm hedefi seçimi: aile içi merkezilik, popülerlik değil
+
+**2026-08-22.** `npm run olcum:hedefler`. 29 çip (ampere 12, rdna_2 12,
+alchemist 5) ailesinde hiç ölçüm olmadığı için ±%30.7 taşıyor.
+
+**Ölçüt spec uzayındaki merkezilik.** Model `indeks = k · x^b` ve log uzayında
+oturuyor; ölçülecek ilk çip ailenin çapasıdır. Uçtan seçilen çapa ailenin öbür
+ucunu ekstrapolasyonla tahmin ettirir, ortadan seçilen iki yöne de
+interpolasyon bırakır.
+
+**Ölçüt sınandı ve iki ölçüm TERS yönde çıktı.** Bütün küme üzerinden
+(15 nokta) merkeze uzak yarı DAHA İYİ tahmin edildi (%10.9'a karşı %19.7);
+aile içinde (9 nokta) merkeze uzak yarı DAHA KÖTÜ tahmin edildi (%10.1'e
+karşı %3.7).
+
+**Geçerli olan aile içi ölçüm.** Sebebi yapısal: bütün küme üzerinden yapılan
+sınamada hatanın kaynağı ağırlıklı olarak dışarıda bırakılan noktanın AİLESİ,
+merkezden uzaklığı değil — aile etkisi mesafe etkisini örtüyor. Çapanın işi
+bir ailenin kendi modelini tutmak olduğu için doğru soru aile içinde sorulan
+sorudur. İkisi de küçük örneklem; script çıktısında "eğilim, kanıt değil"
+yazıyor.
+
+**Tek ölçüm bandı DEĞİŞTİRMEZ ve bu liste öyle sunulmuyor.** Eşik dört
+(`MIN_FAMILY_FOR_OWN_BAND`, K156); dördüncü ölçüm düşürür. Eşiğe ulaşmanın
+kazancı ölçüldü: `blackwell` beş ölçümle ±%30.7 yerine ±%19.8, `rdna_4` dört
+ölçümle ±%8.5 yerine ±%6.4.
+
+**Kısa liste:** `amd-rx-6700` (rdna_2), `nvidia-rtx-3070-ti` (ampere),
+`intel-arc-a750` (alchemist). Sıra ailenin taşıdığı çip sayısına göre.
+
+Rapor: `docs/log/2026-08-22-olcum-hedefleri.md`.
