@@ -885,6 +885,7 @@ Sonradan değiştirilmez.
 | `/sistem/<build-id>` | Kaydedilmiş sistem (paylaşılabilir) |
 | `/git/<part-slug>` | Satıcıya yönlendirme |
 | `/hakkinda`, `/gizlilik` | Statik sayfalar |
+| `/veri` | **İç sayfa** — veri kalitesi panosu. Gezinmeden bağlantı verilmez, salt okunur (K177). |
 
 ---
 

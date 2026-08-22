@@ -3968,3 +3968,33 @@ sınandı: şemaya alan eklenince kontrol **durdu**, geri alınınca **geçti**.
 **Kapsamadığı yer yazıldı:** ayakta duran `next dev` sunucusu eski istemciyi
 bellekte tutuyor ve bu kontrol onu kapsamıyor — migration'dan sonra dev
 sunucusu yeniden başlatılmalı. Bu oturumda bir kez yaşandı.
+
+### K177 — `/veri`: iç veri kalitesi panosu
+
+**2026-08-22.** `app/veri/page.tsx`, `data/quality.ts`, `lib/plausibility.ts`.
+
+"Veri nerede ince" sorusunun cevabı beş ayrı script'e dağılmıştı
+(`spec:kapsam`, `kaynak:kontrol`, `makul:kontrol`, `indeks:tahmin-sapma`,
+`olcum:hedefler`). Pano hepsini tek ekranda topluyor: alan başına kapsam **ve
+kaynak dağılımı**, aile başına ölçülen/tahmin/bant, makullük ihlalleri, dış
+kaynaklı alanların listesi, spec'i tamamen dış kaynaktan gelen parça sayısı.
+
+**Salt okunur.** Form yok, mutasyon yok, `force-dynamic`.
+
+**Kurallar iki yerde yaşamıyor.** Makullük kuralları `lib/plausibility.ts`'e
+taşındı; hem script hem pano oradan okuyor. İki kopya iki farklı cevap
+demektir. Modül saf: veritabanı, ağ, arayüz tanımıyor — düz nesne girer, ihlal
+listesi çıkar. `/engine` altında değil çünkü orası uyumluluk ve performans
+için ayrılmış; bu veri denetimi.
+
+**Çeviri katmanında DEĞİL ve bu bilinçli.** K150 kullanıcıya görünen metinleri
+çeviriye taşıdı; burası tek okuyucusu olan bir iç araç. Sayfa halka açılırsa
+çeviriye girmesi gerekir — o zaman bu karar da değişir.
+
+**Panonun boş bıraktığı bir bölüm var ve boşluğu kendisi anlatıyor:** "açık
+çekişmeli değerler". Üretici ile dış kaynağın çeliştiği alanlar içe aktarma
+sırasında hesaplanıyor ve **hiçbir tabloya yazılmıyor** (K168). Pano bu yüzden
+o soruyu cevaplayamıyor ve cevaplayamadığını yazıyor. Çekişmeleri kalıcı
+kaydetmek bir şema kararı; verilmedi.
+
+Adres `SCHEMA.md` bölüm 9'a eklendi.
