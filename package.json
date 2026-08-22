@@ -39,6 +39,8 @@
     "makul:kontrol": "node scripts/check-plausibility.mts",
     "tahmin:degerlendir": "node scripts/eval-estimation.mts",
     "bant:analiz": "node scripts/analyze-band-vs-n.mts",
+    "vekil:aktar": "node scripts/import-proxy-scores.mts",
+    "vekil:analiz": "node scripts/analyze-proxy.mts",
     "kontrol:tumu": "node scripts/check-all.mjs",
     "prisma:kontrol": "node scripts/check-prisma-client.mjs",
     "typecheck": "tsc --noEmit",

@@ -4080,3 +4080,41 @@ miyiz". Farklı sorular.
 **Karar bekliyor:** tahminci maksimum olarak kalsın mı (adı düzeltilerek), ara
 değerli p90'a mı geçsin. Değişiklik yayınlanan HER bandı ve regresyon temelini
 etkiler; bu yüzden bu turda **dokunulmadı**.
+
+### K180 — Vekil skor toplama: şablon, içe aktarıcı ve çözümleme HAZIR, veri bekliyor
+
+**2026-08-22.** `data/proxy/openbenchmarking.csv` (18 satır, slug'lar dolu),
+`data/proxy/README.md`, `npm run vekil:aktar`, `npm run vekil:analiz`.
+
+K173 kaynağı kapattı: `robots.txt` **ClaudeBot'u** yasaklıyor. Yasak otomatik
+ajana bakıyor, tarayıcısında sayfayı okuyan insana değil — **toplama proje
+sahibinde, çözümleme burada.**
+
+**Profil önceliği yazıldı** (rasterizasyon > hesap, geniş kapsam > dar):
+Unigine Superposition → Heaven → Valley → GravityMark → vkmark → Xonotic.
+Kullanılmayacaklar açıkça listelendi: Blender, LuxCoreRender, OctaneBench,
+hashcat, her türlü OpenCL/CUDA hesap testi — bunlar hesap birimini ölçüyor,
+bizim indeksimiz oyun karesi.
+
+**Profil adları hafızadan yazıldı ve siteye bakılamadı** (K173). README bunu
+söylüyor: sitedeki tam adı bul ve onu yaz.
+
+**Marka konfaundu baştan kurulu, sonradan eklenmedi.** Çözümlemenin **birinci**
+bölümü şu: kalıntılar markaya göre mi kümeleniyor? OpenBenchmarking Linux ve
+AMD **Mesa**, NVIDIA **tescilli** sürücü kullanıyor. Markalar arası ortalama
+fark, marka içi yayılımdan büyükse rapor şunu basıyor: *vekil, marka içinde
+işe yarasa bile markalar arası çapalama için kullanılamaz.*
+
+**Boru hattı sentetik veriyle uçtan uca sınandı** (dosya depoda değil,
+geçici): 9 satır, R² 0,958, marka kümelenmesi doğru tetiklendi, aile içi
+yayılım hesaplandı, kapı uygulandı. **Bu sayılar sınama verisidir, ölçüm
+değil.**
+
+**Tipli tablo AÇILMADI.** Vekil skorlar yalnızca `raw_imports`'a yazılıyor
+(`openbenchmarking:<profil>` damgasıyla — `manufacturer` ve `wikipedia`'dan
+ayrı). Gerekçe: vekilin işe yarayıp yaramadığı ölçülmeden tablo açmak,
+K56'nın "hangi kural bunu kullanıyor" ölçütünü baştan çiğnemek olurdu. Vekil
+kapıyı geçerse tipli tablo ve `Source` enum değeri o zaman gelir.
+
+**Kapı ölçütü:** aile içi kalıntı yayılımı ≥ %30,7 → vekil bir şey katmıyor
+(çünkü %30,7 zaten aileler arası modelin bandı).
