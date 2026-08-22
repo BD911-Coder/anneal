@@ -20,7 +20,13 @@ import type {
   UpgradeCategory,
   UpgradePart,
 } from "@/engine/types";
-import { DISPLAY_CURRENCY, SOURCE_CURRENCY, USD_TRY, toDisplayMinor } from "@/lib/currency";
+import {
+  DISPLAY_CURRENCY,
+  SOURCE_CURRENCY,
+  USD_TRY,
+  isConverted,
+  toDisplayMinor,
+} from "@/lib/currency";
 import {
   formatDisplayPrice,
   formatIsoDate,
@@ -105,13 +111,17 @@ export function Builder({
    * Kur notu: cümle çeviri dosyasında, sayı `lib/currency.ts`te, biçim
    * `Intl`de. Üçü de kendi yerinde duruyor.
    */
-  const kurNotu = tPrice(USD_TRY.manual ? "rateNoteManual" : "rateNoteAuto", {
-    source: SOURCE_CURRENCY,
+  // Çevrim yapılmadıysa kur cümlesi de yok (K157): varsayılan gösterim
+  // kaynağın kendi para birimi ve o hâlde anlatılacak bir işlem yok.
+  const kurNotu = !isConverted(SOURCE_CURRENCY, DISPLAY_CURRENCY)
+    ? tPrice("rateNoteNone", { source: SOURCE_CURRENCY })
+    : tPrice(USD_TRY.manual ? "rateNoteManual" : "rateNoteAuto", {
+        source: SOURCE_CURRENCY,
     // Kur da bir para tutarı: sembolü ve ondalık ayracı dile göre çıksın diye
     // `Intl`in para biçimlendiricisinden geçiyor.
-    rate: formatPriceMinor(USD_TRY.rateMinor, DISPLAY_CURRENCY, locale),
-    date: formatIsoDate(USD_TRY.quotedAt, locale),
-  });
+        rate: formatPriceMinor(USD_TRY.rateMinor, "TRY", locale),
+        date: formatIsoDate(USD_TRY.quotedAt, locale),
+      });
 
   // Başlangıç değeri tembel: `pickDefaultBuild` sunucuda bir kez çalıştı,
   // burada yalnızca kategori adlarına çevriliyor. Sonraki çizimlerde

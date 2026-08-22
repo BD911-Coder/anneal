@@ -42,5 +42,6 @@
     "todayFpsHeading": "Today's per-game FPS",
     "todayFpsNote": "This list is <b>not frozen</b>: it was calculated with today's measurement data and engine version {modelVersion}. The system index above froze on {date}. Because measurement data only ever grows by addition, these numbers can change over time."
   },
-  "coverageTitle": "Price"
+  "coverageTitle": "Price",
+  "rateNoteNone": "Prices are shown in the currency the source publishes ({source}), without conversion."
 }

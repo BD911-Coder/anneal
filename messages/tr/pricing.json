@@ -42,5 +42,6 @@
     "todayFpsNote": "Bu liste <b>dondurulmamıştır</b>: bugünkü ölçüm verisiyle ve motor sürümü {modelVersion} ile hesaplandı. Yukarıdaki sistem indeksi ise {date} tarihinde dondu. Ölçüm verisi yalnızca üstüne eklenerek büyüdüğü için bu sayılar zamanla değişebilir.",
     "todayFpsHeading": "Bugünkü oyun bazlı FPS"
   },
-  "coverageTitle": "Fiyat"
+  "coverageTitle": "Fiyat",
+  "rateNoteNone": "Fiyatlar kaynağın yayınladığı para biriminde ({source}), çevrilmeden gösteriliyor."
 }

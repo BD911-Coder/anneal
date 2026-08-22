@@ -9,7 +9,7 @@ import { getCurrentPrices } from "@/data/prices";
 import { estimateGameFps } from "@/engine/fps-estimate";
 import { resolvePerfIndex } from "@/engine/gpu-selection";
 import { MODEL_VERSION, bandKeyFor } from "@/engine/performance";
-import { DISPLAY_CURRENCY, SOURCE_CURRENCY, USD_TRY } from "@/lib/currency";
+import { DISPLAY_CURRENCY, SOURCE_CURRENCY, USD_TRY, isConverted } from "@/lib/currency";
 import {
   formatDisplayPrice,
   formatIsoDate,
@@ -43,13 +43,17 @@ export default async function SavedBuildPage({ params }: { params: Promise<{ id:
     formatDisplayPrice(minor, build.currency ?? SOURCE_CURRENCY, locale) ??
     tPrice("unconvertible", { currency: build.currency ?? SOURCE_CURRENCY });
 
-  const kurNotu = tPrice(USD_TRY.manual ? "rateNoteManual" : "rateNoteAuto", {
-    source: SOURCE_CURRENCY,
+  // Çevrim yapılmadıysa kur cümlesi de yok (K157): varsayılan gösterim
+  // kaynağın kendi para birimi ve o hâlde anlatılacak bir işlem yok.
+  const kurNotu = !isConverted(SOURCE_CURRENCY, DISPLAY_CURRENCY)
+    ? tPrice("rateNoteNone", { source: SOURCE_CURRENCY })
+    : tPrice(USD_TRY.manual ? "rateNoteManual" : "rateNoteAuto", {
+        source: SOURCE_CURRENCY,
     // Kur da bir para tutarı: sembolü ve ondalık ayracı dile göre çıksın diye
     // `Intl`in para biçimlendiricisinden geçiyor.
-    rate: formatPriceMinor(USD_TRY.rateMinor, DISPLAY_CURRENCY, locale),
-    date: formatIsoDate(USD_TRY.quotedAt, locale),
-  });
+        rate: formatPriceMinor(USD_TRY.rateMinor, "TRY", locale),
+        date: formatIsoDate(USD_TRY.quotedAt, locale),
+      });
 
   // Güncel fiyat ayrıca gösterilir ama dondurulmuş değerin üzerine YAZILMAZ
   // (SCHEMA.md bölüm 5). İki sayı yan yana durur.
