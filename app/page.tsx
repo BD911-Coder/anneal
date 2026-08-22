@@ -2,6 +2,7 @@ import { getFpsGameGroups } from "@/data/benchmarks";
 import { getPerfIndexes } from "@/data/perf";
 import { getBuilderCatalog } from "@/data/parts";
 import { getCurrentPrices } from "@/data/prices";
+import { pickDefaultBuild } from "@/engine/default-build";
 import { MODEL_VERSION } from "@/engine/performance";
 
 import { Builder } from "./builder";
@@ -27,16 +28,38 @@ export default async function HomePage() {
 
   // Kapsam sayıları veriden okunuyor, metne gömülmüyor: ölçüm eklendikçe
   // başlıktaki sayı kendiliğinden güncellenir. Elle yazılsaydı ilk veri
-  // turunda eskirdi — bu metnin bu tura kadar eskimesinin sebebi buydu.
+  // turunda eskirdi.
   //
   // DİKKAT: `fpsGroups.length` GRUP sayısıdır, oyun sayısı değil. Aynı oyun
   // birden fazla çözünürlükte ölçülmüşse birden fazla grup üretir.
+  //
+  // `games` tablosunda 32 satır var ama burada 23 çıkıyor ve bu doğru: bir
+  // oyun ancak KULLANILABİLİR bir ölçüm grubu bıraktığında sayılıyor. Grup
+  // en az üç farklı ekran kartı istiyor ve aynı kartın çelişen değerleri
+  // grubu düşürüyor (K125). Aradaki 9 oyun, tek bir karta sabitlenmiş CPU
+  // ölçümlerinden geliyor ve FPS listesine giremiyor. Başlıktaki etiket bu
+  // yüzden "ölçümü olan oyun" diyor, "oyun" değil (K149).
   const fpsGames = new Set(fpsGroups.map((group) => group.game_id)).size;
-  // Sayılan küme "ölçümü olan çip" değil, **FPS gösterilebilen seçenek**:
-  // türetme indeks gerektiriyor ve kartlar indeksi çiplerinden miras alıyor.
-  const fpsCoveredGpus =
-    catalog.gpu.filter((chip) => perfIndexes[chip.id] !== undefined).length +
-    catalog.gpu_variant.filter((card) => perfIndexes[card.chip_part_id] !== undefined).length;
+
+  // Ölçüm ÇİP seviyesinde (K86). Kartlar indeksi çiplerinden miras alıyor,
+  // bu yüzden ölçümlü bir çipin kartı da FPS gösterebiliyor.
+  //
+  // İki sayı ayrı ayrı duruyor çünkü ayrı şeyler: `olcumluCip` gerçekten
+  // ölçülmüş çip sayısı, `fpsGosterilebilen` ise kullanıcının seçebileceği
+  // ve sonuç alabileceği SEÇENEK sayısı. Etiket hangisini saydığını
+  // söylemezse, 94 sayısı katalogdaki 213 ekran kartıyla karıştırılıyor.
+  const olcumluCip = catalog.gpu.filter((chip) => perfIndexes[chip.id] !== undefined).length;
+  const olcumluKart = catalog.gpu_variant.filter(
+    (card) => perfIndexes[card.chip_part_id] !== undefined,
+  ).length;
+  const fpsGosterilebilen = olcumluCip + olcumluKart;
+  const toplamEkranKarti = catalog.gpu.length + catalog.gpu_variant.length;
+  const olcumluCpu = catalog.cpu.filter((cpu) => perfIndexes[cpu.id] !== undefined).length;
+
+  // Sayfa dolu açılsın: ölçümü olan bir ekran kartı + işlemci ve bunlarla
+  // uyumlu bir sistem (K144). Sunucuda hesaplanıyor, istemciye yalnızca
+  // seçilen id'ler gidiyor.
+  const defaultSelection = pickDefaultBuild(catalog, perfIndexes);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
@@ -52,26 +75,38 @@ export default async function HomePage() {
           çalışıyor, sistem indeksi kısmen, fiyat çok az parçada. Tek cümleye
           sıkıştırıldığında en kötümser olan hepsini temsil ediyordu.
         */}
-        <dl className="mt-5 grid gap-x-6 gap-y-3 text-xs sm:grid-cols-3">
+        <dl className="mt-5 grid gap-x-6 gap-y-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="font-semibold">Oyun bazlı FPS</dt>
+            <dt className="font-semibold">Ölçümü olan oyun</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              <span className="num font-medium text-foreground">{fpsGames}</span> oyun,{" "}
-              <span className="num font-medium text-foreground">{fpsCoveredGpus}</span> ekran
-              kartı
+              <span className="num font-medium text-foreground">{fpsGames}</span> oyunda FPS
+              listesi çıkıyor. Bir oyun, en az üç farklı ekran kartıyla ölçüldüğünde listeye
+              giriyor.
             </dd>
           </div>
           <div>
-            <dt className="font-semibold">Sistem indeksi</dt>
+            <dt className="font-semibold">Ölçümü olan ekran kartı</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              İşlemci ve ekran kartının ikisinde de ölçüm gerekiyor; kataloğun bir bölümünde
-              henüz yok
+              <span className="num font-medium text-foreground">{olcumluCip}</span> çip
+              ölçüldü; kartlar çiplerinin ölçümünü kullandığı için{" "}
+              <span className="num font-medium text-foreground">{fpsGosterilebilen}</span>{" "}
+              seçenekte FPS görünüyor —{" "}
+              <span className="num">{toplamEkranKarti}</span> ekran kartının içinden.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-semibold">Ölçümü olan işlemci</dt>
+            <dd className="mt-0.5 leading-relaxed text-muted">
+              <span className="num font-medium text-foreground">{olcumluCpu}</span> işlemci
+              ölçüldü, <span className="num">{catalog.cpu.length}</span> işlemcinin içinden.
+              Sistem indeksi ikisinde de ölçüm istiyor.
             </dd>
           </div>
           <div>
             <dt className="font-semibold">Fiyat</dt>
             <dd className="mt-0.5 leading-relaxed text-muted">
-              Yalnızca bir bölüm parçada, tek kaynaktan ve tek para biriminde
+              Yalnızca bir bölüm parçada ve tek kaynaktan. Kaynak USD yayınlıyor; ekranda
+              elle girilen kurla ₺ gösteriliyor
             </dd>
           </div>
         </dl>
@@ -87,6 +122,7 @@ export default async function HomePage() {
         prices={prices}
         perfIndexes={perfIndexes}
         fpsGroups={fpsGroups}
+        defaultSelection={defaultSelection}
       />
 
       <section className="mt-12 border-t border-border pt-6">

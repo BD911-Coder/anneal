@@ -12,11 +12,34 @@ proje sahibinin kullandığı okuma yolu `docs/` klasör sayfasına erişemiyor.
 `docs/log/` altındaki raporlar o günün fotoğrafıdır ve değişmez;
 bu dosya güncel durumu gösterir.
 
-Son güncelleme: 2026-08-20
+Son güncelleme: 2026-08-22
 
 ---
 
 ## Açık sorular
+
+### S47 — Dolar kuru onaylanmadı (2026-08-22)
+
+`lib/currency.ts` içindeki **1 USD = 41,00 ₺** benim koyduğum bir başlangıç
+değeri. Ölçülmüş ya da bir kaynaktan alınmış bir sayı **değil**.
+
+Sitedeki her fiyat bu sayıya bağlı: parça listeleri, toplam, yükseltme
+önerisinin bütçe karşılaştırması ve kaydedilmiş sistem sayfası.
+
+Arayüz *"elle girilen kurla çevrildi … Canlı kur değildir"* dediği için
+kullanıcıya yanlış bir iddia sunulmuyor — ama sayı yine de yanlış.
+
+**Yapılacak:** güncel kura bak, `lib/currency.ts` içindeki iki satırı
+güncelle. Başka hiçbir yerde kur yok.
+
+```ts
+rateMinor: 4100,          // 1 USD kaç kuruş
+quotedAt: "2026-08-22",   // hangi güne ait
+```
+
+Kur otomatik alınsın mı ayrı bir soru: yeni bir dış servis demek ve beta
+kapsamı dışında. Bugünkü hâl bilinçli olarak elle.
+
 
 ### S46 — Görsel kimlik gözle onaylanmadı (2026-08-20)
 

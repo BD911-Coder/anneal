@@ -6,6 +6,8 @@
 
 import type { Resolution } from "@/engine/types";
 
+import { DISPLAY_CURRENCY, toDisplayMinor } from "./currency.ts";
+
 /**
  * Kuruş -> okunur fiyat. `149999` -> `1.499,99 ₺`
  *
@@ -48,3 +50,36 @@ export const RESOLUTION_LABEL: Record<Resolution, string> = {
   "1440p": "1440p",
   "2160p": "4K",
 };
+
+/**
+ * Kaynağın para birimindeki kuruşu, ekranda gösterilecek para biriminde
+ * biçimlendirir.
+ *
+ * Fiyat gösteren her yer bunu çağırır; `formatPriceMinor` doğrudan
+ * çağrılmaz. Sebebi: çevrimi atlayan tek bir çağrı, sayfanın bir köşesinde
+ * USD'yi ₺ sembolüyle gösterirdi.
+ *
+ * Çevrilemeyen para birimi -> `null`. Çağıran taraf fiyatı hiç göstermez;
+ * 1:1 varsayıp yanlış sayı basmaktansa boş bırakmak doğru.
+ */
+export function formatDisplayPrice(minor: number, currency: string): string | null {
+  const converted = toDisplayMinor(minor, currency);
+  if (converted === null) return null;
+  return formatPriceMinor(converted, DISPLAY_CURRENCY);
+}
+
+/**
+ * Üretici stok kodunu etiketten çıkarır.
+ *
+ * `Samsung 990 EVO Plus 1TB (MZ-V9S1T0B/AM)` -> `Samsung 990 EVO Plus 1TB`
+ *
+ * Yalnızca **sondaki** parantez ve yalnızca içi stok koduna benziyorsa:
+ * büyük harf/rakamla başlayan, küçük harf ve boşluk içermeyen dizi. Bu dar
+ * kural bilinçli — `(2 x 16GB)` gibi anlamı olan parantezleri silmemeli.
+ *
+ * Veritabanındaki değer değişmiyor; bu yalnızca ekran etiketi. Tam hâli
+ * seçilen parçanın ayrıntı satırında ve `title` ipucunda duruyor.
+ */
+export function stripSku(label: string): string {
+  return label.replace(/\s*\(([A-Z0-9][A-Z0-9\-/.]*)\)\s*$/, "").trim();
+}
