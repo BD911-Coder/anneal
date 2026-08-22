@@ -1,0 +1,312 @@
+{
+  "olusturuldu": "2026-08-22",
+  "kumeOlusturuldu": "2026-08-22",
+  "satirlar": [
+    {
+      "tur": "GPU",
+      "yol": "motor",
+      "aile": "TUMU",
+      "n": 15,
+      "ortalama": 12.8,
+      "p90": 27.3,
+      "enKotu": 69.1
+    },
+    {
+      "tur": "GPU",
+      "yol": "motor",
+      "aile": "rdna_3",
+      "n": 2,
+      "ortalama": 26.8,
+      "p90": 27.3,
+      "enKotu": 27.3
+    },
+    {
+      "tur": "GPU",
+      "yol": "motor",
+      "aile": "rdna_4",
+      "n": 4,
+      "ortalama": 3.3,
+      "p90": 8.5,
+      "enKotu": 8.5
+    },
+    {
+      "tur": "GPU",
+      "yol": "motor",
+      "aile": "xe2",
+      "n": 1,
+      "ortalama": 69.1,
+      "p90": 69.1,
+      "enKotu": 69.1
+    },
+    {
+      "tur": "GPU",
+      "yol": "motor",
+      "aile": "ada_lovelace",
+      "n": 3,
+      "ortalama": 4.1,
+      "p90": 8.4,
+      "enKotu": 8.4
+    },
+    {
+      "tur": "GPU",
+      "yol": "motor",
+      "aile": "blackwell",
+      "n": 5,
+      "ortalama": 8.8,
+      "p90": 19.8,
+      "enKotu": 19.8
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-modeli",
+      "aile": "TUMU",
+      "n": 5,
+      "ortalama": 8.8,
+      "p90": 19.8,
+      "enKotu": 19.8
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-modeli",
+      "aile": "blackwell",
+      "n": 5,
+      "ortalama": 8.8,
+      "p90": 19.8,
+      "enKotu": 19.8
+    },
+    {
+      "tur": "GPU",
+      "yol": "aileler-arasi",
+      "aile": "TUMU",
+      "n": 15,
+      "ortalama": 17.2,
+      "p90": 30.7,
+      "enKotu": 69
+    },
+    {
+      "tur": "GPU",
+      "yol": "aileler-arasi",
+      "aile": "rdna_3",
+      "n": 2,
+      "ortalama": 26.8,
+      "p90": 27.3,
+      "enKotu": 27.3
+    },
+    {
+      "tur": "GPU",
+      "yol": "aileler-arasi",
+      "aile": "rdna_4",
+      "n": 4,
+      "ortalama": 3.3,
+      "p90": 8.5,
+      "enKotu": 8.5
+    },
+    {
+      "tur": "GPU",
+      "yol": "aileler-arasi",
+      "aile": "xe2",
+      "n": 1,
+      "ortalama": 69,
+      "p90": 69,
+      "enKotu": 69
+    },
+    {
+      "tur": "GPU",
+      "yol": "aileler-arasi",
+      "aile": "ada_lovelace",
+      "n": 3,
+      "ortalama": 4.1,
+      "p90": 8.4,
+      "enKotu": 8.4
+    },
+    {
+      "tur": "GPU",
+      "yol": "aileler-arasi",
+      "aile": "blackwell",
+      "n": 5,
+      "ortalama": 22.1,
+      "p90": 30.7,
+      "enKotu": 30.7
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-ortalamasi",
+      "aile": "TUMU",
+      "n": 14,
+      "ortalama": 44,
+      "p90": 93.8,
+      "enKotu": 137
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-ortalamasi",
+      "aile": "rdna_3",
+      "n": 2,
+      "ortalama": 58.4,
+      "p90": 74.3,
+      "enKotu": 74.3
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-ortalamasi",
+      "aile": "rdna_4",
+      "n": 4,
+      "ortalama": 23.3,
+      "p90": 43,
+      "enKotu": 43
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-ortalamasi",
+      "aile": "ada_lovelace",
+      "n": 3,
+      "ortalama": 74.3,
+      "p90": 137,
+      "enKotu": 137
+    },
+    {
+      "tur": "GPU",
+      "yol": "aile-ortalamasi",
+      "aile": "blackwell",
+      "n": 5,
+      "ortalama": 36.5,
+      "p90": 93.8,
+      "enKotu": 93.8
+    },
+    {
+      "tur": "CPU",
+      "yol": "motor",
+      "aile": "TUMU",
+      "n": 12,
+      "ortalama": 4.2,
+      "p90": 8.4,
+      "enKotu": 12.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "motor",
+      "aile": "zen_4",
+      "n": 2,
+      "ortalama": 4.1,
+      "p90": 6.8,
+      "enKotu": 6.8
+    },
+    {
+      "tur": "CPU",
+      "yol": "motor",
+      "aile": "zen_5",
+      "n": 4,
+      "ortalama": 6.6,
+      "p90": 12.5,
+      "enKotu": 12.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "motor",
+      "aile": "raptor_lake_refresh",
+      "n": 3,
+      "ortalama": 3.5,
+      "p90": 5.5,
+      "enKotu": 5.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "motor",
+      "aile": "arrow_lake",
+      "n": 3,
+      "ortalama": 1.7,
+      "p90": 2.5,
+      "enKotu": 2.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "aileler-arasi",
+      "aile": "TUMU",
+      "n": 12,
+      "ortalama": 4.2,
+      "p90": 8.4,
+      "enKotu": 12.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "aileler-arasi",
+      "aile": "zen_4",
+      "n": 2,
+      "ortalama": 4.1,
+      "p90": 6.8,
+      "enKotu": 6.8
+    },
+    {
+      "tur": "CPU",
+      "yol": "aileler-arasi",
+      "aile": "zen_5",
+      "n": 4,
+      "ortalama": 6.6,
+      "p90": 12.5,
+      "enKotu": 12.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "aileler-arasi",
+      "aile": "raptor_lake_refresh",
+      "n": 3,
+      "ortalama": 3.5,
+      "p90": 5.5,
+      "enKotu": 5.5
+    },
+    {
+      "tur": "CPU",
+      "yol": "aileler-arasi",
+      "aile": "arrow_lake",
+      "n": 3,
+      "ortalama": 1.7,
+      "p90": 2.6,
+      "enKotu": 2.6
+    },
+    {
+      "tur": "CPU",
+      "yol": "aile-ortalamasi",
+      "aile": "TUMU",
+      "n": 12,
+      "ortalama": 10.9,
+      "p90": 20.4,
+      "enKotu": 30.1
+    },
+    {
+      "tur": "CPU",
+      "yol": "aile-ortalamasi",
+      "aile": "zen_4",
+      "n": 2,
+      "ortalama": 7.8,
+      "p90": 8.1,
+      "enKotu": 8.1
+    },
+    {
+      "tur": "CPU",
+      "yol": "aile-ortalamasi",
+      "aile": "zen_5",
+      "n": 4,
+      "ortalama": 21.8,
+      "p90": 30.1,
+      "enKotu": 30.1
+    },
+    {
+      "tur": "CPU",
+      "yol": "aile-ortalamasi",
+      "aile": "raptor_lake_refresh",
+      "n": 3,
+      "ortalama": 5.3,
+      "p90": 8.3,
+      "enKotu": 8.3
+    },
+    {
+      "tur": "CPU",
+      "yol": "aile-ortalamasi",
+      "aile": "arrow_lake",
+      "n": 3,
+      "ortalama": 3.9,
+      "p90": 5.7,
+      "enKotu": 5.7
+    }
+  ]
+}
