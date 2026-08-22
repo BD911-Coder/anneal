@@ -3770,3 +3770,32 @@ bir karar, ölçüm değil; geniş tutuldu. Sonuç: **60 çipin tamamı tutarlı
 kullanıyor). Onu yakalayan şey iç tutarlılık değil, **dış kaynakla
 karşılaştırma** oldu. İki kontrol birbirinin yerine geçmiyor:
 iç tutarlılık imkânsızı yakalar, dış karşılaştırma yanlışı.
+
+### K172 — Dört ölçüm eşiğinin modeli (ekstrapolasyon, ölçüm değil)
+
+**2026-08-22.** `npm run olcum:hedefler` 6. bölüm. Donanım alınmadan önce
+"ne kazanacağım" sorusuna sayı verildi ve sayının nereden geldiği yazıldı.
+
+**Yöntem:** eşiği geçmiş ailelerin dörtlü alt kümeleri ayrı ayrı ölçüldü.
+Blackwell'in 5 noktasından 5 farklı dörtlü çıkıyor; her biri kendi bandını
+veriyor. Toplam 7 dörtlü küme: **ortalama ±%16,0, aralık ±%6,0 … ±%25,9**.
+
+**Aile başına ayrı tahmin verilmedi.** Yayılım-bant ilişkisi denendi ve
+`zen_5` onu bozdu (dar yayılım, geniş bant). Üç gözlemden katsayı çıkmaz.
+
+**Aileler arası bant için geriye dönük simülasyon:** ölçülü aile sayısı 3 → 4
+→ 5 olduğunda bant %52,8 → %36,8 → **%30,7**. Uzatma modeli `bant = a + b/k`
+(k = ölçülü aile sayısı); biçim bir seçim, gerekçesi azalan getiri. Model üç
+gözlemi 1,4 puandan iyi tutturuyor ve **k=8 için ±%17,1** veriyor.
+
+**Sınırı da karara yazılıyor:** k=8 en büyük gözlemin üç aile ötesinde ve
+simülasyon "daha çok aile" ile "daha çok nokta"yı ayıramıyor. Bu sayı bir
+tahmin bandı değil, bir büyüklük mertebesi.
+
+**Yan bulgu — hangi dördü seçtiğin kaç tane seçtiğin kadar önemli.**
+Blackwell'in dörtlüleri ±%6,0 ile ±%25,9 arasında değişiyor. K169'un
+merkezilik ölçütü tam bu yüzden var.
+
+**Karşı bulgu — sayı büyüdükçe bandın daralacağı GARANTİ DEĞİL.**
+Blackwell'in beşli bandı (±%19,8), kendi dörtlü ortalamasından (±%16,9) daha
+geniş. Eşiği beşe çıkarmanın ne getireceği bu yüzden ölçülmeden söylenemez.
