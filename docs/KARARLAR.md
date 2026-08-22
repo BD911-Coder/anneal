@@ -3264,3 +3264,82 @@ ICU parametreleri ve zengin metin etiketleri de karşılaştırılıyor ama
   değişkene ihtiyaç duymayabilir. Bugün gerçek bir örneği var: İngilizce C6
   kuralı tekil/çoğul için `supportedCount` kullanıyor, Türkçede gerekmiyor.
   Hata saymak, çeviriyi İngilizcenin dilbilgisine mahkûm ederdi.
+
+
+### K154 — İndeks tahmini için üç alan eklendi; istenen yedi alandan dördü ELDE YOK
+
+**2026-08-22.** Spec'ten indeks tahmini için şemaya eklenen alanlar:
+
+| Alan | Tablo | Kaynak |
+|---|---|---|
+| `l3_cache_mb` | `cpu_specs` | AMD "L3 Cache", Intel ARK "Cache" |
+| `bus_width_bits` | `gpu_specs` | NVIDIA "Memory Interface Width", AMD "Memory Interface", Intel ARK "Graphics Memory Interface" |
+| `architecture_family` | `gpu_specs` | NVIDIA "NVIDIA Architecture", AMD/Intel serinin yayınlanmış mimari adı |
+
+**Kapsam: 60/60 ekran kartı, 42/42 işlemci.** Hepsi `source='manufacturer'`.
+
+**İstenen ama alınamayan alanlar — üretici yayınlamıyor:**
+
+| Alan | Durum |
+|---|---|
+| `memory_bandwidth_gbs` (geri doldurma) | NVIDIA **hiçbir** nesilde yayınlamıyor. 5080, 4090 ve 3080 sayfaları ham HTML'den denetlendi: yalnızca "Memory Interface Width" var. 30 kartın 27'si boş kalırdı. |
+| `transistor_count` | AMD veriyor (53.9 B), NVIDIA vermiyor. |
+| `process_node_nm` | NVIDIA ve AMD GPU sayfalarında yok; yalnızca Intel ARK'ta. |
+
+Üçü de yarısı boş kalırdı. Proje sahibinin kendi kuralı: *"yarısı boş bir
+öngörücü, hiç olmayandan kötüdür."* Bu yüzden eklenmediler.
+
+**`bus_width_bits`, `memory_bandwidth_gbs`'in yerine geçiyor.** İkisi aynı
+büyüklüğün iki yüzü: `bant genişliği = veri yolu × bellek hızı ÷ 8`. NVIDIA bu
+çarpımın yalnızca ilk terimini yayınlıyor — ama o terim üç üreticide de tam
+dolu. Yapısal olan ve tamamı elde olan tutuldu.
+
+**Çapraz kontrol yapıldı.** Bant genişliği bilinen 21 AMD satırında
+`veri yolu × hız ÷ 8` hesabı CSV'deki bant genişliğiyle **birebir tuttu**.
+İki satır istisnadır: AMD, RX 7900 XTX ve XT sayfalarında "Memory Interface"
+alanını yayınlamıyor; o iki değer aynı sayfadaki bant genişliği ve bellek
+hızından çıkarıldı (960×8/20 = 384, 800×8/20 = 320). Bu ikisinde çapraz
+kontrol döngüseldir ve kanıt değeri yoktur — kayda geçiyor.
+
+Intel işlemcilerde L3 **iki bağımsız kaynaktan** doğrulandı: ARK spec
+değeri ile Intel'in kendi adresindeki `-36m-cache-` parçası. 22 işlemcinin
+22'sinde ikisi aynı.
+
+### K155 — L3 önbellek, işlemci tahminini tabandan iyi hale getirdi
+
+Ölçüm (birini-dışarıda-bırak, `npm run indeks:tahmin-sapma`):
+
+```
+CPU aileler arası          ort    p90  en kötü   taban
+  boost × √cores  (eski)  13.6%  25.3%  32.8%    11.0%   <- taban DAHA IYI
+  boost × √l3     (yeni)   4.1%   8.4%  13.2%    11.0%   <- 2.7 kat daha iyi
+```
+
+Ekleme öncesi model "hep ortalamayı söyle" tabanını yenemiyordu; sonrasında
+belirgin şekilde yeniyor. **Eksik olan şey model değil veriydi.**
+
+Aynı ölçüm ekran kartında da eksen değiştirdi: aile içinde
+`bus_width × boost_clock`, `shader_units × boost_clock`'tan iyi çıktı
+(RDNA 4: %7.8 → %3.3; Blackwell: %11.9 → %8.8). Aileler arasında ise TDP
+en iyi eksen olarak kaldı (%15.3); veri yolu tek başına daha kötü (%19.3).
+
+### K156 — Doğrulanamayan aile, iyimser bant taşıyamaz
+
+Bir ailenin kendi hata bandını taşıyabilmesi için içinde **en az 4 ölçülmüş
+parça** olmalı (LOO'nun anlamlı olabileceği en küçük sayı). Bugün bu ölçütü
+yalnızca üç grup karşılıyor:
+
+```
+GPU   Blackwell n=5      RDNA 4 n=4
+CPU   AM5 n=6
+```
+
+Kalanlar — Ada Lovelace (3), RDNA 3 (2), Xe2 (1) ve **hiç ölçümü olmayan**
+Ampere (0), RDNA 2 (0), Alchemist (0) — **aileler arası bandı devralır**.
+
+**Gerekçe:** doğrulanamamış bir ailenin hatası küçük değil, **bilinmiyor**.
+Komşu ailenin bandını ödünç vermek ya da aradeğerlemek, ölçülmemiş bir şeye
+ölçülmüş gibi dar bir bant takmak olurdu.
+
+`n` her bandın yanında taşınıyor: hangi sayının dört veri noktasına dayandığı
+görünmeden bant okunamaz.

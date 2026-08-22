@@ -210,6 +210,19 @@ model GpuSpecs {
   boost_clock_mhz      Int?
   memory_bandwidth_gbs Float?
 
+  // Indeks tahmini icin (K154). Ikisi de uc ureticinin de yayinladigi alanlar.
+  //
+  // bus_width_bits, memory_bandwidth_gbs'in YERINE gecen olcu:
+  // bant genisligi = veri yolu x bellek hizi / 8, ve NVIDIA bu carpimin
+  // yalnizca ilk terimini yayinliyor (30 karttan 27'sinde bant genisligi yok).
+  // Yarisi bos bir sutun tahmin ekseni olamaz.
+  bus_width_bits       Int?
+  // "Blackwell", "Ada Lovelace", "RDNA 4", "Xe2". Tahmin once aile icinde
+  // yapiliyor ve shader_units yalnizca ayni mimaride anlamli (K57), bu yuzden
+  // aile bilgisi satirin kendisinde durmak zorunda -- parca adindan tahmin
+  // edilemez.
+  architecture_family  String?
+
   source       Source
   source_url   String?
   confidence   Confidence
@@ -287,6 +300,12 @@ model CpuSpecs {
   tdp_watt        Int
   memory_type     CpuMemoryType
   has_igpu        Boolean
+
+  // Indeks tahmini icin (K154). Oyun yukunde islemciler arasindaki farki
+  // cekirdek sayisi ve saat hizi aciklamiyor: olculen 12 islemcide X3D
+  // parcalari DAHA DUSUK cekirdekxsaat degeriyle DAHA YUKSEK indeks aliyor.
+  // Fark yigilmis onbellekten geliyor.
+  l3_cache_mb     Int?
 
   source       Source
   source_url   String?

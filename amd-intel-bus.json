@@ -1,0 +1,205 @@
+{
+ "amd-rx-9070-xt": {
+  "bus": "256-bit",
+  "bw": "Up to 640 GB/s",
+  "speed": "Up to 20 Gbps",
+  "arch": null,
+  "csv_bw": "640"
+ },
+ "amd-rx-9070": {
+  "bus": "256-bit",
+  "bw": "Up to 640 GB/s",
+  "speed": "Up to 20 Gbps",
+  "arch": null,
+  "csv_bw": "640"
+ },
+ "amd-rx-9070-gre": {
+  "bus": "192-bit",
+  "bw": "Up to 432 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": null,
+  "csv_bw": "432"
+ },
+ "amd-rx-9060-xt": {
+  "bus": "128-bit",
+  "bw": "Up to 320 GB/s",
+  "speed": "Up to 20 Gbps",
+  "arch": null,
+  "csv_bw": "320"
+ },
+ "amd-rx-7900-xtx": {
+  "bus": null,
+  "bw": "Up to 960 GB/s",
+  "speed": "Up to 20 Gbps",
+  "arch": null,
+  "csv_bw": "960"
+ },
+ "amd-rx-7900-xt": {
+  "bus": null,
+  "bw": "Up to 800 GB/s",
+  "speed": "Up to 20 Gbps",
+  "arch": null,
+  "csv_bw": "800"
+ },
+ "amd-rx-7900-gre": {
+  "bus": "256-bit",
+  "bw": "Up to 576 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": "RDNA 3",
+  "csv_bw": "576"
+ },
+ "amd-rx-7800-xt": {
+  "bus": "256-bit",
+  "bw": "Up to 624 GB/s",
+  "speed": "Up to 19.5 Gbps",
+  "arch": null,
+  "csv_bw": "624"
+ },
+ "amd-rx-7700-xt": {
+  "bus": "192-bit",
+  "bw": "Up to 432 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": null,
+  "csv_bw": "432"
+ },
+ "amd-rx-7600-xt": {
+  "bus": "128-bit",
+  "bw": "Up to 288 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": null,
+  "csv_bw": "288"
+ },
+ "amd-rx-7600": {
+  "bus": "128-bit",
+  "bw": "Up to 288 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": "RDNA 3",
+  "csv_bw": "288"
+ },
+ "amd-rx-6950-xt": {
+  "bus": "256-bit",
+  "bw": "Up to 576 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": null,
+  "csv_bw": "576"
+ },
+ "amd-rx-6900-xt": {
+  "bus": "256-bit",
+  "bw": "Up to 512 GB/s",
+  "speed": "Up to 16 Gbps",
+  "arch": null,
+  "csv_bw": "512"
+ },
+ "amd-rx-6800-xt": {
+  "bus": "256-bit",
+  "bw": "Up to 512 GB/s",
+  "speed": "Up to 16 Gbps",
+  "arch": null,
+  "csv_bw": "512"
+ },
+ "amd-rx-6800": {
+  "bus": "256-bit",
+  "bw": "Up to 512 GB/s",
+  "speed": "Up to 16 Gbps",
+  "arch": null,
+  "csv_bw": "512"
+ },
+ "amd-rx-6750-xt": {
+  "bus": "192-bit",
+  "bw": "Up to 432 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": null,
+  "csv_bw": "432"
+ },
+ "amd-rx-6700-xt": {
+  "bus": "192-bit",
+  "bw": "Up to 384 GB/s",
+  "speed": "Up to 16 Gbps",
+  "arch": null,
+  "csv_bw": "384"
+ },
+ "amd-rx-6700": {
+  "bus": "160-bit",
+  "bw": "Up to 320 GB/s",
+  "speed": "Up to 16 Gbps  / \n\t\t\t\t\t\t\t\t\t\t\t Up to 14 Gbps",
+  "arch": null,
+  "csv_bw": "320"
+ },
+ "amd-rx-6650-xt": {
+  "bus": "128-bit",
+  "bw": "Up to 280 GB/s",
+  "speed": "Up to 17.5 Gbps",
+  "arch": null,
+  "csv_bw": "280"
+ },
+ "amd-rx-6600-xt": {
+  "bus": "128-bit",
+  "bw": "Up to 256 GB/s",
+  "speed": "Up to 16 Gbps",
+  "arch": "RDNA 2",
+  "csv_bw": "256"
+ },
+ "amd-rx-6600": {
+  "bus": "128-bit",
+  "bw": "Up to 224 GB/s",
+  "speed": "Up to 14 Gbps",
+  "arch": null,
+  "csv_bw": "224"
+ },
+ "amd-rx-6500-xt": {
+  "bus": "64-bit",
+  "bw": "Up to 144 GB/s",
+  "speed": "Up to 18 Gbps",
+  "arch": "RDNA 2",
+  "csv_bw": "144"
+ },
+ "amd-rx-6400": {
+  "bus": "64-bit",
+  "bw": "Up to 128 GB/s",
+  "speed": "Up to 16 Gbps",
+  "arch": null,
+  "csv_bw": "128"
+ },
+ "intel-arc-b580": {
+  "bus": null,
+  "arch": "Xe2",
+  "csv_bw": "456",
+  "labels_ornek": []
+ },
+ "intel-arc-b570": {
+  "bus": null,
+  "arch": "Xe2",
+  "csv_bw": "380",
+  "labels_ornek": []
+ },
+ "intel-arc-a770-16gb": {
+  "bus": null,
+  "arch": null,
+  "csv_bw": "560",
+  "labels_ornek": []
+ },
+ "intel-arc-a770-8gb": {
+  "bus": null,
+  "arch": null,
+  "csv_bw": "512",
+  "labels_ornek": []
+ },
+ "intel-arc-a750": {
+  "bus": null,
+  "arch": null,
+  "csv_bw": "512",
+  "labels_ornek": []
+ },
+ "intel-arc-a580": {
+  "bus": null,
+  "arch": null,
+  "csv_bw": "512",
+  "labels_ornek": []
+ },
+ "intel-arc-a380": {
+  "bus": null,
+  "arch": null,
+  "csv_bw": "186",
+  "labels_ornek": []
+ }
+}

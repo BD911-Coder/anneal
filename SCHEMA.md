@@ -139,6 +139,21 @@ Hepsi olgusal iddia taşır; dolayısıyla hepsinde `source`, `source_url`, `con
 | `shader_unit_type` | enum? (`cuda_core`, `stream_processor`, `xe_vector_engine`) |
 | `boost_clock_mhz` | int? |
 | `memory_bandwidth_gbs` | float? |
+| `bus_width_bits` | int? |
+| `architecture_family` | text? |
+
+`bus_width_bits` ve `architecture_family` **indeks tahmini için** eklendi
+(K154). İkisi de üç üreticinin de yayınladığı alanlar:
+
+- `bus_width_bits` — NVIDIA "Memory Interface Width", AMD "Memory Interface",
+  Intel "Graphics Memory Interface". **Bant genişliğinin yerine geçiyor:**
+  `bant genişliği = veri yolu × bellek hızı ÷ 8` ve NVIDIA bu çarpımın
+  yalnızca ilk terimini yayınlıyor. Yarısı boş bir sütun yerine tamamı dolu
+  olan tutuluyor.
+- `architecture_family` — NVIDIA "Blackwell"/"Ada Lovelace", AMD "RDNA 4",
+  Intel "Xe2". Tahmin **önce aile içinde** yapılıyor ve `shader_units`
+  yalnızca aynı mimari içinde anlamlı olduğu için (K57) aile bilgisi satırın
+  kendisinde durmak zorunda; parça adından tahmin edilemez.
 
 `length_mm`, `recommended_psu_watt` ve `pcie_version` **opsiyoneldir**
 (K52, K56). Hangi alanı hangi üreticinin yayınladığı kaynağa göre değişiyor:
@@ -236,6 +251,17 @@ yapılandırılır. Bkz. `SORULAR.md` S38.
 | `tdp_watt` | int |
 | `memory_type` | enum (`DDR4`, `DDR5`, `DDR4/DDR5`) |
 | `has_igpu` | bool |
+| `l3_cache_mb` | int? |
+
+`l3_cache_mb` **indeks tahmini için** eklendi (K154) ve opsiyoneldir.
+
+Neden bu alan: oyun yükünde işlemciler arasındaki farkı çekirdek sayısı ve
+saat hızı açıklamıyor. Ölçülen 12 işlemcide X3D parçaları **daha düşük**
+çekirdek×saat değeriyle **daha yüksek** indeks alıyor (ortalama 132.9 / 107.0).
+Aradaki fark yığılmış önbellekten geliyor ve o alan şemada yoktu; bu yüzden
+işlemci tahmini "hep ortalamayı söyle" tabanını yenemiyordu.
+
+AMD ve Intel ikisi de yayınlıyor (AMD "L3 Cache", Intel ARK "Cache").
 
 **`motherboard_specs`**
 

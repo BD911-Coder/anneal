@@ -1,0 +1,177 @@
+{
+ "nvidia-rtx-5090": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": []
+ },
+ "nvidia-rtx-5080": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "GeForce RTX 4090"
+  ]
+ },
+ "nvidia-rtx-5070-ti": {
+  "bus": "256-bit",
+  "arch": "Blackwell",
+  "model": "GeForce RTX 5070 Ti"
+ },
+ "nvidia-rtx-5070": {
+  "bus": "192-bit",
+  "arch": "Blackwell",
+  "model": "GeForce RTX 5070"
+ },
+ "nvidia-rtx-5060-ti-16gb": {
+  "bus": "128-bit",
+  "arch": "Blackwell",
+  "model": "GeForce RTX 5060 Ti 16GB"
+ },
+ "nvidia-rtx-5060-ti-8gb": {
+  "bus": "128-bit",
+  "arch": "Blackwell",
+  "model": "GeForce RTX 5060 Ti 8GB"
+ },
+ "nvidia-rtx-5060": {
+  "bus": "128-bit",
+  "arch": "Blackwell",
+  "model": "GeForce RTX 5060"
+ },
+ "nvidia-rtx-5050": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": []
+ },
+ "nvidia-rtx-4090": {
+  "bus": "384-bit",
+  "arch": "Ada Lovelace",
+  "model": "GeForce RTX 4090"
+ },
+ "nvidia-rtx-4080-super": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4080 SUPER",
+   "RTX 4080"
+  ]
+ },
+ "nvidia-rtx-4080": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4080 SUPER",
+   "RTX 4080"
+  ]
+ },
+ "nvidia-rtx-4070-ti-super": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4070  Ti  SUPER",
+   "RTX 4070  Ti",
+   "RTX 4070 SUPER",
+   "RTX 4070"
+  ]
+ },
+ "nvidia-rtx-4070-ti": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4070  Ti  SUPER",
+   "RTX 4070  Ti",
+   "RTX 4070 SUPER",
+   "RTX 4070"
+  ]
+ },
+ "nvidia-rtx-4070-super": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4070  Ti  SUPER",
+   "RTX 4070  Ti",
+   "RTX 4070 SUPER",
+   "RTX 4070"
+  ]
+ },
+ "nvidia-rtx-4070": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4070  Ti  SUPER",
+   "RTX 4070  Ti",
+   "RTX 4070 SUPER",
+   "RTX 4070"
+  ]
+ },
+ "nvidia-rtx-4060-ti-16gb": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4060  Ti",
+   "RTX 4060"
+  ]
+ },
+ "nvidia-rtx-4060-ti-8gb": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4060  Ti",
+   "RTX 4060"
+  ]
+ },
+ "nvidia-rtx-4060": {
+  "HATA": "kart tabloda bulunamadi",
+  "adaylar": [
+   "RTX 4060  Ti",
+   "RTX 4060"
+  ]
+ },
+ "nvidia-rtx-3090-ti": {
+  "bus": "384-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3090 Ti"
+ },
+ "nvidia-rtx-3090": {
+  "bus": "384-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3090"
+ },
+ "nvidia-rtx-3080-ti": {
+  "bus": "384-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3080 Ti"
+ },
+ "nvidia-rtx-3080-12gb": {
+  "bus": "384-bit / 320-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3080 12GB"
+ },
+ "nvidia-rtx-3080-10gb": {
+  "bus": "384-bit / 320-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3080 10GB"
+ },
+ "nvidia-rtx-3070-ti": {
+  "bus": "256-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3070 Ti"
+ },
+ "nvidia-rtx-3070": {
+  "bus": "256-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3070"
+ },
+ "nvidia-rtx-3060-ti": {
+  "bus": "256-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3060 Ti"
+ },
+ "nvidia-rtx-3060-12gb": {
+  "bus": "192-bit / 128-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3060 12GB"
+ },
+ "nvidia-rtx-3060-8gb": {
+  "bus": "192-bit / 128-bit",
+  "arch": "Ampere",
+  "model": "GeForce RTX 3060 8GB"
+ },
+ "nvidia-rtx-3050-8gb": {
+  "bus": null,
+  "arch": null,
+  "model": "GeForce RTX 3050 8GB"
+ },
+ "nvidia-rtx-3050-6gb": {
+  "bus": null,
+  "arch": null,
+  "model": "GeForce RTX 3050 6GB"
+ }
+}
