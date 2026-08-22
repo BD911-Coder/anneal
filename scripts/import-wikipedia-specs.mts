@@ -4,10 +4,11 @@
 //   npm run wikipedia:deneme               rapor
 //   npm run wikipedia:deneme -- --ayrinti  başarısız satırların tamamı
 //   npm run wikipedia:deneme -- --makale=List_of_Intel_graphics_processing_units
+//   npm run wikipedia:aktar -- --apply     YAZAR (yalnizca bos alanlari)
 //
-// **HİÇBİR ŞEY YAZMAZ.** `--apply` bayrağı bilinçli olarak YOK — dış değerin
-// nereye yazılacağı henüz kararlı değil (raporun sonundaki "YAZMA YOLU"
-// bölümü ve SORULAR.md S48).
+// **VARSAYILAN KURU ÇALIŞMA.** `--apply` verilmedikçe hiçbir şey yazılmaz.
+// Yazma yolu K170 ile açıldı: dış değer `spec_field_sources` defterine kendi
+// damgasıyla yazılıyor ve YALNIZCA null alanları dolduruyor.
 //
 // Neden bu script var: Wikidata kuru çalışmasında (K165) aradığımız spec
 // alanlarının Wikidata'da OLMADIĞI ölçüldü; dolu olan yer Wikipedia'nın
@@ -65,6 +66,10 @@ const args = process.argv.slice(2);
 const AYRINTI = args.includes("--ayrinti");
 /** Tablo teshisi: kabul edilen her tablonun sutun eslemesi ve ilk satirlari. */
 const TABLO_DOK = args.includes("--tablo-dok");
+/** Yazma. Verilmezse hicbir sey yazilmaz -- varsayilan kuru calisma. */
+const UYGULA = args.includes("--apply");
+/** Lisans metni tek yerde: satirda da raporda da ayni sey yazsin. */
+const LISANS = "CC BY-SA 4.0";
 const makaleFiltre = args.find((a) => a.startsWith("--makale="))?.split("=")[1];
 
 // ===========================================================================
@@ -1210,20 +1215,141 @@ for (const s of kaynakSayfalar) {
 }
 
 // --- Yazma yolu ------------------------------------------------------------
+//
+// S48 kapandı (K170): dış değer artık yazılabiliyor çünkü nereye yazılacağı
+// çözüldü — `spec_field_sources`, alan başına kaynak defteri.
+//
+// İKİ KURAL, yazma anında zorlanıyor:
+//   1. Üretici değeri ASLA ezilmez. Yalnızca `null` alan doldurulur.
+//   2. Yazılan her alan kendi damgasını alır: kaynak, makale, revizyon,
+//      lisans. Satırın damgası değişmez.
 
 console.log();
 cizgi();
-console.log("YAZMA YOLU — henuz YOK, ve sebebi bir karar bekliyor");
+console.log(UYGULA ? "YAZMA — --apply verildi" : "YAZMA YOLU — kuru calisma, --apply verilmedi");
 cizgi();
-console.log("  Uzlastirma kurali islemeye hazir: uretici degeri varsa dis deger");
-console.log(`  UZERINE YAZMAZ, %${DISCREPANCY_THRESHOLD_PCT} ustu fark yukaridaki listeye duser.`);
-console.log("  Cozulmemis olan sey NEREYE yazilacagi:");
-console.log("    - gpu_specs satirinin provenance'i SATIR BASINA (source, source_url,");
-console.log("      confidence). Tek bir alani Wikipedia'dan doldurmak, satirin");
-console.log("      'manufacturer' damgasini yalan yapar.");
-console.log("    - Capraz kontrol degerlerinin (celismeyenler dahil) duracagi bir");
-console.log("      tablo yok.");
-console.log("  Ikisi de SCHEMA.md degisikligi; karar proje sahibinin (SORULAR.md S48).");
-console.log("\nHICBIR SEY YAZILMADI.");
+
+type Yazim = { partId: string; alan: Alan; deger: number; kaynak: WikiSatir };
+const yazilacak: Yazim[] = [];
+const atlanan: string[] = [];
+
+for (const e of eslesmeler) {
+  const spec = specHarita.get(e.partId)!;
+  for (const alan of SEMADA_VAR) {
+    const cozum = disDegerler.get(`${e.partId}|${alan}`);
+    if (!cozum) continue;
+    const mevcut = (spec as unknown as Record<string, number | null>)[alan];
+    if (mevcut !== null && mevcut !== undefined) {
+      atlanan.push(`${e.partId}.${alan} (uretici degeri var: ${mevcut})`);
+      continue;
+    }
+    yazilacak.push({ partId: e.partId, alan, deger: cozum.deger, kaynak: cozum.kaynak });
+  }
+}
+
+console.log(`  Doldurulacak bos alan : ${yazilacak.length}`);
+console.log(`  Dokunulmayacak alan   : ${atlanan.length} (uretici degeri var)`);
+
+if (!UYGULA) {
+  console.log("\n  HICBIR SEY YAZILMADI. Yazmak icin: npm run wikipedia:aktar -- --apply");
+} else {
+  // Ham veri once raw_imports'a (SCHEMA.md bolum 0, kural 3).
+  //
+  // "Ham" burada AYRISTIRILMIS SATIR KUMESI + revizyon numarasi demek,
+  // wikitext'in kendisi degil: uc makalenin wikitext'i 834 KB ve revizyon
+  // numarasi verildiginde byte byte geri getirilebiliyor. Saklanmasi gereken
+  // sey "hangi metinden okuduk" sorusunun cevabi; revizyon numarasi o cevabin
+  // kendisi. Ayrica ayristirilmis satirlar saklaniyor ki bir deger
+  // sorgulandiginda hangi satirdan geldigi wikitext'i yeniden ayristirmadan
+  // gorulebilsin.
+  const imported_at = new Date();
+  for (const sayfa of kaynakSayfalar) {
+    const satirlar = tumSatirlar.filter((s) => s.kaynakSayfa === sayfa.title);
+    await prisma.rawImport.create({
+      data: {
+        source: `wikipedia:${sayfa.title}`,
+        payload: {
+          article: sayfa.title,
+          revision_id: sayfa.revid,
+          wikitext_bytes: sayfa.wikitext.length,
+          license: LISANS,
+          fetched_at: imported_at.toISOString(),
+          rows: satirlar.map((s) => ({
+            model: s.model,
+            section: s.bolum,
+            values: s.degerler,
+          })),
+        },
+        imported_at,
+        status: "processed",
+      },
+    });
+  }
+  console.log(`  raw_imports satiri    : ${kaynakSayfalar.length} (makale basina bir)`);
+
+  let yazilan = 0;
+  for (const y of yazilacak) {
+    const url = `https://en.wikipedia.org/w/index.php?oldid=${y.kaynak.revizyon}`;
+    await prisma.$transaction(async (tx) => {
+      // Sartli guncelleme: alan HALA null ise yaz. Kural veritabani
+      // seviyesinde de duruyor, yalnizca yukaridaki kontrole guvenilmiyor.
+      const etkilenen = await tx.$executeRawUnsafe(
+        `UPDATE gpu_specs SET ${y.alan} = $1, updated_at = now() WHERE part_id = $2 AND ${y.alan} IS NULL`,
+        y.deger,
+        y.partId,
+      );
+      if (etkilenen === 0) return;
+      await tx.specFieldSource.upsert({
+        where: { part_id_field_name: { part_id: y.partId, field_name: y.alan } },
+        create: {
+          part_id: y.partId,
+          field_name: y.alan,
+          source: "wikipedia",
+          source_url: url,
+          // Uretici sayfasi birincil kaynak; ucuncul bir kaynak ondan daha
+          // guvenilir isaretlenemez.
+          confidence: "medium",
+          collected_at: imported_at,
+          license: LISANS,
+          source_article: y.kaynak.kaynakSayfa,
+          source_revision_id: y.kaynak.revizyon,
+        },
+        update: {
+          source: "wikipedia",
+          source_url: url,
+          confidence: "medium",
+          collected_at: imported_at,
+          license: LISANS,
+          source_article: y.kaynak.kaynakSayfa,
+          source_revision_id: y.kaynak.revizyon,
+        },
+      });
+      yazilan += 1;
+    });
+  }
+
+  console.log(`  YAZILAN alan          : ${yazilan}`);
+  console.log("\n  parca                        alan                     deger      kaynak");
+  for (const y of yazilacak) {
+    console.log(
+      `  ${y.partId.padEnd(28)} ${y.alan.padEnd(24)} ${String(y.deger).padStart(8)}   rev ${y.kaynak.revizyon}`,
+    );
+  }
+
+  // Yazımdan sonraki kapsam — iddia değil, veritabanından yeniden okunuyor.
+  const sonrasi = await prisma.gpuSpecs.findMany({
+    select: { memory_bandwidth_gbs: true, bus_width_bits: true, tdp_watt: true, transistor_count_m: true },
+  });
+  console.log("\n  YAZIMDAN SONRAKI KAPSAM (veritabanindan okundu)");
+  for (const alan of SEMADA_VAR) {
+    const dolu = sonrasi.filter(
+      (r) => (r as unknown as Record<string, number | null>)[alan] !== null,
+    ).length;
+    console.log(`  ${alan.padEnd(24)} ${dolu}/${sonrasi.length}`);
+  }
+  const damga = await prisma.specFieldSource.groupBy({ by: ["source"], _count: true });
+  console.log("\n  ALAN DAMGALARI");
+  for (const d of damga) console.log(`  ${String(d.source).padEnd(24)} ${d._count}`);
+}
 
 await prisma.$disconnect();

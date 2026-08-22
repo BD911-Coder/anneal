@@ -369,6 +369,44 @@ Eksikse C5 ve W5 kuralları kendini atlar, arayüz kullanıcıya bildirir.
 `supported_form_factors` zorunlu kalır — o bir ölçü değil, üreticinin
 listelediği uyumluluk beyanıdır ve C6 onsuz hiç çalışamaz.
 
+### `spec_field_sources` — alan başına kaynak defteri (K170)
+
+| Alan | Tip |
+|---|---|
+| `part_id` | FK |
+| `field_name` | text — spec tablosundaki sütun adı |
+| `source` | enum (`Source`) |
+| `source_url` | text? |
+| `confidence` | enum (`Confidence`) |
+| `collected_at` | timestamptz |
+| `license` | text? — yalnızca lisans yükümlülüğü olan kaynakta |
+| `source_article` | text? — atıf için makale adı |
+| `source_revision_id` | int? — atıf için revizyon numarası |
+
+Birincil anahtar: (`part_id`, `field_name`).
+
+**Neden var:** bölüm 1.3'teki `source`/`source_url`/`confidence` üçlüsü **satır
+başına**. Bir `gpu_specs` satırının bant genişliği Wikipedia'dan, geri kalan
+her alanı üreticiden gelebiliyor; satırın tamamını `manufacturer` damgalamak
+yalan, `wikipedia` damgalamak daha büyüğü.
+
+**Öncelik kuralı, yazma anında zorlanır:** üretici değeri **asla** ezilmez. Dış
+kaynak yalnızca `null` olan bir alanı doldurabilir. Bir alan bir kez üreticiden
+geldiyse dış kaynak onun üstüne yazamaz; farklı bir değer görürse çelişki
+olarak raporlanır (K168).
+
+**Satır yoksa** o alan spec satırının kendi damgasını taşır. Yani bu tablo bir
+**istisna defteridir**; geçişte bütün dolu alanlar yazıldığı için bugün
+damgasız dolu alan yok ve `npm run kaynak:kontrol` bunu denetliyor.
+
+**Atıf alan başınadır:** CC BY-SA kredisi, değeri **gösteren** yerde görünür.
+Gösterilmeyen bir alanın kredisi de gösterilmez; gösterilen alanların listesi
+`data/spec-sources.ts` içindeki `DISPLAYED_GPU_FIELDS`.
+
+`field_name` metin sütunudur ve veritabanı onu doğrulamaz. Yan tablo seçiminin
+bilinen bedeli budur; karşılığı `npm run kaynak:kontrol`, bilinmeyen alan adı
+bulursa durur.
+
 ---
 
 ## 3. Fiyat
@@ -884,6 +922,7 @@ burada sayılmaz.
 | `gpu_variant_specs` | (`chip_part_id`) | "Bu çipin kartları" — kart seçim listesi ve parça detay sayfası. Kartlar her zaman çipleriyle birlikte okunur, tek başına değil. |
 | `perf_index_estimated` | (`part_id`, `workload`, `model_version`) **UNIQUE** | Tekillik kısıtı ve çözümleme yolu — `perf_index` ile aynı desen. |
 | `perf_index_estimated` | (`model_version`) | Bütün tahminleri tek sürüm için okuma: katalog sayfası her istekte bunu yapıyor. |
+| `spec_field_sources` | (`source`) | "Bu kaynaktan gelen bütün alanlar" — atıf gösterimi ve dev-seed dağıtım kontrolü bu yoldan geçer. |
 
 **Silinen indeks:** `raw_imports(status)` kaldırıldı — `raw_imports` yalnızca hata
 ayıklarken elle okunur, belgelenmiş bir sorgu yolu değildir.

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getFpsGameGroups } from "@/data/benchmarks";
 import { getMeasuredPerfIndexes, getResolvedPerfIndexes } from "@/data/perf";
 import { getBuilderCatalog } from "@/data/parts";
+import { getGpuChipFacts } from "@/data/spec-sources";
 import { getCurrentPrices } from "@/data/prices";
 import { pickDefaultBuild } from "@/engine/default-build";
 import { MODEL_VERSION } from "@/engine/performance";
@@ -24,7 +25,7 @@ export default async function HomePage() {
   ]);
 
   // Fiyat ve indeks, katalogla aynı anda okunuyor: üçü de bağımsız sorgu.
-  const [catalog, prices, perfIndexes, fpsGroups] = await Promise.all([
+  const [catalog, prices, perfIndexes, fpsGroups, chipFacts] = await Promise.all([
     getBuilderCatalog(),
     getCurrentPrices(),
     // Sayfanın okuduğu sürüm ile motorun ürettiği sürüm hep aynı olmalı.
@@ -34,6 +35,10 @@ export default async function HomePage() {
     // Oyun bazlı FPS ölçümleri (Faz A.1). Türetilen FPS hiçbir tabloya
     // yazılmaz; burada okunanlar ham ölçümler, hesap istemcide yapılıyor.
     getFpsGameGroups(MODEL_VERSION),
+    // Gösterilen spec değerleri + ALAN BAŞINA kaynakları (K170). Atıf
+    // kredisi burada taşınıyor: değerin kendisiyle aynı yerde durmazsa
+    // gösterildiği yerde görünmesi tesadüfe kalır.
+    getGpuChipFacts(),
   ]);
 
   const toplamParca = Object.values(catalog).reduce((sum, list) => sum + list.length, 0);
@@ -142,6 +147,7 @@ export default async function HomePage() {
         prices={prices}
         perfIndexes={perfIndexes}
         fpsGroups={fpsGroups}
+        chipFacts={Object.fromEntries(chipFacts)}
         defaultSelection={defaultSelection}
       />
 

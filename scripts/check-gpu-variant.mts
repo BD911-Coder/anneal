@@ -97,6 +97,25 @@ const cipHaritasi = new Map(cipSatirlari.map((row) => [row.part_id, row]));
 const sapmalar: string[] = [];
 let karsilastirilan = 0;
 
+// Dis kaynakli alanlar bu karsilastirmanin DISINDA (K170).
+//
+// CSV artik gpu_specs'in TEK kaynagi degil: Wikipedia'dan gelen degerler
+// yalnizca bos alanlari dolduruyor ve CSV'de karsiliklari yok. Onlari
+// "sapma" saymak, ice aktarmanin kendisini hata gibi gosterirdi.
+//
+// Alan alan atlaniyor, satir satir degil: ayni satirin geri kalan alanlari
+// hala CSV ile birebir esit olmak zorunda. Hangi alanin disarida kaldigi
+// tahmin edilmiyor, DEFTERDEN okunuyor.
+const disKaynakli = new Set(
+  (
+    await prisma.specFieldSource.findMany({
+      where: { source: { notIn: ["manufacturer", "manual", "dev_seed"] } },
+      select: { part_id: true, field_name: true },
+    })
+  ).map((d) => `${d.part_id}|${d.field_name}`),
+);
+let atlananAlan = 0;
+
 for (const dosya of readdirSync("data/parts").filter((f) => /^gpu-[a-z]+\.csv$/.test(f))) {
   for (const satir of csvSatirlari(dosya)) {
     const db = cipHaritasi.get(satir.id) as Record<string, unknown> | undefined;
@@ -106,6 +125,10 @@ for (const dosya of readdirSync("data/parts").filter((f) => /^gpu-[a-z]+\.csv$/.
     }
     karsilastirilan++;
     for (const alan of CSV_ALANLARI) {
+      if (disKaynakli.has(`${satir.id}|${alan}`)) {
+        atlananAlan++;
+        continue;
+      }
       const beklenen = satir[alan] ?? "";
       const gelen = db[alan] === null || db[alan] === undefined ? "" : String(db[alan]);
       if (beklenen !== gelen) sapmalar.push(`${satir.id}.${alan}: CSV='${beklenen}' DB='${gelen}'`);
@@ -114,6 +137,7 @@ for (const dosya of readdirSync("data/parts").filter((f) => /^gpu-[a-z]+\.csv$/.
 }
 
 console.log(`  CSV ile karsilastirilan  : ${karsilastirilan} cip`);
+console.log(`  Dis kaynakli, atlanan alan: ${atlananAlan} (defterden okundu)`);
 check("cip satirlari kaynak CSV ile birebir ayni", sapmalar.length === 0, sapmalar.slice(0, 5).join("; "));
 check("CSV'deki her cip veritabaninda", karsilastirilan === cipSayisi, `${karsilastirilan} != ${cipSayisi}`);
 
