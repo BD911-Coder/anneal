@@ -3483,3 +3483,49 @@ varsayılan seçim `getMeasuredPerfIndexes` ile kuruluyor.
 
 **Gerekçe:** kullanıcının gördüğü ilk ekran, sitenin neye dayandığını
 göstermeli. Önce ölçülmüş veri, sonra boşluğun nasıl doldurulduğu.
+
+### K165 — Wikidata spec taşımıyor; asıl kaynak Wikipedia tabloları
+
+**2026-08-22, kuru çalışma** (`npm run wikidata:deneme`, hiçbir şey yazılmadı).
+
+NVIDIA masaüstü GPU'ları için Wikidata **82 varlık** döndürdü ve katalogla
+**7 tanesi** normalize adla eşleşti. Alan doluluğu:
+
+```
+transistör sayısı    2/82   %2
+fabrikasyon süreci   0/82   %0
+TDP                  2/82   %2
+bant genişliği       0/82   %0
+veri yolu genişliği  0/82   %0
+yayın tarihi        63/82  %77
+```
+
+**Wikidata'da aradığımız spec alanları yok.** Yalnızca yayın tarihi dolu.
+
+Sınıf kimliği ölçülerek bulundu, tahmin edilmedi: RTX 4090'ın (Q114062761)
+`P31` değeri `Q183484` ("graphics processing unit") **değil**,
+`Q122760264` ("graphics card model"). İlk sorgu bu yüzden sıfır döndürdü.
+
+**Wikipedia tabloları zengin.** `List_of_Nvidia_graphics_processing_units`
+wikitext'inde (549 KB, revizyon 1369488585) sütun geçişleri:
+
+```
+dolgu hızı (fillrate)   140      TDP / TBP               109
+bant genişliği          110      çekirdek yapılandırması  87
+saat hızı                73      veri yolu genişliği       72
+transistör sayısı         6      fabrikasyon süreci         0
+```
+
+Yani proje sahibinin öngörüsü doğru çıktı: **veri Wikidata'da değil,
+Wikipedia tablolarında.** Bir sonraki adım o tabloların ayrıştırılması.
+
+**Lisans ayrımı satırda taşınacak:** Wikidata CC0 (atıf yükümlülüğü yok),
+Wikipedia CC BY-SA (atıf **zorunlu**, kaynak makale + revizyon numarası ile).
+İkisi aynı tabloda karışamaz.
+
+**Uzlaştırma:** üretici değeri asla ezilmez. Dış değer çapraz kontrol olarak
+kaydedilir; %5 üstü fark "incelenecek" işaretlenir ve insana gider. Üretici
+sayfası birincil kaynak; dış kaynak onu doğrulayabilir ya da şüphe düşürebilir,
+sessizce değiştiremez.
+
+**Yazma yolu yok:** `--apply` bayrağı bilinçli olarak eklenmedi.
